@@ -121,7 +121,7 @@
             transition: all 0.3s ease;
         }
 
-        .search-icon:hover {
+        .search-icon-btn:hover .search-icon {
             animation: searchRotate 0.6s ease-in-out;
             color: var(--accent-color-1) !important;
         }
@@ -130,19 +130,19 @@
             animation: searchPulse 3s ease-in-out infinite, searchGlow 3s ease-in-out infinite;
         }
 
-        html.dark .search-icon:hover {
+        html.dark .search-icon-btn:hover .search-icon {
             filter: drop-shadow(0 0 12px rgba(190, 242, 100, 0.8));
         }
 
         /* Search bar focus effect - make icon brighter when input is focused */
-        #search-bar:focus ~ .search-icon {
+        #search-bar:focus ~ .search-icon-btn .search-icon {
             animation: searchRotate 0.6s ease-in-out;
             transform: scale(1.2);
             color: var(--accent-color-1) !important;
             filter: drop-shadow(0 0 8px rgba(132, 204, 22, 0.6));
         }
 
-        html.dark #search-bar:focus ~ .search-icon {
+        html.dark #search-bar:focus ~ .search-icon-btn .search-icon {
             filter: drop-shadow(0 0 12px rgba(190, 242, 100, 0.9));
         }
 
@@ -674,8 +674,9 @@
                 <input 
                     type="text" 
                     id="search-bar" 
-                    placeholder="Search for products..." 
-                    class="w-full pl-14 pr-4 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
+                    list="product-search-suggestions"
+                          placeholder="Search for products" 
+                    class="w-full pl-14 pr-14 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
                            bg-white dark:bg-gray-700
                            text-gray-900 dark:text-gray-100
                            placeholder-gray-400 dark:placeholder-gray-400
@@ -684,8 +685,23 @@
                            focus:ring-[color:var(--accent-color-1)]
                            dark:focus:ring-lime-400
                            hover:border-lime-400 dark:hover:border-lime-500">
-                <i class="ph-magnifying-glass-bold search-icon absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-lime-600 dark:text-lime-400 pointer-events-none"></i>
+                <button type="button" class="search-icon-btn absolute left-4 top-1/2 -translate-y-1/2 z-10 w-6 h-6 p-0 m-0 flex items-center justify-center bg-transparent border-0 text-lime-600 dark:text-lime-400" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+                    </svg>
+                </button>
+                <button type="button" id="voice-search-btn" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-md text-lime-600 dark:text-lime-400 hover:text-[color:var(--accent-color-1)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-color-1)] transition-colors" aria-label="Voice search" aria-controls="search-bar" aria-pressed="false" title="Voice search">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                        <line x1="8" y1="22" x2="16" y2="22"></line>
+                    </svg>
+                </button>
+                <span id="voice-search-status" class="sr-only" role="status" aria-live="polite"></span>
             </div>
+            <datalist id="product-search-suggestions"></datalist>
         </div>
 
         <!-- Categories -->
@@ -1061,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         updateProfileDisplay();
     }
     
-    const products = [
+    let products = [
         // Fruits
         { id: 1, name: 'Fresh Apples', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1024,pr-true,f-auto,q-80/cms/product_variant/8758d987-e101-46d3-9c9b-f2babc5d6389.jpeg', category: 'Fruits', variants: [{unit: '500 g', price: 75}, {unit: '1 kg', price: 150}] },
         { id: 2, name: 'Ripe Bananas', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/2ce10ffc-348b-4f20-a0c4-6f004c162c90.jpeg', category: 'Fruits', variants: [{unit: '6 pcs', price: 30}, {unit: '1 dozen', price: 50}] },
@@ -1215,13 +1231,19 @@ document.addEventListener('DOMContentLoaded', async() => {
                 const response = await fetch(`${API_BASE_URL}/products`);
                 if (response.ok) {
                     products = await response.json();
+                    refreshCategories();
+                    populateSearchSuggestionList();
                     renderProducts(products);
                 }
             } catch (error) {
                 console.error('Error fetching products:', error);
             }
         };
-    const categories = ['All', ...new Set(products.map(p => p.category))];
+    let categories = ['All', ...new Set(products.map(p => p.category))];
+    
+    const refreshCategories = () => {
+        categories = ['All', ...new Set(products.map(p => p.category))];
+    };
 
     // Clear any previously saved location - user must enter address each time
     localStorage.removeItem('userLocation');
@@ -1233,6 +1255,9 @@ document.addEventListener('DOMContentLoaded', async() => {
     const productGrid = document.getElementById('product-grid');
     const categoryContainer = document.getElementById('category-container');
     const searchBar = document.getElementById('search-bar');
+    const searchSuggestionList = document.getElementById('product-search-suggestions');
+    const voiceSearchBtn = document.getElementById('voice-search-btn');
+    const voiceSearchStatus = document.getElementById('voice-search-status');
     const noResults = document.getElementById('no-results');
     const cartFooter = document.getElementById('cart-footer');
     const cartSummary = document.getElementById('cart-summary');
@@ -1394,6 +1419,116 @@ document.addEventListener('DOMContentLoaded', async() => {
                 categoryButton.classList.add('active');
             }
             categoryContainer.appendChild(categoryButton);
+        });
+    };
+
+    const populateSearchSuggestionList = () => {
+        if (!searchSuggestionList) return;
+        searchSuggestionList.innerHTML = '';
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.name;
+            searchSuggestionList.appendChild(option);
+        });
+    };
+
+    const setupVoiceSearch = () => {
+        if (!voiceSearchBtn || !searchBar) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const setVoiceStatus = (message) => {
+            if (voiceSearchStatus) {
+                voiceSearchStatus.textContent = message;
+            }
+        };
+
+        const setVoiceButtonState = (isListening) => {
+            voiceSearchBtn.setAttribute('aria-pressed', String(isListening));
+            voiceSearchBtn.classList.toggle('text-red-500', isListening);
+            voiceSearchBtn.classList.toggle('dark:text-red-400', isListening);
+            if (!isListening) {
+                voiceSearchBtn.classList.add('text-lime-600', 'dark:text-lime-400');
+            }
+            voiceSearchBtn.title = isListening ? 'Stop voice search' : 'Voice search';
+        };
+
+        if (!SpeechRecognition) {
+            voiceSearchBtn.disabled = true;
+            voiceSearchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            voiceSearchBtn.setAttribute('aria-label', 'Voice search is not supported in this browser');
+            voiceSearchBtn.title = 'Voice search not supported';
+            setVoiceStatus('Voice search is not supported in this browser.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let isListening = false;
+        let finalTranscript = '';
+
+        recognition.onstart = () => {
+            isListening = true;
+            finalTranscript = '';
+            setVoiceButtonState(true);
+            setVoiceStatus('Listening. Speak your product search.');
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            const transcriptValue = (finalTranscript || interimTranscript).trim();
+            if (transcriptValue) {
+                searchBar.value = transcriptValue;
+                searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        };
+
+        recognition.onerror = (event) => {
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                setVoiceStatus('Microphone permission denied. Please allow microphone access.');
+            } else if (event.error === 'no-speech') {
+                setVoiceStatus('No speech detected. Try again.');
+            } else {
+                setVoiceStatus('Voice search failed. Please try again.');
+            }
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            setVoiceButtonState(false);
+            if (searchBar.value.trim()) {
+                setVoiceStatus(`Searching for ${searchBar.value}.`);
+            } else {
+                setVoiceStatus('Voice search stopped.');
+            }
+        };
+
+        voiceSearchBtn.addEventListener('click', () => {
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+
+            try {
+                searchBar.focus();
+                recognition.start();
+            } catch (error) {
+                console.error('Unable to start voice recognition:', error);
+                setVoiceStatus('Could not start voice search. Please try again.');
+            }
         });
     };
     
@@ -1909,13 +2044,19 @@ document.addEventListener('DOMContentLoaded', async() => {
     let suggestionInterval;
     
     const startAutoSuggestion = () => {
+        clearInterval(suggestionInterval);
+
         // Get all product names
         const productNames = products.map(p => p.name);
+        if (productNames.length === 0) {
+            searchBar.placeholder = 'Search products';
+            return;
+        }
         
         // Function to update placeholder
         const updatePlaceholder = () => {
             if (searchBar.value === '') { // Only update if search is empty
-                searchBar.placeholder = `Search for ${productNames[suggestionIndex]}...`;
+                searchBar.placeholder = `Search for \"${productNames[suggestionIndex]}\"`;
                 suggestionIndex = (suggestionIndex + 1) % productNames.length;
             }
         };
@@ -1931,7 +2072,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     searchBar.addEventListener('focus', () => {
         clearInterval(suggestionInterval);
         if (searchBar.value === '') {
-            searchBar.placeholder = 'Search for products...';
+            searchBar.placeholder = 'Search for products';
         }
     });
     
@@ -1954,10 +2095,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     // --- INITIAL RENDER ---
     await fetchProducts();
     loadDataFromStorage();
+    refreshCategories();
+    populateSearchSuggestionList();
     renderCategories();
     renderProducts();
     updateCartView();
     renderProfile();
+    setupVoiceSearch();
     
     // Start auto-suggestion after products are loaded
     startAutoSuggestion();
@@ -2247,14 +2391,14 @@ function getCurrentLocation() {
     // Show loading state
     const btn = event.target.closest('button');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="ph-spinner animate-spin text-xl"></i> Getting precise location...';
+    btn.innerHTML = '<i class="ph-spinner animate-spin text-xl"></i> Getting location...';
     btn.disabled = true;
 
-    // Enhanced geolocation options for better accuracy
+    // Quick location (lower accuracy, faster)
     const options = {
-        enableHighAccuracy: true,      // Request GPS if available
-        timeout: 20000,                 // Increased timeout for better accuracy
-        maximumAge: 0                   // Always get fresh location
+        enableHighAccuracy: false,      
+        timeout: 5000,                 
+        maximumAge: 0                   
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -2263,16 +2407,9 @@ function getCurrentLocation() {
             const lng = position.coords.longitude;
             const accuracy = position.coords.accuracy;
             
-            console.log('Location acquired:', {
-                lat: lat,
-                lng: lng,
-                accuracy: `${Math.round(accuracy)}m`,
-                timestamp: new Date(position.timestamp).toISOString()
-            });
-            
             try {
-                // Try multiple geocoding APIs for better results with retry
-                let addressData = await getAddressFromCoordinatesWithRetry(lat, lng, accuracy);
+                // Simple geocoding
+                let addressData = await getAddressFromCoordinates(lat, lng, accuracy);
                 
                 if (addressData) {
                     userLocation = {
@@ -2282,30 +2419,21 @@ function getCurrentLocation() {
                         pincode: addressData.pincode,
                         country: addressData.country,
                         coordinates: { 
-                            lat: lat.toFixed(7),    // Increased precision to 7 decimals (~1cm accuracy)
-                            lng: lng.toFixed(7), 
+                            lat: lat.toFixed(6),
+                            lng: lng.toFixed(6), 
                             accuracy: Math.round(accuracy)
                         }
                     };
                     
                     updateLocationDisplay();
-                    // Don't save location - user must enter each time
-                    // saveLocationToStorage();
                     closeLocationModal();
-                    
-                    // Show accuracy info with pincode in notification
-                    const accuracyText = accuracy < 50 ? 'High precision' : accuracy < 100 ? 'Good precision' : 'Approximate';
-                    const locationSummary = addressData.pincode 
-                        ? `${addressData.city || addressData.formattedAddress} - PIN: ${addressData.pincode}`
-                        : addressData.formattedAddress;
-                    showNotification(`📍 ${accuracyText} (±${Math.round(accuracy)}m): ${locationSummary}`, 'success');
+                    showNotification(`Location set successfully!`, 'success');
                 } else {
                     throw new Error('Unable to get address');
                 }
                 
             } catch (error) {
                 console.error('Geocoding error:', error);
-                // Fallback: Use coordinates directly
                 userLocation = {
                     address: `Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`,
                     city: 'Unknown',
@@ -2313,7 +2441,7 @@ function getCurrentLocation() {
                     coordinates: { lat: lat.toFixed(6), lng: lng.toFixed(6), accuracy: Math.round(accuracy) }
                 };
                 updateLocationDisplay();
-                showNotification('Location detected but address details unavailable. Please add details manually.', 'warning');
+                showNotification('Location detected. Please add address manually.', 'warning');
                 closeLocationModal();
             } finally {
                 btn.innerHTML = originalText;
@@ -2324,132 +2452,12 @@ function getCurrentLocation() {
             btn.innerHTML = originalText;
             btn.disabled = false;
             
-            let errorMessage = 'Location access denied.';
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMessage = '🚫 Location permission denied. Please enable location access in your browser settings.';
-                    showNotification(errorMessage, 'error');
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    errorMessage = '⚠️ Location information unavailable. Check if GPS/WiFi is enabled and try again.';
-                    showNotification(errorMessage, 'error');
-                    break;
-                case error.TIMEOUT:
-                    errorMessage = '⏱️ Location request timed out. Trying with enhanced precision mode...';
-                    showNotification(errorMessage, 'warning');
-                    // Automatically retry with watch position for continuous updates
-                    retryLocationWithWatch();
-                    return;  // Don't show error, we're retrying
-                default:
-                    errorMessage = `Location error: ${error.message}`;
-                    showNotification(errorMessage, 'error');
-            }
+            let errorMessage = 'Location access denied. Please enable location access.';
+            showNotification(errorMessage, 'error');
             console.error('Location error:', error);
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 20000,              // Increased to 20 seconds for better accuracy
-            maximumAge: 0
-        }
-    );
-}
-
-// Retry function with continuous position watching for better accuracy
-function retryLocationWithWatch() {
-    if (!navigator.geolocation) return;
-    
-    showNotification('🎯 Improving location accuracy...', 'info');
-    
-    const options = {
-        enableHighAccuracy: true,
-        timeout: 30000,                 // Extended timeout
-        maximumAge: 0
-    };
-    
-    const watchId = navigator.geolocation.watchPosition(
-        async (position) => {
-            const accuracy = position.coords.accuracy;
-            
-            // Stop watching once we get good accuracy (within 100 meters)
-            if (accuracy < 100) {
-                navigator.geolocation.clearWatch(watchId);
-                
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                try {
-                    let addressData = await getAddressFromCoordinatesWithRetry(lat, lng, accuracy);
-                    
-                    if (addressData) {
-                        userLocation = {
-                            address: addressData.formattedAddress,
-                            city: addressData.city,
-                            state: addressData.state,
-                            pincode: addressData.pincode,
-                            country: addressData.country,
-                            coordinates: { 
-                                lat: lat.toFixed(7),    // 7 decimals = ~1cm precision
-                                lng: lng.toFixed(7),
-                                accuracy: Math.round(accuracy)
-                            }
-                        };
-                        
-                        updateLocationDisplay();
-                        closeLocationModal();
-                        
-                        const accuracyText = accuracy < 50 ? 'High precision' : 'Good precision';
-                        const locationSummary = addressData.pincode 
-                            ? `${addressData.city || addressData.formattedAddress} - PIN: ${addressData.pincode}`
-                            : addressData.formattedAddress;
-                        showNotification(`📍 ${accuracyText} (±${Math.round(accuracy)}m): ${locationSummary}`, 'success');
-                    }
-                } catch (error) {
-                    console.error('Watch position geocoding error:', error);
-                    showNotification('Unable to determine precise location. Please enter address manually.', 'warning');
-                }
-            } else {
-                // Show progress while improving accuracy
-                console.log(`Improving accuracy: ±${Math.round(accuracy)}m`);
-            }
-        },
-        (error) => {
-            navigator.geolocation.clearWatch(watchId);
-            console.error('Watch position error:', error);
-            showNotification('Unable to get precise location. Please enter address manually.', 'error');
         },
         options
     );
-    
-    // Auto-clear watch after 30 seconds to prevent infinite watching
-    setTimeout(() => {
-        navigator.geolocation.clearWatch(watchId);
-    }, 30000);
-}
-
-// Enhanced geocoding with retry logic for better reliability
-async function getAddressFromCoordinatesWithRetry(lat, lng, accuracy) {
-    const maxRetries = 3;
-    let lastError;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`Geocoding attempt ${attempt}/${maxRetries}`);
-            const addressData = await getAddressFromCoordinates(lat, lng, accuracy);
-            if (addressData) {
-                console.log('Geocoding successful:', addressData);
-                return addressData;
-            }
-        } catch (error) {
-            lastError = error;
-            console.warn(`Geocoding attempt ${attempt} failed:`, error);
-            // Wait before retry with exponential backoff
-            if (attempt < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            }
-        }
-    }
-    
-    throw lastError || new Error('All geocoding attempts failed');
 }
 
 // Enhanced geocoding with multiple API fallbacks and better accuracy
