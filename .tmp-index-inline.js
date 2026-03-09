@@ -1,852 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" class="">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grocery Mart - Delivery in Minutes</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
-    <!-- Google Fonts: Inter -->   
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    
-    <!-- Clerk Authentication - Local Script -->
-    <script src="./clerk.browser.js"></script>
 
-    <style>
-        /* Define CSS variables for theming */
-        :root {
-            --bg-light: #f7fee7; /* lime-50 */
-            --text-light: #1a2e05; /* dark green */
-            --card-bg-light: #ffffff;
-            --border-light: #dcfce7; /* green-100 */
-            --subtle-text-light: #4d5e42; /* darker green-gray for better contrast */
-            --accent-color-1: #84cc16; /* lime-500 */
-            --accent-color-2: #a3e635; /* lime-400 */
-
-            /* Enhanced dark mode colors with better depth */
-            --bg-dark: #0f172a; /* slate-900 - richer dark background */
-            --bg-dark-secondary: #1e293b; /* slate-800 - for layered depth */
-            --text-dark: #ecfccb; /* lime-100 */
-            --card-bg-dark: #1e293b; /* slate-800 */
-            --card-bg-dark-elevated: #334155; /* slate-700 - for elevated cards */
-            --border-dark: #334155; /* slate-700 */
-            --subtle-text-dark: #94a3b8; /* slate-400 */
-
-            /* Background pattern variables */
-            --bg-image-light: url('https://www.transparenttextures.com/patterns/cubes.png');
-            --bg-image-dark: url('https://www.transparenttextures.com/patterns/dark-matter.png');
-            
-            /* Glassmorphism background variables with enhanced blur */
-            --glass-bg-light: rgba(255, 255, 255, 0.85);
-            --glass-bg-dark: rgba(30, 41, 59, 0.75);
-            
-            /* Transition timing - optimized for smoothness */
-            --theme-transition-duration: 0.5s;
-            --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Apply light theme by default with smooth transitions */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-light);
-            padding-bottom: 120px;
-            background-image: var(--bg-image-light);
-            background-size: cover;
-            background-attachment: fixed;
-            transition: background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        color var(--theme-transition-duration) var(--theme-transition-easing),
-                        background-image var(--theme-transition-duration) var(--theme-transition-easing);
-        }
-
-        /* Enhanced dark mode with gradient overlay */
-        html.dark body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            background-size: 200% 200%;
-            background-attachment: fixed;
-            color: var(--text-dark);
-            background-image: var(--bg-image-dark);
-            animation: gradientShift 15s ease infinite;
-        }
-
-        /* Subtle gradient animation for dark mode */
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Search icon animations */
-        @keyframes searchPulse {
-            0%, 100% { 
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% { 
-                transform: scale(1.15);
-                opacity: 0.8;
-            }
-        }
-
-        @keyframes searchGlow {
-            0%, 100% { 
-                filter: drop-shadow(0 0 0px rgba(132, 204, 22, 0));
-            }
-            50% { 
-                filter: drop-shadow(0 0 8px rgba(132, 204, 22, 0.6));
-            }
-        }
-
-        @keyframes searchRotate {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(-10deg) scale(1.1); }
-            50% { transform: rotate(0deg) scale(1); }
-            75% { transform: rotate(10deg) scale(1.1); }
-            100% { transform: rotate(0deg) scale(1); }
-        }
-
-        /* Search icon styling */
-        .search-icon {
-            animation: searchPulse 3s ease-in-out infinite;
-            transition: all 0.3s ease;
-        }
-
-        .search-icon:hover {
-            animation: searchRotate 0.6s ease-in-out;
-            color: var(--accent-color-1) !important;
-        }
-
-        html.dark .search-icon {
-            animation: searchPulse 3s ease-in-out infinite, searchGlow 3s ease-in-out infinite;
-        }
-
-        html.dark .search-icon:hover {
-            filter: drop-shadow(0 0 12px rgba(190, 242, 100, 0.8));
-        }
-
-        /* Search bar focus effect - make icon brighter when input is focused */
-        #search-bar:focus ~ .search-icon {
-            animation: searchRotate 0.6s ease-in-out;
-            transform: scale(1.2);
-            color: var(--accent-color-1) !important;
-            filter: drop-shadow(0 0 8px rgba(132, 204, 22, 0.6));
-        }
-
-        html.dark #search-bar:focus ~ .search-icon {
-            filter: drop-shadow(0 0 12px rgba(190, 242, 100, 0.9));
-        }
-
-        /* Custom scrollbar for cart */
-        .scrollable-cart {
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-color-1) transparent;
-        }
-
-        .scrollable-cart::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .scrollable-cart::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .scrollable-cart::-webkit-scrollbar-thumb {
-            background-color: var(--accent-color-1);
-            border-radius: 3px;
-        }
-
-        .scrollable-cart::-webkit-scrollbar-thumb:hover {
-            background-color: var(--accent-color-2);
-        }
-
-        /* Smooth scroll behavior */
-        .scrollable-cart {
-            scroll-behavior: smooth;
-        }
-
-        /* Cart item animation on scroll */
-        .cart-item {
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideInCart 0.3s ease forwards;
-        }
-
-        @keyframes slideInCart {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-        
-        /* Prevent body scroll when a modal is open */
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        /* Apply dark theme when the .dark class is present */
-        .dark {
-            --bg-light: var(--bg-dark);
-            --text-light: var(--text-dark);
-            --card-bg-light: var(--card-bg-dark);
-            --border-light: var(--border-dark);
-            --subtle-text-light: var(--subtle-text-dark);
-            --bg-image-light: var(--bg-image-dark);
-            --accent-color-1: #a3e635; /* lime-400 */
-            --accent-color-2: #bef264; /* lime-300 */
-            --glass-bg-light: var(--glass-bg-dark);
-            
-            /* Transition timing variables */
-            --theme-transition-duration: 0.4s;
-            --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Helper classes to apply theme variables with smooth transitions */
-        .themed-bg { 
-            background-color: var(--bg-light); 
-            transition: background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        box-shadow var(--theme-transition-duration) var(--theme-transition-easing); 
-        }
-        html.dark .themed-bg {
-            background-color: var(--bg-dark-secondary);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-        }
-        
-        .themed-text { 
-            color: var(--text-light); 
-            transition: color var(--theme-transition-duration) var(--theme-transition-easing); 
-        }
-        html.dark .themed-text {
-            color: var(--text-dark);
-        }
-        
-        .themed-card-bg { 
-            background-color: var(--card-bg-light); 
-            transition: background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
-                        transform var(--theme-transition-duration) var(--theme-transition-easing); 
-        }
-        html.dark .themed-card-bg {
-            background-color: var(--card-bg-dark);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-        }
-        html.dark .themed-card-bg:hover {
-            background-color: var(--card-bg-dark-elevated);
-            transform: translateY(-2px);
-        }
-        
-        .themed-border { 
-            border-color: var(--border-light); 
-            transition: border-color var(--theme-transition-duration) var(--theme-transition-easing); 
-        }
-        html.dark .themed-border {
-            border-color: var(--border-dark);
-        }
-        
-        .themed-subtle-text { 
-            color: var(--subtle-text-light); 
-            transition: color var(--theme-transition-duration) var(--theme-transition-easing); 
-        }
-        html.dark .themed-subtle-text {
-            color: var(--subtle-text-dark);
-        }
-        
-        /* Smooth transitions for all interactive elements */
-        button, a, input, select, textarea {
-            transition: all 0.3s ease,
-                        background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        color var(--theme-transition-duration) var(--theme-transition-easing),
-                        border-color var(--theme-transition-duration) var(--theme-transition-easing);
-        }
-
-        /* Icon transitions */
-        i {
-            transition: color var(--theme-transition-duration) var(--theme-transition-easing),
-                        transform 0.3s ease;
-        }
-        
-        /* Hide scrollbar for category container */
-        .category-scroll::-webkit-scrollbar { display: none; }
-        .category-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Custom button styles */
-        .btn-primary {
-            background-image: linear-gradient(45deg, var(--accent-color-1), var(--accent-color-2), var(--accent-color-1));
-            background-size: 200% auto;
-            color: #1a2e05; /* Always dark text for readability on lime bg */
-            font-weight: 700;
-            transition: all 0.4s cubic-bezier(.25,.8,.25,1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .btn-primary:hover {
-            background-position: right center; /* change the direction of the change here */
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(132, 204, 22, 0.2), 0 4px 6px -4px rgba(132, 204, 22, 0.1);
-        }
-
-        /* Custom card styles with smooth transitions */
-        .product-card {
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-light);
-            transition: all 0.3s ease,
-                        border-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        box-shadow 0.3s ease;
-        }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
-        }
-        html.dark .product-card {
-            border-color: var(--border-dark);
-            background-color: var(--card-bg-dark);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-        }
-        html.dark .product-card:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* Enhanced glassmorphism effect for sticky/fixed elements */
-        .glass-effect {
-            background-color: var(--glass-bg-light);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            backdrop-filter: blur(16px) saturate(180%);
-            border-color: rgba(255, 255, 255, 0.5);
-            transition: background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        border-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
-                        box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
-        }
-        html.dark .glass-effect {
-            background-color: var(--glass-bg-dark);
-            border-color: rgba(71, 85, 105, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            backdrop-filter: blur(20px) saturate(180%);
-        }
-
-        /* Theme toggle button - subtle, no highlight effects */
-        #theme-toggle {
-            transition: opacity 0.2s ease;
-        }
-        #theme-toggle:hover {
-            opacity: 0.8;
-        }
-        #theme-toggle:focus {
-            outline: none;
-        }
-        
-        /* Active category button style with smooth transitions */
-        .category-btn {
-            transition: all 0.3s ease,
-                        background-color var(--theme-transition-duration) var(--theme-transition-easing),
-                        color var(--theme-transition-duration) var(--theme-transition-easing);
-        }
-        .category-btn.active {
-            background-color: var(--accent-color-1);
-            color: #1a2e05;
-            font-weight: 700;
-            box-shadow: 0 4px 14px 0 rgba(132, 204, 22, 0.2);
-        }
-        .category-btn {
-             border: 1px solid var(--border-light);
-        }
-        
-        /* Profile Tab styles */
-        .profile-tab {
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-        .profile-tab.active {
-            border-bottom-color: var(--accent-color-1);
-            color: var(--text-light);
-        }
-        .dark .profile-tab.active {
-            color: var(--text-dark);
-        }
-        
-        /* Logo styles for transparency and blend */
-        .logo-img {
-            mix-blend-mode: multiply;
-            opacity: 0.9;
-            transition: all 0.3s ease;
-        }
-        .logo-img:hover {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-        .dark .logo-img {
-            mix-blend-mode: screen;
-            opacity: 0.95;
-            filter: brightness(1.2);
-        }
-
-        /* ============================================ */
-        /* MOBILE RESPONSIVE ENHANCEMENTS */
-        /* ============================================ */
-        
-        /* Mobile: Small devices (phones, 640px and down) */
-        @media (max-width: 640px) {
-            body {
-                padding-bottom: 100px; /* Account for fixed cart */
-            }
-            
-            /* Mobile header */
-            header h1 {
-                font-size: 1.25rem !important;
-            }
-            
-            /* Mobile theme toggle */
-            #theme-toggle i {
-                font-size: 1.75rem !important;
-            }
-            
-            /* Product cards - mobile friendly */
-            .product-card {
-                padding: 0.75rem !important;
-            }
-            
-            html.dark .product-card {
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            }
-            
-            html.dark .product-card:hover {
-                box-shadow: 0 12px 18px -3px rgba(0, 0, 0, 0.45),
-                            0 4px 8px -2px rgba(190, 242, 100, 0.15);
-            }
-            
-            /* Mobile cart */
-            #cart-container {
-                max-height: 60vh !important;
-            }
-            
-            /* Mobile buttons */
-            .btn-primary {
-                padding: 0.75rem 1.25rem !important;
-                font-size: 0.9rem;
-            }
-            
-            html.dark .btn-primary {
-                box-shadow: 0 3px 10px rgba(132, 204, 22, 0.35),
-                            0 1px 4px rgba(163, 230, 53, 0.25);
-            }
-            
-            /* Mobile search bar */
-            #search-bar {
-                font-size: 16px !important; /* Prevents zoom on iOS */
-                padding: 0.625rem 1rem !important;
-            }
-            
-            /* Mobile glass effect - reduced blur for performance */
-            .glass-effect {
-                -webkit-backdrop-filter: blur(10px) saturate(150%);
-                backdrop-filter: blur(10px) saturate(150%);
-            }
-            
-            html.dark .glass-effect {
-                -webkit-backdrop-filter: blur(12px) saturate(150%);
-                backdrop-filter: blur(12px) saturate(150%);
-                box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.32);
-            }
-            
-            /* Mobile gradient animation - slower for battery */
-            html.dark body {
-                animation: gradientShift 20s ease infinite;
-            }
-            
-            /* Mobile category scroll */
-            .category-scroll {
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            /* Mobile modals */
-            .fixed.inset-0 > div {
-                max-width: 95% !important;
-                margin: 1rem !important;
-            }
-            
-            /* Input fields - prevent zoom */
-            input, textarea, select {
-                font-size: 16px !important;
-            }
-            
-            html.dark input:focus,
-            html.dark textarea:focus,
-            html.dark select:focus {
-                box-shadow: 0 0 0 2px rgba(190, 242, 100, 0.15),
-                            0 2px 8px rgba(190, 242, 100, 0.2);
-            }
-        }
-        
-        /* Mobile: Extra small devices (320px and down) */
-        @media (max-width: 380px) {
-            header h1 {
-                font-size: 1.1rem !important;
-            }
-            
-            .product-card {
-                padding: 0.625rem !important;
-            }
-            
-            .btn-primary {
-                padding: 0.625rem 1rem !important;
-                font-size: 0.85rem;
-            }
-            
-            /* Reduce effects on very small screens */
-            html.dark .glass-effect {
-                box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
-            }
-        }
-        
-        /* Tablet: Medium devices (641px to 1024px) */
-        @media (min-width: 641px) and (max-width: 1024px) {
-            .product-card {
-                padding: 1rem;
-            }
-            
-            html.dark .glass-effect {
-                -webkit-backdrop-filter: blur(16px) saturate(170%);
-                backdrop-filter: blur(16px) saturate(170%);
-            }
-            
-            html.dark .product-card:hover {
-                box-shadow: 0 16px 22px -4px rgba(0, 0, 0, 0.48),
-                            0 6px 12px -3px rgba(190, 242, 100, 0.18);
-            }
-        }
-        
-        /* Touch device optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            /* Remove hover effects on touch */
-            .product-card:hover {
-                transform: translateY(0) !important;
-            }
-            
-            .logo-img:hover {
-                transform: scale(1) !important;
-            }
-            
-            /* Enhance tap feedback */
-            .product-card:active {
-                opacity: 0.9;
-                transform: scale(0.98);
-            }
-            
-            button:active {
-                opacity: 0.85;
-            }
-            
-            /* Larger touch targets */
-            button {
-                min-height: 44px;
-            }
-        }
-        
-        /* Landscape mobile optimizations */
-        @media (max-width: 900px) and (orientation: landscape) {
-            body {
-                padding-bottom: 80px;
-            }
-            
-            header {
-                padding-top: 0.75rem !important;
-                padding-bottom: 0.75rem !important;
-            }
-            
-            #cart-container {
-                max-height: 50vh !important;
-            }
-        }
-        
-        /* High DPI screens */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            html.dark .glass-effect {
-                box-shadow: 0 8px 36px 0 rgba(0, 0, 0, 0.4);
-            }
-            
-            html.dark .product-card {
-                box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.35),
-                            0 2px 4px -2px rgba(0, 0, 0, 0.3);
-            }
-        }
-        
-        /* Reduce motion for accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-            
-            html.dark body {
-                animation: none;
-            }
-            
-            .product-card:hover,
-            .logo-img:hover {
-                transform: none;
-            }
-        }
-    </style>
-</head>
-<body class="themed-bg themed-text">
-
-    <!-- Main content container -->
-    <div class="w-full max-w-5xl mx-auto p-4 sm:p-6">
-        <!-- Header -->
-        <header class="sticky top-0 z-50 flex justify-between items-center mb-6 py-3 glass-effect -mx-4 sm:-mx-6 px-4 sm:px-6">
-            <a href="/" class="flex items-center gap-2 sm:gap-3 md:gap-4 cursor-pointer no-underline group">
-                <!-- Logo Image -->
-                <img src="./Grocery2.png" alt="Grocery Mart Logo" class="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.style.display='none'; console.error('Logo failed to load');">
-                <div class="flex flex-col justify-center">
-                    <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight themed-text transition-all duration-300 group-hover:text-[color:var(--accent-color-1)]">
-                        Grocery Mart
-                    </h1>
-                    <p class="hidden sm:block text-xs md:text-sm themed-subtle-text font-medium">Fresh groceries delivered fast</p>
-                </div>
-            </a>
-            <div class="flex items-center gap-3">
-                <!-- Authentication Container -->
-                <div id="auth-container" class="mr-4">
-                    <!-- Auth buttons will be inserted here -->
-                </div>
-                <button id="theme-toggle" class="p-2 rounded-lg transition-all" title="Toggle theme">
-                    <i id="sun-icon" class="ph ph-sun text-3xl text-[#84cc16]"></i>
-                    <i id="moon-icon" class="ph ph-moon text-3xl text-[#84cc16] hidden"></i>
-                </button>
-                <button id="profile-btn" class="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--bg-light)] focus:ring-[color:var(--accent-color-1)] transition-transform transform hover:scale-110">
-                    <img id="header-avatar" src="https://placehold.co/32x32/a3e635/1a2e05?text=G" alt="Profile" class="w-9 h-9 rounded-full border-2 themed-border">
-                </button>
-            </div>
-        </header>
-
-        <!-- Delivery Time & Search Banner -->
-        <div class="themed-card-bg border themed-border rounded-xl p-4 mb-8 shadow-sm">
-            <!-- Location Section -->
-            <div class="flex items-center gap-4 mb-4 pb-4 border-b themed-border">
-                <i class="ph-map-pin-fill text-3xl text-[color:var(--accent-color-1)]"></i>
-                <div class="flex-1">
-                    <p class="font-semibold text-sm">Deliver to</p>
-                    <div id="location-display" class="flex items-center gap-2">
-                        <span id="current-location" class="text-sm themed-subtle-text">Select delivery location</span>
-                        <button id="change-location-btn" onclick="showLocationModal()" class="text-xs text-[color:var(--accent-color-1)] font-medium hover:underline">
-                            Change
-                        </button>
-                        <button id="view-map-btn" onclick="openLocationMap()" class="hidden text-xs text-[color:var(--accent-color-1)] font-medium hover:underline" title="View on map">
-                            <i class="ph-map-trifold"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4 mb-4">
-                <i class="ph-timer text-4xl text-[color:var(--accent-color-1)]"></i>
-                <div class="flex-1">
-                    <p class="font-semibold text-lg">Delivery in 12 minutes</p>
-                    <p class="text-sm themed-subtle-text">From our store in New Town</p>
-                </div>
-                <button onclick="showAllWarehouses()" class="text-xs text-[color:var(--accent-color-1)] hover:underline font-medium flex items-center gap-1" title="View all stores">
-                    <i class="ph-storefront"></i>
-                    <span class="hidden sm:inline">Stores</span>
-                </button>
-            </div>
-            <div class="relative group">
-                <input 
-                    type="text" 
-                    id="search-bar" 
-                    list="product-search-suggestions"
-                    placeholder="Search for products..." 
-                    class="w-full pl-14 pr-4 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
-                           bg-white dark:bg-gray-700
-                           text-gray-900 dark:text-gray-100
-                           placeholder-gray-400 dark:placeholder-gray-400
-                           border-gray-200 dark:border-gray-600
-                           focus:border-[color:var(--accent-color-1)] 
-                           focus:ring-[color:var(--accent-color-1)]
-                           dark:focus:ring-lime-400
-                           hover:border-lime-400 dark:hover:border-lime-500">
-                <i class="ph-magnifying-glass-bold search-icon absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-lime-600 dark:text-lime-400 pointer-events-none"></i>
-            </div>
-            <datalist id="product-search-suggestions"></datalist>
-        </div>
-
-        <!-- Categories -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold mb-4">Categories</h2>
-            <div id="category-container" class="flex gap-3 overflow-x-auto pb-3 category-scroll">
-                <!-- Categories will be dynamically inserted here -->
-            </div>
-        </div>
-
-        <!-- Product Grid -->
-        <main>
-            <h2 class="text-2xl sm:text-3xl font-bold mb-6">All Products</h2>
-            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Products will be dynamically inserted here -->
-            </div>
-            <p id="no-results" class="text-center themed-subtle-text hidden col-span-full py-10">No products found.</p>
-        </main>
-    </div>
-
-    <!-- Sticky Cart Footer -->
-    <footer id="cart-footer" class="fixed bottom-0 left-0 right-0 glass-effect border-t p-4 transform translate-y-full transition-transform duration-300 z-40">
-        <div class="w-full max-w-5xl mx-auto flex justify-between items-center">
-            <div>
-                <p id="cart-summary" class="font-semibold text-lg">Your cart is empty</p>
-                <p id="cart-total" class="text-sm themed-subtle-text"></p>
-            </div>
-            <button id="view-cart-btn" class="btn-primary py-3 px-6 rounded-lg flex items-center gap-2">
-                View Cart <i class="ph-arrow-right"></i>
-            </button>
-        </div>
-    </footer>
-
-    <!-- Cart Modal -->
-    <div id="cart-modal" class="fixed inset-0 glass-effect z-50 p-4 flex-col hidden">
-        <div class="w-full max-w-2xl mx-auto flex-grow flex flex-col max-h-[90vh]">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center mb-6 flex-shrink-0">
-                <h2 class="text-3xl font-bold">Your Cart</h2>
-                <div>
-                    <button id="clear-cart-btn" class="themed-subtle-text hover:text-red-500 text-sm font-semibold mr-4 transition-colors">Clear Cart</button>
-                    <button id="close-cart-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                        <i class="ph-x text-2xl"></i>
-                    </button>
-                </div>
-            </div>
-            <!-- Cart Items - Scrollable Container -->
-            <div class="flex-grow overflow-hidden flex flex-col min-h-0">
-                <div id="cart-items-container" class="flex-grow overflow-y-auto space-y-4 pr-2 scrollable-cart">
-                    <!-- Cart items will be dynamically inserted here -->
-                </div>
-            </div>
-            <!-- Modal Footer - Fixed at bottom -->
-            <div class="mt-6 pt-4 border-t themed-border flex-shrink-0">
-                <div class="flex justify-between items-center font-bold text-xl mb-4">
-                    <span>Total</span>
-                    <span id="modal-total-price">₹0.00</span>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="continue-shopping-btn" class="w-full themed-card-bg border themed-border text-center font-bold py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Continue Shopping
-                    </button>
-                    <button id="checkout-btn" class="btn-primary w-full py-3 rounded-lg text-lg">
-                        Proceed to Checkout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 glass-effect z-50 p-4 flex-col hidden">
-        <div class="w-full max-w-md mx-auto flex-grow flex flex-col">
-             <!-- Modal Header -->
-            <div class="flex justify-between items-center mb-6">
-                <button id="close-profile-modal-btn" class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all" title="Back">
-                    <i id="profile-back-icon" class="ph ph-arrow-left text-3xl"></i>
-                </button>
-                <h2 class="text-2xl sm:text-3xl font-bold">My Account</h2>
-                <div class="w-12"></div> <!-- Spacer for alignment -->
-            </div>
-            <!-- Profile Content -->
-            <div class="themed-card-bg border themed-border rounded-xl shadow-lg flex-grow flex flex-col">
-                <div class="border-b themed-border flex">
-                    <button data-tab="profile-details" class="profile-tab active flex-1 py-3 font-semibold themed-subtle-text">My Profile</button>
-                    <button data-tab="order-history" class="profile-tab flex-1 py-3 font-semibold themed-subtle-text">Order History</button>
-                </div>
-                <div class="p-4 sm:p-6 overflow-y-auto">
-                    <!-- Profile Details Tab -->
-                    <div id="profile-details-tab">
-                        <div class="text-center mb-6">
-                            <img id="profile-avatar" src="https://placehold.co/128x128/a3e635/1a2e05?text=G" alt="User Avatar" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 border-4 border-[color:var(--accent-color-1)]">
-                            <h3 id="profile-name" class="text-xl sm:text-2xl font-bold">Guest User</h3>
-                            <p id="profile-email" class="themed-subtle-text text-sm sm:text-base">guest.user@email.com</p>
-                        </div>
-                        
-                        <div class="text-left bg-white dark:bg-slate-800 border themed-border p-4 rounded-lg mb-6">
-                            <p class="font-semibold mb-2 text-gray-900 dark:text-white">Delivery Address:</p>
-                            <p id="profile-address" class="text-gray-700 dark:text-gray-300 text-sm">123 Market Street<br>New Town, West Bengal<br>India</p>
-                        </div>
-                        
-                        <button id="edit-profile-btn" class="w-full text-center btn-primary font-bold py-3 rounded-lg">Edit Profile</button>
-                    </div>
-                    <!-- Order History Tab -->
-                    <div id="order-history-tab" class="hidden">
-                        <div id="order-history-container" class="space-y-4">
-                            <!-- Past orders will be dynamically inserted here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Profile Modal -->
-    <div id="edit-profile-modal" class="fixed inset-0 glass-effect z-50 p-4 flex-col hidden">
-        <div class="w-full max-w-md mx-auto">
-             <!-- Modal Header -->
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl sm:text-3xl font-bold">Edit Profile</h2>
-                <button id="close-edit-profile-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <i class="ph-arrow-left text-2xl"></i>
-                </button>
-            </div>
-            <!-- Edit Profile Form -->
-            <div class="themed-card-bg border themed-border rounded-xl p-4 sm:p-6 shadow-lg">
-                <form id="edit-profile-form" class="space-y-4">
-                    <div>
-                        <label for="edit-name" class="block text-sm font-medium themed-subtle-text">Name</label>
-                        <input type="text" id="edit-name" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label for="edit-email" class="block text-sm font-medium themed-subtle-text">Email</label>
-                        <input type="email" id="edit-email" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label for="edit-address" class="block text-sm font-medium themed-subtle-text">Address</label>
-                        <textarea id="edit-address" rows="3" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white"></textarea>
-                    </div>
-                    <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" id="cancel-edit-btn" class="themed-card-bg border themed-border font-bold py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Cancel</button>
-                        <button type="submit" class="btn-primary font-bold py-2 px-6 rounded-lg">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Checkout Confirmation Modal -->
-    <div id="checkout-success-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 p-4 items-center justify-center hidden">
-        <div class="themed-card-bg rounded-lg p-8 text-center max-w-sm mx-auto shadow-2xl">
-            <i class="ph-check-circle text-6xl text-[color:var(--accent-color-1)] mx-auto mb-4"></i>
-            <h2 class="text-2xl font-bold mb-2">Order Placed!</h2>
-            <p class="themed-subtle-text mb-6">Your groceries are on their way and will arrive in about 12 minutes.</p>
-            <button id="close-success-btn" class="btn-primary font-bold py-2 px-8 rounded-lg">Great!</button>
-        </div>
-    </div>
-
-<script>
 
 const API_BASE_URL = '/api';
 
@@ -1065,9 +217,9 @@ document.addEventListener('DOMContentLoaded', async() => {
     
     let products = [
         // Fruits
-        { id: 1, name: 'Fresh Apples', image: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg', category: 'Fruits', variants: [{unit: '500 g', price: 75}, {unit: '1 kg', price: 150}] },
-        { id: 2, name: 'Bananas', image: 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Banana-Single.jpg', category: 'Fruits', variants: [{unit: '6 pcs', price: 30}, {unit: '1 dozen', price: 50}] },
-        { id: 13, name: 'Mangoes', image: 'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/da/cms-assets/cms/product/cf5d2c0d-c3f7-4b34-938b-4ce11b9d7cb7.png', category: 'Fruits', variants: [{unit: '500 g', price: 200}, {unit: '1 kg', price: 380}] },
+        { id: 1, name: 'Fresh Apples', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1024,pr-true,f-auto,q-80/cms/product_variant/8758d987-e101-46d3-9c9b-f2babc5d6389.jpeg', category: 'Fruits', variants: [{unit: '500 g', price: 75}, {unit: '1 kg', price: 150}] },
+        { id: 2, name: 'Ripe Bananas', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/2ce10ffc-348b-4f20-a0c4-6f004c162c90.jpeg', category: 'Fruits', variants: [{unit: '6 pcs', price: 30}, {unit: '1 dozen', price: 50}] },
+        { id: 13, name: 'Mangoes', image: 'https://www.bbassets.com/media/uploads/p/m/10000343_9-fresho-mango-neelam.jpg?tr=w-154,q-80', category: 'Fruits', variants: [{unit: '500 g', price: 200}, {unit: '1 kg', price: 380}] },
         { id: 14, name: 'Pineapple', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1536,pr-true,f-auto,q-80/cms/product_variant/088cb923-8d1a-431f-98ea-2f01259b3545.png', category: 'Fruits', variants: [{unit: '1 piece', price: 45}, {unit: '1 kg', price: 35}] },
         { id: 15, name: 'Papaya', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/14beced9-a7d1-4a3f-b9bb-ab0a150876f6.jpeg', category: 'Fruits', variants: [{unit: '500 g', price: 30}, {unit: '1 kg', price: 55}] },
         { id: 16, name: 'Coconut', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/fe8840b1-211d-4fca-9420-23703e653c7e.jpeg', category: 'Fruits', variants: [{unit: '2 pc', price: 100}, {unit: '3 pieces', price: 120}] },
@@ -1213,34 +365,28 @@ document.addEventListener('DOMContentLoaded', async() => {
     ];
     //Function to fetch products from the backend 
     const fetchProducts = async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             try {
-                const response = await fetch(`${API_BASE_URL}/products`, { cache: 'no-store' });
-                if (response.ok) {
-                    const apiProducts = await response.json();
+                const response = await fetch(`${API_BASE_URL}/products`, { signal: controller.signal });
+                if (!response.ok) {
+                    throw new Error(`Products API failed: ${response.status}`);
+                }
 
-                    if (Array.isArray(apiProducts) && apiProducts.length > 0) {
-                        const localProductsById = new Map(products.map(product => [product.id, product]));
-                        const mergedProductsById = new Map(products.map(product => [product.id, product]));
-
-                        apiProducts.forEach(product => {
-                            if (product && typeof product.id !== 'undefined' && Array.isArray(product.variants) && product.variants.length > 0) {
-                                const localProduct = localProductsById.get(product.id);
-                                mergedProductsById.set(product.id, {
-                                    ...product,
-                                    image: localProduct?.image || product.image
-                                });
-                            }
-                        });
-
-                        products = Array.from(mergedProductsById.values());
-                    }
-
-                    refreshCategories();
-                    populateSearchSuggestionList();
-                    renderProducts(products);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    products = data;
+                } else {
+                    console.warn('Products API returned empty/invalid data, using local fallback list.');
                 }
             } catch (error) {
-                console.error('Error fetching products:', error);
+                console.error('Error fetching products, using local fallback list:', error);
+            } finally {
+                clearTimeout(timeoutId);
+                refreshCategories();
+                populateSearchSuggestionList();
+                renderCategories();
+                renderProducts(products);
             }
         };
     let categories = ['All', ...new Set(products.map(p => p.category))];
@@ -1253,13 +399,19 @@ document.addEventListener('DOMContentLoaded', async() => {
     localStorage.removeItem('userLocation');
     
     // Initialize nearest warehouse
-    findNearestWarehouse();
+    try {
+        findNearestWarehouse();
+    } catch (error) {
+        console.error('Warehouse initialization failed:', error);
+    }
 
     // --- DOM ELEMENTS ---
     const productGrid = document.getElementById('product-grid');
     const categoryContainer = document.getElementById('category-container');
     const searchBar = document.getElementById('search-bar');
     const searchSuggestionList = document.getElementById('product-search-suggestions');
+    const voiceSearchBtn = document.getElementById('voice-search-btn');
+    const voiceSearchStatus = document.getElementById('voice-search-status');
     const noResults = document.getElementById('no-results');
     const cartFooter = document.getElementById('cart-footer');
     const cartSummary = document.getElementById('cart-summary');
@@ -1431,6 +583,101 @@ document.addEventListener('DOMContentLoaded', async() => {
             const option = document.createElement('option');
             option.value = product.name;
             searchSuggestionList.appendChild(option);
+        });
+    };
+
+    const setupVoiceSearch = () => {
+        if (!voiceSearchBtn || !searchBar) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const setVoiceStatus = (message) => {
+            if (voiceSearchStatus) {
+                voiceSearchStatus.textContent = message;
+            }
+        };
+
+        const setVoiceButtonState = (isListening) => {
+            voiceSearchBtn.setAttribute('aria-pressed', String(isListening));
+            voiceSearchBtn.title = isListening ? 'Stop voice search' : 'Voice search';
+        };
+
+        if (!SpeechRecognition) {
+            voiceSearchBtn.disabled = true;
+            voiceSearchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            voiceSearchBtn.setAttribute('aria-label', 'Voice search is not supported in this browser');
+            voiceSearchBtn.title = 'Voice search not supported';
+            setVoiceStatus('Voice search is not supported in this browser.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let isListening = false;
+        let finalTranscript = '';
+
+        recognition.onstart = () => {
+            isListening = true;
+            finalTranscript = '';
+            setVoiceButtonState(true);
+            setVoiceStatus('Listening. Speak your product search.');
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            const transcriptValue = (finalTranscript || interimTranscript).trim();
+            if (transcriptValue) {
+                searchBar.value = transcriptValue;
+                searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        };
+
+        recognition.onerror = (event) => {
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                setVoiceStatus('Microphone permission denied. Please allow microphone access.');
+            } else if (event.error === 'no-speech') {
+                setVoiceStatus('No speech detected. Try again.');
+            } else {
+                setVoiceStatus('Voice search failed. Please try again.');
+            }
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            setVoiceButtonState(false);
+            if (searchBar.value.trim()) {
+                setVoiceStatus(`Searching for ${searchBar.value}.`);
+            } else {
+                setVoiceStatus('Voice search stopped.');
+            }
+        };
+
+        voiceSearchBtn.addEventListener('click', () => {
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+
+            try {
+                searchBar.focus();
+                recognition.start();
+            } catch (error) {
+                console.error('Unable to start voice recognition:', error);
+                setVoiceStatus('Could not start voice search. Please try again.');
+            }
         });
     };
     
@@ -1951,14 +1198,14 @@ document.addEventListener('DOMContentLoaded', async() => {
         // Get all product names
         const productNames = products.map(p => p.name);
         if (productNames.length === 0) {
-            searchBar.placeholder = 'Search for products...';
+            searchBar.placeholder = 'Search products';
             return;
         }
         
         // Function to update placeholder
         const updatePlaceholder = () => {
             if (searchBar.value === '') { // Only update if search is empty
-                searchBar.placeholder = `Search for \"${productNames[suggestionIndex]}\"...`;
+                searchBar.placeholder = `Search for \"${productNames[suggestionIndex]}\"`;
                 suggestionIndex = (suggestionIndex + 1) % productNames.length;
             }
         };
@@ -1974,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     searchBar.addEventListener('focus', () => {
         clearInterval(suggestionInterval);
         if (searchBar.value === '') {
-            searchBar.placeholder = 'Search for products...';
+            searchBar.placeholder = 'Search for products';
         }
     });
     
@@ -1995,7 +1242,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     });
     
     // --- INITIAL RENDER ---
-    await fetchProducts();
     loadDataFromStorage();
     refreshCategories();
     populateSearchSuggestionList();
@@ -2003,9 +1249,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     renderProducts();
     updateCartView();
     renderProfile();
-    
-    // Start auto-suggestion after products are loaded
+    setupVoiceSearch();
     startAutoSuggestion();
+
+    // Refresh from API without blocking the initial UI render
+    fetchProducts().then(() => {
+        startAutoSuggestion();
+    });
 });
 
 // Location Functions
@@ -2963,118 +2213,4 @@ function validateLocationForOrder() {
     }
     return true;
 }
-</script>
 
-<!-- Location Modal -->
-<div id="location-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-    <div class="themed-card-bg border themed-border rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 themed-card-bg border-b themed-border p-4 flex justify-between items-center">
-            <h2 class="text-xl font-bold flex items-center gap-2">
-                <i class="ph-map-pin-fill text-[color:var(--accent-color-1)]"></i>
-                Set Delivery Location
-            </h2>
-            <button onclick="closeLocationModal()" class="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full">
-                <i class="ph-x text-xl"></i>
-            </button>
-        </div>
-        
-        <div class="p-4 space-y-6">
-            <!-- Current Location Info (if available) -->
-            <div id="current-location-info" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                    <i class="ph-map-pin-fill text-blue-600 dark:text-blue-400 text-xl"></i>
-                    <div class="flex-1 text-sm">
-                        <p class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Current Location</p>
-                        <p id="current-loc-address" class="text-blue-700 dark:text-blue-300"></p>
-                        <p id="current-loc-coords" class="text-xs text-blue-600 dark:text-blue-400 mt-1"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Buttons -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="getCurrentLocation()" class="bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
-                    <i class="ph-crosshairs text-xl"></i>
-                    <span class="text-sm">Quick Detect</span>
-                </button>
-                
-                <button onclick="getPreciseLocation()" class="bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
-                    <i class="ph-crosshairs-simple text-xl"></i>
-                    <span class="text-sm">Precise GPS</span>
-                </button>
-            </div>
-            
-            <p class="text-xs text-center themed-subtle-text">
-                <i class="ph-lock-simple"></i> Your location is secure and used only for delivery
-            </p>
-            <p class="text-xs text-center text-blue-600 dark:text-blue-400">
-                💡 Use "Precise GPS" for exact coordinates via OpenStreetMap
-            </p>
-            
-            <!-- Divider -->
-            <div class="text-center themed-subtle-text relative">
-                <span class="bg-[color:var(--card-bg-light)] dark:bg-[color:var(--card-bg-dark)] px-3">OR</span>
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t themed-border"></div>
-                </div>
-            </div>
-            
-            <!-- Manual Address Entry -->
-            <div class="space-y-4">
-                <h3 class="font-semibold">Enter Address Manually</h3>
-                <input 
-                    type="text" 
-                    id="address-input" 
-                    placeholder="House No, Street, Area" 
-                    class="w-full p-3 border themed-border rounded-lg focus:ring-2 focus:ring-[color:var(--accent-color-1)] focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                >
-                <select 
-                    id="city-select" 
-                    class="w-full p-3 border themed-border rounded-lg focus:ring-2 focus:ring-[color:var(--accent-color-1)] focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                >
-                    <option value="">Select City</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Ahmedabad">Ahmedabad</option>
-                </select>
-                <input 
-                    type="text" 
-                    id="pincode-input" 
-                    placeholder="Pincode" 
-                    maxlength="6" 
-                    class="w-full p-3 border themed-border rounded-lg focus:ring-2 focus:ring-[color:var(--accent-color-1)] focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                >
-                <button onclick="setManualLocation()" class="w-full bg-[color:var(--accent-color-1)] text-white font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-colors">
-                    Set Location
-                </button>
-            </div>
-            
-            <!-- Quick Locations -->
-            <div class="space-y-4">
-                <h3 class="font-semibold">Popular Areas</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="setQuickLocation('Connaught Place, Delhi', '110001')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Connaught Place
-                    </button>
-                    <button onclick="setQuickLocation('Bandra West, Mumbai', '400050')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Bandra West
-                    </button>
-                    <button onclick="setQuickLocation('Koramangala, Bangalore', '560034')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Koramangala
-                    </button>
-                    <button onclick="setQuickLocation('Hitech City, Hyderabad', '500081')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Hitech City
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-</body>
-</html>
