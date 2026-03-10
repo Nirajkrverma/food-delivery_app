@@ -618,12 +618,17 @@
                 return;
             }
 
+            let cardNumber = '';
+            let cardName = '';
+            let cardExpiry = '';
+            let cardCVV = '';
+
             // Validate payment details based on method
             if (currentPaymentMethod === 'card') {
-                const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-                const cardName = document.getElementById('cardName').value;
-                const cardExpiry = document.getElementById('cardExpiry').value;
-                const cardCVV = document.getElementById('cardCVV').value;
+                cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                cardName = document.getElementById('cardName').value;
+                cardExpiry = document.getElementById('cardExpiry').value;
+                cardCVV = document.getElementById('cardCVV').value;
 
                 if (!cardNumber || cardNumber.length < 16) {
                     alert('Please enter a valid card number');

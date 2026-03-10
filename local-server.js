@@ -19,6 +19,64 @@ const pool = new Pool({
     }
 });
 
+const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/200x200/e0e0e0/333?text=No+Image';
+
+const normalizeProductName = (name = '') => String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+
+const isValidImageUrl = (image) => {
+  if (typeof image !== 'string') return false;
+  const normalized = image.trim().toLowerCase();
+  return normalized.length > 0 && normalized !== 'null' && normalized !== 'undefined';
+};
+
+const normalizeProducts = (items = []) => {
+  const productsByName = new Map();
+
+  items.forEach((item) => {
+    if (!item || !item.name || !Array.isArray(item.variants) || item.variants.length === 0) {
+      return;
+    }
+
+    const key = normalizeProductName(item.name);
+    if (!key) return;
+
+    const existing = productsByName.get(key);
+    const candidateHasImage = isValidImageUrl(item.image);
+    const existingHasImage = existing ? isValidImageUrl(existing.image) : false;
+
+    const candidate = {
+      ...item,
+      image: candidateHasImage ? item.image : (existingHasImage ? existing.image : DEFAULT_PRODUCT_IMAGE)
+    };
+
+    if (!existing) {
+      productsByName.set(key, candidate);
+      return;
+    }
+
+    const shouldReplace =
+      (!existingHasImage && candidateHasImage) ||
+      ((item.variants?.length || 0) > (existing.variants?.length || 0));
+
+    if (shouldReplace) {
+      productsByName.set(key, {
+        ...candidate,
+        image: candidateHasImage ? item.image : existing.image
+      });
+      return;
+    }
+
+    if (!existingHasImage) {
+      productsByName.set(key, {
+        ...existing,
+        image: candidateHasImage ? item.image : DEFAULT_PRODUCT_IMAGE
+      });
+    }
+  });
+
+  return Array.from(productsByName.values());
+};
+
 // Test database connection on startup
 pool.connect((err, client, release) => {
     if (err) {
@@ -38,6 +96,11 @@ app.use(express.json());
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Friendly page route aliases
+app.get('/payment', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'payment.html'));
+});
 
 // Simple mock API endpoints
 app.get('/api/health', (req, res) => {
@@ -64,7 +127,7 @@ app.get('/api/products', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM products ORDER BY id');
     if (result.rows.length > 0) {
-      return res.json(result.rows);
+      return res.json(normalizeProducts(result.rows));
     }
   } catch (error) {
     console.error('Database error, falling back to sample products:', error.message);
@@ -79,7 +142,7 @@ app.get('/api/products', async (req, res) => {
     { id: 6, name: 'Eggs', image: 'https://cdn.zeptonow.com/production/tr:w-1280,ar-1200-1200,pr-true,f-auto,q-80/cms/product_variant/35241f67-e64e-4f15-8c9e-175186993049.jpeg', category: 'Dairy', variants: [{unit: '6 pack', price: 40}, {unit: '12 pack', price: 70}] }
   ];
 
-  res.json(fallbackProducts);
+  res.json(normalizeProducts(fallbackProducts));
 });
 
 // Mock orders storage

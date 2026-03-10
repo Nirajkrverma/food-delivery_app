@@ -652,9 +652,6 @@
                         <button id="change-location-btn" onclick="showLocationModal()" class="text-xs text-[color:var(--accent-color-1)] font-medium hover:underline">
                             Change
                         </button>
-                        <button id="view-map-btn" onclick="openLocationMap()" class="hidden text-xs text-[color:var(--accent-color-1)] font-medium hover:underline" title="View on map">
-                            <i class="ph-map-trifold"></i>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1065,8 +1062,8 @@ document.addEventListener('DOMContentLoaded', async() => {
     
     let products = [
         // Fruits
-        { id: 1, name: 'Fresh Apples', image: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg', category: 'Fruits', variants: [{unit: '500 g', price: 75}, {unit: '1 kg', price: 150}] },
-        { id: 2, name: 'Bananas', image: 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Banana-Single.jpg', category: 'Fruits', variants: [{unit: '6 pcs', price: 30}, {unit: '1 dozen', price: 50}] },
+        { id: 1, name: 'Fresh Apples', image: 'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/da/cms-assets/cms/product/8304edd4-bfcb-44f4-87de-c8faa6aeb3fa.png', category: 'Fruits', variants: [{unit: '500 g', price: 75}, {unit: '1 kg', price: 150}] },
+        { id: 2, name: 'Bananas', image: 'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/da/cms-assets/cms/product/b89fe4bd-2018-4502-a80e-d8dc274955b8.png', category: 'Fruits', variants: [{unit: '6 pcs', price: 30}, {unit: '1 dozen', price: 50}] },
         { id: 13, name: 'Mangoes', image: 'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/da/cms-assets/cms/product/cf5d2c0d-c3f7-4b34-938b-4ce11b9d7cb7.png', category: 'Fruits', variants: [{unit: '500 g', price: 200}, {unit: '1 kg', price: 380}] },
         { id: 14, name: 'Pineapple', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1536,pr-true,f-auto,q-80/cms/product_variant/088cb923-8d1a-431f-98ea-2f01259b3545.png', category: 'Fruits', variants: [{unit: '1 piece', price: 45}, {unit: '1 kg', price: 35}] },
         { id: 15, name: 'Papaya', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/14beced9-a7d1-4a3f-b9bb-ab0a150876f6.jpeg', category: 'Fruits', variants: [{unit: '500 g', price: 30}, {unit: '1 kg', price: 55}] },
@@ -1079,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         { id: 22, name: 'Green grapes', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/3f86ac58-4a55-4b7e-9775-25afa7e74734.jpeg', category: 'Fruits', variants: [{unit: '250 g', price: 53}, {unit: '500 g', price: 100}] },
         { id: 23, name: 'Mousami', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/411b71aa-da3c-48f8-823e-f0f39dcbf3e8.jpeg', category: 'Fruits', variants: [{unit: '4 pcs', price: 36}, {unit: '6 pcs', price: 70}] },
 
-
+        
         // Vegetables
         { id: 24, name: 'Tomatoes', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1024,pr-true,f-auto,q-80/cms/product_variant/04a3037a-04a3-47f3-9db4-23ae268177aa.jpeg', category: 'Vegetables', variants: [{unit: '250 g', price: 24}, {unit: '500 g', price: 42}] },
         { id: 25, name: 'Onion (Pyaz)', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/49dcc487-39ac-45a3-8ed6-654ff0afa825.jpeg', category: 'Vegetables', variants: [{unit: '500 g', price: 15}, {unit: '1 kg', price: 31}] },
@@ -1110,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         { id: 50, name: 'Spinach (Palak)', image: 'https://cdn.zeptonow.com/production/tr:w-1280,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/aaedc2c9-8e42-44cd-b835-c43d1b3913ec.jpeg', category: 'Vegetables', variants: [{unit: '250 g', price: 25}, {unit: '500 g', price: 50}] },
 
         // Dairy
-        { id: 51, name: 'Organic Milk', image: 'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400', category: 'Dairy', variants: [{unit: '500 ml', price: 25}, {unit: '1 litre', price: 48}] },
+        { id: 51, name: 'Amul Milk', image: 'https://cdn.zeptonow.com/production/ik-seo/tr:w-403,ar-1200-1200,pr-true,f-auto,,q-40,dpr-2/cms/product_variant/2e8a0f88-1038-4fd3-8093-7085a49b473c/Amul-Taaza-Toned-Fresh-Milk-Pouch.jpeg', category: 'Dairy', variants: [{unit: '500 ml', price: 25}, {unit: '1 litre', price: 48}] },
         { id: 52, name: 'Eggs', image: 'https://cdn.zeptonow.com/production/tr:w-1280,ar-1200-1200,pr-true,f-auto,q-80/cms/product_variant/35241f67-e64e-4f15-8c9e-175186993049.jpeg', category: 'Dairy', variants: [{unit: '6 pack', price: 40}, {unit: '12 pack', price: 70}] },
         { id: 53, name: 'Cheddar Cheese', image: 'https://cdn.zeptonow.com/production/tr:w-1280,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/19b40e18-47b0-40bb-806c-f8e9319f6f16.jpeg', category: 'Dairy', variants: [{unit: '100 g', price: 110}, {unit: '200 g', price: 200}] },
         { id: 54, name: 'Misti Doi', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1200-1200,pr-true,f-auto,q-80/cms/product_variant/f05477e8-2eb0-42d7-bcf8-b724e69e57c6.jpg', category: 'Dairy', variants: [{unit: '80 g', price: 15}, {unit: '400 g', price: 70}] },
@@ -1211,6 +1208,64 @@ document.addEventListener('DOMContentLoaded', async() => {
         { id: 319, name: 'Limca', image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_544,w_504/iegvddhilgghljtwyoug', category: 'Beverages', variants: [{unit: '750 ml', price: 40}, {unit: '1.5 litre', price: 70}] },
     
     ];
+    const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/200x200/e0e0e0/333?text=No+Image';
+    const normalizeProductName = (name = '') => String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+    const isUsableImage = (image) => {
+        if (typeof image !== 'string') return false;
+        const normalized = image.trim().toLowerCase();
+        return normalized.length > 0 && normalized !== 'null' && normalized !== 'undefined';
+    };
+    const safeProductImage = (image) => isUsableImage(image) ? image : DEFAULT_PRODUCT_IMAGE;
+    const dedupeProductsByName = (items = []) => {
+        const productsByName = new Map();
+
+        items.forEach((product) => {
+            if (!product || !product.name || !Array.isArray(product.variants) || product.variants.length === 0) {
+                return;
+            }
+
+            const key = normalizeProductName(product.name);
+            if (!key) return;
+
+            const existing = productsByName.get(key);
+            const candidateHasImage = isUsableImage(product.image);
+            const existingHasImage = existing ? isUsableImage(existing.image) : false;
+
+            const normalizedProduct = {
+                ...product,
+                image: candidateHasImage ? product.image : (existingHasImage ? existing.image : DEFAULT_PRODUCT_IMAGE)
+            };
+
+            if (!existing) {
+                productsByName.set(key, normalizedProduct);
+                return;
+            }
+
+            const shouldReplace =
+                (!existingHasImage && candidateHasImage) ||
+                ((product.variants?.length || 0) > (existing.variants?.length || 0));
+
+            if (shouldReplace) {
+                productsByName.set(key, {
+                    ...normalizedProduct,
+                    image: candidateHasImage ? product.image : existing.image
+                });
+                return;
+            }
+
+            if (!existingHasImage) {
+                productsByName.set(key, {
+                    ...existing,
+                    image: candidateHasImage ? product.image : DEFAULT_PRODUCT_IMAGE
+                });
+            }
+        });
+
+        return Array.from(productsByName.values());
+    };
+
+    products = dedupeProductsByName(products);
+
     //Function to fetch products from the backend 
     const fetchProducts = async () => {
             try {
@@ -1219,20 +1274,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                     const apiProducts = await response.json();
 
                     if (Array.isArray(apiProducts) && apiProducts.length > 0) {
-                        const localProductsById = new Map(products.map(product => [product.id, product]));
-                        const mergedProductsById = new Map(products.map(product => [product.id, product]));
-
-                        apiProducts.forEach(product => {
-                            if (product && typeof product.id !== 'undefined' && Array.isArray(product.variants) && product.variants.length > 0) {
-                                const localProduct = localProductsById.get(product.id);
-                                mergedProductsById.set(product.id, {
-                                    ...product,
-                                    image: localProduct?.image || product.image
-                                });
-                            }
-                        });
-
-                        products = Array.from(mergedProductsById.values());
+                        products = dedupeProductsByName([...products, ...apiProducts]);
                     }
 
                     refreshCategories();
@@ -1249,8 +1291,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         categories = ['All', ...new Set(products.map(p => p.category))];
     };
 
-    // Clear any previously saved location - user must enter address each time
-    localStorage.removeItem('userLocation');
+    loadLocationFromStorage();
     
     // Initialize nearest warehouse
     findNearestWarehouse();
@@ -1358,17 +1399,20 @@ document.addEventListener('DOMContentLoaded', async() => {
             productCard.className = 'product-card themed-card-bg rounded-xl p-4 flex flex-col text-center';
             productCard.dataset.productId = product.id;
 
-            const variantsOptions = product.variants.map((v, index) => `<option value="${index}">${v.unit}</option>`).join('');
+            const safeVariants = Array.isArray(product.variants) && product.variants.length > 0
+                ? product.variants
+                : [{ unit: '1 pc', price: 0 }];
+            const variantsOptions = safeVariants.map((v, index) => `<option value="${index}">${v.unit}</option>`).join('');
             
             productCard.innerHTML = `
-                <img src="${product.image}" alt="${product.name}" class="w-full h-32 object-contain rounded-md mb-2" onerror="this.onerror=null;this.src='https://placehold.co/200x200/e0e0e0/333?text=Image+Error';">
+                <img src="${safeProductImage(product.image)}" alt="${product.name}" class="w-full h-32 object-contain rounded-md mb-2" onerror="this.onerror=null;this.src='${DEFAULT_PRODUCT_IMAGE}';">
                 <h3 class="font-semibold flex-grow text-sm sm:text-base">${product.name}</h3>
                 <div class="my-3">
                     <select class="variant-select w-full themed-bg border themed-border rounded-md p-1 text-sm focus:ring-1 focus:ring-[color:var(--accent-color-1)] focus:outline-none">
                         ${variantsOptions}
                     </select>
                 </div>
-                <p class="font-bold text-lg mb-3 price-display">₹${product.variants[0].price.toFixed(2)}</p>
+                <p class="font-bold text-lg mb-3 price-display">₹${safeVariants[0].price.toFixed(2)}</p>
                 <div class="quantity-control mt-auto">
                      <button class="add-btn btn-primary font-semibold py-2 px-4 rounded-lg w-full" data-id="${product.id}">Add</button>
                 </div>
@@ -1513,7 +1557,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             } else {
                 // For normal products, use the existing logic
                 itemElement.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}" class="w-16 h-16 rounded-md object-contain flex-shrink-0">
+                    <img src="${safeProductImage(product.image)}" alt="${product.name}" class="w-16 h-16 rounded-md object-contain flex-shrink-0" onerror="this.onerror=null;this.src='${DEFAULT_PRODUCT_IMAGE}';">
                     <div class="flex-grow min-w-0">
                         <p class="font-semibold truncate">${product.name}</p>
                         <p class="text-sm themed-subtle-text">${cartItem.unit} - ₹${cartItem.price.toFixed(2)}</p>
@@ -2283,17 +2327,19 @@ function closeLocationModal() {
     document.getElementById('location-modal').style.display = 'none';
 }
 
-function getCurrentLocation() {
+function getCurrentLocation(buttonElement) {
     if (!navigator.geolocation) {
         showNotification('Geolocation is not supported by your browser', 'error');
         return;
     }
 
     // Show loading state
-    const btn = event.target.closest('button');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="ph-spinner animate-spin text-xl"></i> Getting location...';
-    btn.disabled = true;
+    const btn = buttonElement || null;
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<i class="ph-spinner animate-spin text-xl"></i> Getting location...';
+        btn.disabled = true;
+    }
 
     // Quick location (lower accuracy, faster)
     const options = {
@@ -2327,6 +2373,7 @@ function getCurrentLocation() {
                     };
                     
                     updateLocationDisplay();
+                    saveLocationToStorage();
                     closeLocationModal();
                     showNotification(`Location set successfully!`, 'success');
                 } else {
@@ -2342,16 +2389,21 @@ function getCurrentLocation() {
                     coordinates: { lat: lat.toFixed(6), lng: lng.toFixed(6), accuracy: Math.round(accuracy) }
                 };
                 updateLocationDisplay();
+                saveLocationToStorage();
                 showNotification('Location detected. Please add address manually.', 'warning');
                 closeLocationModal();
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
         },
         (error) => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
             
             let errorMessage = 'Location access denied. Please enable location access.';
             showNotification(errorMessage, 'error');
@@ -2508,6 +2560,27 @@ async function getAddressFromCoordinates(lat, lng, accuracy = 0) {
 }
 
 // Get precise location with detailed address from OpenStreetMap
+async function getAddressFromCoordinatesWithRetry(lat, lng, accuracy = 0, maxRetries = 2) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const result = await getAddressFromCoordinates(lat, lng, accuracy);
+            if (result) {
+                return result;
+            }
+        } catch (error) {
+            console.warn(`Reverse geocode attempt ${attempt + 1} failed:`, error);
+        }
+
+        if (attempt < maxRetries) {
+            const delayMs = 800 * (attempt + 1);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+
+    return null;
+}
+
+// Get precise location with detailed address from OpenStreetMap
 async function getPreciseLocation() {
     if (!navigator.geolocation) {
         showNotification('Geolocation is not supported by your browser', 'error');
@@ -2533,9 +2606,6 @@ async function getPreciseLocation() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             const accuracy = position.coords.accuracy;
-            const altitude = position.coords.altitude;
-            const heading = position.coords.heading;
-            const speed = position.coords.speed;
             
             try {
                 // Use retry logic for better reliability
@@ -2555,10 +2625,14 @@ async function getPreciseLocation() {
                             }
                         );
                         const osmData = await detailedResponse.json();
-                        showPreciseLocationDetails(osmData, lat, lng, accuracy, altitude, heading, speed);
+                        const osmAddr = osmData.address || {};
+                        const resolvedAddress = osmData.display_name || data.formattedAddress || `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        const resolvedCity = osmAddr.city || osmAddr.town || osmAddr.municipality || osmAddr.locality || data.city || '';
+                        const resolvedPincode = osmAddr.postcode || osmAddr.pincode || data.pincode || '';
+                        useThisPreciseLocation(resolvedAddress, resolvedCity, resolvedPincode, lat, lng, accuracy);
                     } catch (error) {
                         // If detailed fetch fails, show basic data
-                        showPreciseLocationDetails({address: data}, lat, lng, accuracy, altitude, heading, speed);
+                        useThisPreciseLocation(data.formattedAddress || `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, data.city || '', data.pincode || '', lat, lng, accuracy);
                     }
                 } else {
                     throw new Error('Unable to fetch address details');
@@ -2594,161 +2668,6 @@ async function getPreciseLocation() {
     );
 }
 
-// Show precise location details in a modal
-function showPreciseLocationDetails(osmData, lat, lng, accuracy, altitude, heading, speed) {
-    const addr = osmData.address;
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 overflow-y-auto';
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.remove();
-    };
-    
-    // Build detailed address
-    const houseNumber = addr.house_number || '';
-    const road = addr.road || addr.street || '';
-    const neighbourhood = addr.neighbourhood || addr.suburb || '';
-    const locality = addr.locality || addr.village || '';
-    const city = addr.city || addr.town || addr.municipality || '';
-    const district = addr.state_district || '';
-    const state = addr.state || '';
-    const postcode = addr.postcode || '';
-    const country = addr.country || '';
-    
-    const fullAddress = [
-        houseNumber && road ? `${houseNumber}, ${road}` : road,
-        neighbourhood,
-        locality,
-        city,
-        district && district !== city ? district : '',
-        state,
-        postcode,
-        country
-    ].filter(Boolean).join(', ');
-    
-    // Additional location info
-    const placeType = osmData.type || 'Unknown';
-    const osmId = osmData.osm_id || 'N/A';
-    const displayName = osmData.display_name || fullAddress;
-    
-    modal.innerHTML = `
-        <div class="themed-card-bg border themed-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 themed-card-bg border-b themed-border p-4 flex justify-between items-center">
-                <h3 class="text-xl font-bold flex items-center gap-2">
-                    <i class="ph-map-pin-line text-[color:var(--accent-color-1)]"></i>
-                    Precise Location Details
-                </h3>
-                <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full">
-                    <i class="ph-x text-xl"></i>
-                </button>
-            </div>
-            
-            <div class="p-6 space-y-6">
-                <!-- Location verification notice -->
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-                    <div class="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
-                        <i class="ph-check-circle-fill text-2xl"></i>
-                        <p class="font-semibold">Location Detected Successfully</p>
-                    </div>
-                    <p class="text-sm text-green-600 dark:text-green-400 mt-1">Your precise location has been identified</p>
-                </div>
-                
-                <!-- Address Details -->
-                <div class="space-y-3">
-                    <h4 class="font-bold flex items-center gap-2">
-                        <i class="ph-map-pin"></i>
-                        Address Details
-                    </h4>
-                    
-                    ${road ? `
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-road-horizon text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">Street</p>
-                            <p class="themed-subtle-text">${houseNumber ? houseNumber + ', ' : ''}${road}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${neighbourhood ? `
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-buildings text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">Neighbourhood</p>
-                            <p class="themed-subtle-text">${neighbourhood}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${city ? `
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-city text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">City</p>
-                            <p class="themed-subtle-text">${city}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${state ? `
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-map-trifold text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">State</p>
-                            <p class="themed-subtle-text">${state}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${postcode ? `
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-envelope text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">Pin Code</p>
-                            <p class="themed-subtle-text">${postcode}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    <div class="flex items-start gap-3 text-sm">
-                        <i class="ph-globe text-gray-600 dark:text-gray-400 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium">Country</p>
-                            <p class="themed-subtle-text">${country}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Full Address -->
-                <div class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
-                    <p class="text-xs themed-subtle-text mb-2">Complete Address:</p>
-                    <p class="text-sm font-medium">${displayName}</p>
-                </div>
-                
-                <!-- OpenStreetMap Info -->
-                <div class="text-xs themed-subtle-text border-t themed-border pt-3">
-                    <p>📍 Location Type: ${placeType}</p>
-                    <p>🆔 OSM ID: ${osmId}</p>
-                    <p>📡 Data Source: OpenStreetMap Nominatim</p>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex gap-2 pt-2">
-                    <button onclick="useThisPreciseLocation('${fullAddress.replace(/'/g, "\\'")}', '${city}', '${postcode}', ${lat}, ${lng}, ${accuracy}); this.closest('.fixed').remove();" class="flex-1 bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
-                        <i class="ph-check-circle"></i>
-                        Use This Location
-                    </button>
-                    <button onclick="window.open('https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=18', '_blank')" class="flex-1 bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
-                        <i class="ph-map-trifold"></i>
-                        View on Map
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
 // Use the precise location details
 function useThisPreciseLocation(address, city, pincode, lat, lng, accuracy) {
     userLocation = {
@@ -2763,6 +2682,7 @@ function useThisPreciseLocation(address, city, pincode, lat, lng, accuracy) {
     };
     
     updateLocationDisplay();
+    saveLocationToStorage();
     closeLocationModal();
     showNotification('Precise location set successfully!', 'success');
 }
@@ -2841,6 +2761,7 @@ function setManualLocation() {
     };
     
     updateLocationDisplay();
+    saveLocationToStorage();
     closeLocationModal();
     
     // Clear inputs
@@ -2860,6 +2781,7 @@ function setQuickLocation(address, pincode) {
     };
     
     updateLocationDisplay();
+    saveLocationToStorage();
     closeLocationModal();
 }
 
@@ -2868,25 +2790,43 @@ function updateLocationDisplay() {
     const viewMapBtn = document.getElementById('view-map-btn');
     
     if (userLocation.address) {
-        // Build comprehensive display text with city, state, and pincode
-        let displayParts = [];
-        
-        // Add main address
-        displayParts.push(userLocation.address);
-        
-        // Add city if not already in address
-        if (userLocation.city && !userLocation.address.toLowerCase().includes(userLocation.city.toLowerCase())) {
-            displayParts.push(userLocation.city);
+        // Build comprehensive display text without duplicated city/state/pincode
+        const displayParts = [];
+        const seenNormalized = new Set();
+        const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+        const normalizedAddress = ` ${normalize(userLocation.address)} `;
+
+        const addUniquePart = (value) => {
+            const normalized = normalize(value);
+            if (!normalized || seenNormalized.has(normalized)) {
+                return;
+            }
+            seenNormalized.add(normalized);
+            displayParts.push(value);
+        };
+
+        addUniquePart(userLocation.address);
+
+        if (userLocation.city) {
+            const normalizedCity = normalize(userLocation.city);
+            if (normalizedCity && !normalizedAddress.includes(` ${normalizedCity} `)) {
+                addUniquePart(userLocation.city);
+            }
         }
-        
-        // Add state if available
+
         if (userLocation.state) {
-            displayParts.push(userLocation.state);
+            const normalizedState = normalize(userLocation.state);
+            if (normalizedState && !normalizedAddress.includes(` ${normalizedState} `)) {
+                addUniquePart(userLocation.state);
+            }
         }
-        
-        // Add pincode prominently
+
         if (userLocation.pincode) {
-            displayParts.push(`PIN: ${userLocation.pincode}`);
+            const normalizedPincode = String(userLocation.pincode).replace(/\D/g, '');
+            const addressHasPincode = normalizedPincode && normalizedAddress.includes(normalizedPincode);
+            if (!addressHasPincode) {
+                addUniquePart(`PIN: ${userLocation.pincode}`);
+            }
         }
         
         const displayText = displayParts.join(', ');
@@ -2896,9 +2836,8 @@ function updateLocationDisplay() {
         locationElement.classList.remove('themed-subtle-text');
         locationElement.classList.add('font-medium');
         
-        // Show map button if coordinates available
-        if (viewMapBtn && userLocation.coordinates) {
-            viewMapBtn.classList.remove('hidden');
+        if (viewMapBtn) {
+            viewMapBtn.classList.add('hidden');
         }
         
         // Update location info in modal if open
@@ -2993,7 +2932,7 @@ function validateLocationForOrder() {
 
             <!-- Location Buttons -->
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="getCurrentLocation()" class="bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
+                <button onclick="getCurrentLocation(this)" class="bg-[color:var(--accent-color-1)] text-[#1a2e05] font-semibold py-3 px-4 rounded-lg hover:bg-[color:var(--accent-color-2)] transition-colors flex items-center justify-center gap-2">
                     <i class="ph-crosshairs text-xl"></i>
                     <span class="text-sm">Quick Detect</span>
                 </button>
@@ -3054,24 +2993,6 @@ function validateLocationForOrder() {
                 </button>
             </div>
             
-            <!-- Quick Locations -->
-            <div class="space-y-4">
-                <h3 class="font-semibold">Popular Areas</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="setQuickLocation('Connaught Place, Delhi', '110001')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Connaught Place
-                    </button>
-                    <button onclick="setQuickLocation('Bandra West, Mumbai', '400050')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Bandra West
-                    </button>
-                    <button onclick="setQuickLocation('Koramangala, Bangalore', '560034')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Koramangala
-                    </button>
-                    <button onclick="setQuickLocation('Hitech City, Hyderabad', '500081')" class="p-2 text-sm border themed-border rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Hitech City
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>

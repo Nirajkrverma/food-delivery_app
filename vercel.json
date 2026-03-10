@@ -6,6 +6,10 @@
       "destination": "/api/$1"
     },
     {
+      "source": "/payment",
+      "destination": "/public/payment.html"
+    },
+    {
       "source": "/",
       "destination": "/public/index.html"
     },

@@ -7,6 +7,64 @@ const pool = new Pool({
     }
 });
 
+const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/200x200/e0e0e0/333?text=No+Image';
+
+const normalizeName = (name = '') => String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+
+const hasUsableImage = (image) => {
+    if (typeof image !== 'string') return false;
+    const normalized = image.trim().toLowerCase();
+    return normalized.length > 0 && normalized !== 'null' && normalized !== 'undefined';
+};
+
+const normalizeProductList = (items = []) => {
+    const productsByName = new Map();
+
+    items.forEach((item) => {
+        if (!item || !item.name || !Array.isArray(item.variants) || item.variants.length === 0) {
+            return;
+        }
+
+        const key = normalizeName(item.name);
+        if (!key) return;
+
+        const existing = productsByName.get(key);
+        const candidateHasImage = hasUsableImage(item.image);
+        const existingHasImage = existing ? hasUsableImage(existing.image) : false;
+
+        const candidate = {
+            ...item,
+            image: candidateHasImage ? item.image : (existingHasImage ? existing.image : DEFAULT_PRODUCT_IMAGE)
+        };
+
+        if (!existing) {
+            productsByName.set(key, candidate);
+            return;
+        }
+
+        const shouldReplace =
+            (!existingHasImage && candidateHasImage) ||
+            ((item.variants?.length || 0) > (existing.variants?.length || 0));
+
+        if (shouldReplace) {
+            productsByName.set(key, {
+                ...candidate,
+                image: candidateHasImage ? item.image : existing.image
+            });
+            return;
+        }
+
+        if (!existingHasImage) {
+            productsByName.set(key, {
+                ...existing,
+                image: candidateHasImage ? item.image : DEFAULT_PRODUCT_IMAGE
+            });
+        }
+    });
+
+    return Array.from(productsByName.values());
+};
+
 export default async function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,7 +82,7 @@ export default async function handler(req, res) {
     try {
         // Try to get products from database
         const result = await pool.query('SELECT * FROM products ORDER BY id');
-        res.status(200).json(result.rows);
+        res.status(200).json(normalizeProductList(result.rows));
     } catch (error) {
         console.error('Database error, falling back to sample data:', error.message);
         
@@ -38,6 +96,6 @@ export default async function handler(req, res) {
             { id: 6, name: 'Eggs', image: 'https://cdn.zeptonow.com/production/tr:w-1280,ar-1200-1200,pr-true,f-auto,q-80/cms/product_variant/35241f67-e64e-4f15-8c9e-175186993049.jpeg', category: 'Dairy', variants: [{unit: '6 pack', price: 40}, {unit: '12 pack', price: 70}] }
         ];
         
-        res.status(200).json(fallbackProducts);
+        res.status(200).json(normalizeProductList(fallbackProducts));
     }
 }
