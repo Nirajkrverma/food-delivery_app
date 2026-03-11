@@ -125,20 +125,79 @@
             84% { width: 55px; right: 0px; top: 35px; }
             100% { width: 47px; right: 8px; top: 38px; }
         }
+
+        @media (max-width: 640px) {
+            .payment-header-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .payment-panel {
+                padding: 1rem;
+                border-radius: 1rem;
+            }
+
+            .payment-method {
+                padding: 0.65rem;
+            }
+
+            .payment-method i {
+                font-size: 1.6rem !important;
+                margin-bottom: 0.3rem;
+            }
+
+            .payment-method div {
+                font-size: 0.72rem;
+                line-height: 1.15;
+            }
+
+            #upiQrPreviewBox {
+                width: 10rem;
+                height: 10rem;
+            }
+
+            .card-preview {
+                padding: 1rem;
+                border-radius: 0.9rem;
+            }
+
+            #previewCardNumber {
+                font-size: 1rem;
+            }
+
+            .sticky.top-8 {
+                position: static;
+            }
+
+            #successModal .-mt-8 {
+                margin-top: -1.25rem;
+            }
+
+            #successModal .mx-6 {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+
+            #successModal .px-8 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 slide-in">
-            <div class="flex items-center justify-between">
+        <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 mb-6 slide-in">
+            <div class="payment-header-inner flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">💳 Secure Payment</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">💳 Secure Payment</h1>
                     <p class="text-gray-600">Complete your order with our secure payment gateway</p>
                 </div>
-                <div class="text-right">
+                <div class="text-left sm:text-right">
                     <div class="text-sm text-gray-500">Order ID</div>
-                    <div class="text-xl font-bold text-gray-800" id="orderId">#ORD-12345</div>
+                    <div class="text-base sm:text-xl font-bold text-gray-800" id="orderId">#ORD-12345</div>
                 </div>
             </div>
         </div>
@@ -147,10 +206,10 @@
             <!-- Left: Payment Form -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Payment Methods -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">Choose Payment Method</h2>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                         <div class="payment-method active border-2 border-gray-200 rounded-xl p-4 text-center" 
                              onclick="selectPaymentMethod('card')" id="method-card">
                             <i class="ph-credit-card text-4xl text-blue-600 mb-2"></i>
@@ -170,6 +229,11 @@
                              onclick="selectPaymentMethod('netbanking')" id="method-netbanking">
                             <i class="ph-bank text-4xl text-orange-600 mb-2"></i>
                             <div class="font-semibold text-sm">Net Banking</div>
+                        </div>
+                        <div class="payment-method border-2 border-gray-200 rounded-xl p-4 text-center" 
+                             onclick="selectPaymentMethod('cod')" id="method-cod">
+                            <i class="ph-hand-coins text-4xl text-amber-600 mb-2"></i>
+                            <div class="font-semibold text-sm">Cash on Delivery</div>
                         </div>
                     </div>
 
@@ -228,9 +292,15 @@
                             <div class="text-center py-6">
                                 <div class="inline-block bg-white p-6 rounded-2xl shadow-lg">
                                     <div class="text-gray-600 mb-4">Or scan QR code</div>
-                                    <div class="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <i class="ph-qr-code text-8xl text-gray-400"></i>
+                                    <div id="upiQrPreviewBox" class="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                                        <i id="upiQrPlaceholder" class="ph-qr-code text-8xl text-gray-400"></i>
+                                        <img id="upiQrPreviewImage" alt="Uploaded UPI QR" class="hidden w-full h-full object-contain">
                                     </div>
+                                    <label for="upiQrUpload" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-purple-200 text-purple-700 font-medium cursor-pointer hover:bg-purple-50 transition">
+                                        <i class="ph-upload-simple"></i>
+                                        Upload QR Code
+                                    </label>
+                                    <input type="file" id="upiQrUpload" accept="image/*" class="hidden">
                                     <div class="mt-4 text-sm text-gray-500">Scan with any UPI app</div>
                                 </div>
                             </div>
@@ -371,10 +441,31 @@
                             </label>
                         </div>
                     </div>
+
+                    <!-- COD Form -->
+                    <div id="cod-form" class="payment-form hidden">
+                        <h3 class="font-bold text-gray-700 mb-4">Cash on Delivery</h3>
+                        <div class="rounded-2xl border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-5">
+                            <div class="flex items-start gap-3 mb-3">
+                                <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                                    <i class="ph-hand-coins text-2xl text-amber-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 text-lg">Pay when your order arrives</p>
+                                    <p class="text-sm text-gray-600">No advance payment required. Hand over cash to delivery partner.</p>
+                                </div>
+                            </div>
+                            <ul class="text-sm text-gray-700 space-y-2">
+                                <li class="flex items-center gap-2"><i class="ph-check-circle text-green-600"></i><span>Instant order confirmation</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-check-circle text-green-600"></i><span>Fast doorstep delivery</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-check-circle text-green-600"></i><span>Keep exact cash ready for smoother handoff</span></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Save Card Option -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="saveCard" class="w-5 h-5 text-blue-600 rounded">
                         <div>
@@ -385,7 +476,7 @@
                 </div>
 
                 <!-- Terms and Conditions -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                     <label class="flex items-start gap-3 cursor-pointer">
                         <input type="checkbox" id="terms" class="w-5 h-5 text-blue-600 rounded mt-1">
                         <div class="text-sm text-gray-600">
@@ -423,7 +514,7 @@
                     </div>
 
                     <!-- Order Summary -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                    <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
                         
                         <div class="space-y-3 mb-4">
@@ -455,8 +546,8 @@
                         <!-- Payment Button -->
                         <button onclick="processPayment()" 
                                 class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2">
-                            <i class="ph-lock text-xl"></i>
-                            <span>Pay ₹<span id="payAmount">462.50</span></span>
+                            <i id="payActionIcon" class="ph-lock text-xl"></i>
+                            <span><span id="payActionText">Pay</span> ₹<span id="payAmount">462.50</span></span>
                         </button>
 
                         <div class="mt-4 text-center text-xs text-gray-500">
@@ -466,7 +557,7 @@
                     </div>
 
                     <!-- Security Badges -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                    <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                         <div class="grid grid-cols-3 gap-3 text-center">
                             <div>
                                 <i class="ph-shield-checkered text-3xl text-green-600 mb-2"></i>
@@ -497,37 +588,100 @@
     </div>
 
     <!-- Success Modal -->
-    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center">
-            <div class="success-checkmark mb-6">
-                <div class="check-icon">
-                    <span class="icon-line line-tip"></span>
-                    <span class="icon-line line-long"></span>
-                    <div class="icon-circle"></div>
-                    <div class="icon-fix"></div>
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-auto overflow-hidden">
+            <!-- Green top banner -->
+            <div class="bg-gradient-to-r from-green-400 to-emerald-500 px-8 pt-10 pb-16 text-center relative">
+                <div class="success-checkmark mx-auto mb-4">
+                    <div class="check-icon">
+                        <span class="icon-line line-tip"></span>
+                        <span class="icon-line line-long"></span>
+                        <div class="icon-circle"></div>
+                        <div class="icon-fix"></div>
+                    </div>
+                </div>
+                <h3 class="text-3xl font-extrabold text-white mb-1">Thank You! 🎉</h3>
+                <p id="successGreeting" class="text-green-100 text-base font-medium">Your order has been placed.</p>
+            </div>
+
+            <!-- Delivery ribbon -->
+            <div class="-mt-8 mx-6 bg-white rounded-2xl shadow-lg p-5 flex items-center gap-4 border border-green-100">
+                <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="ph-moped text-3xl text-green-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Estimated Arrival</p>
+                    <p class="text-xl font-extrabold text-gray-800">Your groceries arrive in</p>
+                    <p id="deliveryCountdown" class="text-3xl font-black text-green-600 tabular-nums">12 min</p>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
-            <p class="text-gray-600 mb-4">Your order has been placed successfully</p>
-            <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                <div class="text-sm text-gray-600 mb-1">Transaction ID</div>
-                <div class="font-mono font-bold text-gray-800" id="transactionId">TXN-123456789</div>
-            </div>
-            <div class="space-y-3">
-                <button onclick="downloadReceipt()" 
-                        class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">
-                    Download Receipt
-                </button>
-                <button onclick="window.location.href='prototype.html'" 
-                        class="w-full bg-gray-100 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-200 transition">
-                    Back to Home
-                </button>
+
+            <!-- Details -->
+            <div class="px-8 pt-5 pb-6 space-y-4">
+                <div class="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Transaction ID</p>
+                        <p class="font-mono font-bold text-gray-800 text-sm" id="transactionId">TXN-123456789</p>
+                    </div>
+                    <i class="ph-check-circle text-3xl text-green-500"></i>
+                </div>
+
+                <p class="text-center text-sm text-gray-500">A confirmation has been recorded. Sit back and relax! 🛒</p>
+
+                <div class="flex gap-3">
+                    <button onclick="downloadReceipt()"
+                            class="flex-1 border-2 border-blue-600 text-blue-600 font-semibold py-3 rounded-xl hover:bg-blue-50 transition flex items-center justify-center gap-2">
+                        <i class="ph-download-simple"></i> Receipt
+                    </button>
+                    <button onclick="window.location.href='index.html'"
+                            class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i class="ph-house"></i> Home
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let currentPaymentMethod = 'card';
+        let isProcessingPayment = false;
+
+        function safeParseJSON(value, fallback = {}) {
+            try {
+                return JSON.parse(value);
+            } catch {
+                return fallback;
+            }
+        }
+
+        const paymentPageParams = new URLSearchParams(window.location.search);
+        const isPayNowMode = paymentPageParams.get('payNow') === '1';
+        const defaultProfile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
+        const pendingOrderSeed = safeParseJSON(localStorage.getItem('pendingOrder') || '{}', {});
+        const payNowUserId = paymentPageParams.get('userId') || pendingOrderSeed.userId || defaultProfile.id || 'guest-user';
+        let currentOrderContext = {
+            orderId: '',
+            amount: 0,
+            items: [],
+            userId: 'guest-user',
+            deliveryAddress: ''
+        };
+
+        const getActiveDeliveryStorageKey = (userId) => `activeDelivery_${userId || 'guest-user'}`;
+        const getActiveDeliveryForUser = (userId) => safeParseJSON(localStorage.getItem(getActiveDeliveryStorageKey(userId)), null);
+        const setActiveDeliveryForUser = (userId, payload) => localStorage.setItem(getActiveDeliveryStorageKey(userId), JSON.stringify(payload));
+
+        // ── Duplicate-payment guard ─────────────────────────────────────
+        (function blockIfAlreadyOrdered() {
+            const active = getActiveDeliveryForUser(payNowUserId);
+            if (active && active.endsAt && Date.now() < active.endsAt && !isPayNowMode) {
+                const remaining = Math.ceil((active.endsAt - Date.now()) / 60000);
+                const leave = confirm(
+                    `\u26a0\ufe0f You already have an active order arriving in ~${remaining} min.\n\nGo back to track it?`
+                );
+                window.location.href = leave ? 'index.html' : 'index.html';
+            }
+        })();
 
         // Select Payment Method
         function selectPaymentMethod(method) {
@@ -551,6 +705,22 @@
                 cardPreview.classList.remove('hidden');
             } else {
                 cardPreview.classList.add('hidden');
+            }
+
+            updatePayAction();
+        }
+
+        function updatePayAction() {
+            const actionText = document.getElementById('payActionText');
+            const actionIcon = document.getElementById('payActionIcon');
+            if (!actionText || !actionIcon) return;
+
+            if (currentPaymentMethod === 'cod') {
+                actionText.textContent = 'Place COD Order';
+                actionIcon.className = 'ph-hand-coins text-xl';
+            } else {
+                actionText.textContent = 'Pay';
+                actionIcon.className = 'ph-lock text-xl';
             }
         }
 
@@ -610,8 +780,79 @@
             });
         }
 
+        function setupQrUpload() {
+            const uploadInput = document.getElementById('upiQrUpload');
+            const previewImage = document.getElementById('upiQrPreviewImage');
+            const placeholderIcon = document.getElementById('upiQrPlaceholder');
+
+            if (!uploadInput || !previewImage || !placeholderIcon) return;
+
+            uploadInput.addEventListener('change', (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    alert('Please upload an image file for QR code.');
+                    uploadInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    previewImage.classList.remove('hidden');
+                    placeholderIcon.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveOrderRecord(paymentData, transactionId) {
+            const fallbackItems = [
+                {
+                    productId: 'manual-order',
+                    name: 'Order Payment',
+                    quantity: 1,
+                    price: paymentData.amount,
+                    unit: 'payment'
+                }
+            ];
+
+            const orderItems = Array.isArray(currentOrderContext.items) && currentOrderContext.items.length > 0
+                ? currentOrderContext.items
+                : fallbackItems;
+
+            const orderResponse = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: currentOrderContext.userId || 'guest-user',
+                    items: orderItems,
+                    totalAmount: currentOrderContext.amount || paymentData.amount,
+                    paymentMethod: currentPaymentMethod,
+                    paymentId: transactionId,
+                    deliveryAddress: currentOrderContext.deliveryAddress || '',
+                    status: 'confirmed'
+                })
+            });
+
+            if (orderResponse.ok) {
+                const orderResult = await orderResponse.json();
+                console.log('Order saved:', orderResult);
+                localStorage.removeItem('pendingOrder');
+                localStorage.removeItem('currentOrderId');
+                localStorage.removeItem('currentOrderAmount');
+            }
+        }
+
         // Process Payment
         async function processPayment() {
+            if (isProcessingPayment) {
+                return;
+            }
+
             // Validate terms
             if (!document.getElementById('terms').checked) {
                 alert('Please accept the terms and conditions');
@@ -666,19 +907,28 @@
                 }
             }
 
+            const payButton = document.querySelector('button[onclick="processPayment()"]');
+            isProcessingPayment = true;
+            if (payButton) {
+                payButton.disabled = true;
+                payButton.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+
             // Show processing modal
             document.getElementById('processingModal').classList.remove('hidden');
             document.getElementById('processingModal').classList.add('flex');
 
             // Call payment API
             try {
+                const profile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
+
                 // Prepare payment data
                 const paymentData = {
-                    orderId: document.getElementById('orderId').textContent,
+                    orderId: currentOrderContext.orderId || document.getElementById('orderId').textContent,
                     amount: parseFloat(document.getElementById('totalAmount').textContent),
                     paymentMethod: currentPaymentMethod,
-                    customerEmail: 'customer@example.com', // Get from user session
-                    customerPhone: '+91 9876543210' // Get from user session
+                    customerEmail: profile.email || 'customer@example.com',
+                    customerPhone: profile.phone || '+91 9876543210'
                 };
 
                 // Add method-specific data
@@ -695,6 +945,68 @@
                     paymentData.walletType = document.querySelector('input[name="wallet"]:checked').value;
                 } else if (currentPaymentMethod === 'netbanking') {
                     paymentData.bankCode = document.querySelector('input[name="bank"]:checked').value;
+                }
+
+                // COD flow (no gateway hit)
+                if (currentPaymentMethod === 'cod') {
+                    const codResult = {
+                        success: true,
+                        transactionId: `COD-${Date.now().toString().slice(-10)}`,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    // Hide processing modal quickly for COD
+                    document.getElementById('processingModal').classList.add('hidden');
+                    document.getElementById('processingModal').classList.remove('flex');
+
+                    document.getElementById('transactionId').textContent = codResult.transactionId;
+
+                    const profile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
+                    const firstName = (profile.name || 'Guest').split(' ')[0];
+                    document.getElementById('successGreeting').textContent =
+                        `Hey ${firstName}, order confirmed! Pay cash on delivery. 🚚`;
+
+                    let totalSeconds = 12 * 60;
+                    const countdownEl = document.getElementById('deliveryCountdown');
+                    const tick = () => {
+                        const minutes = Math.ceil(totalSeconds / 60);
+                        countdownEl.textContent = `${minutes} min`;
+                        if (totalSeconds > 0) {
+                            totalSeconds--;
+                            setTimeout(tick, 1000);
+                        } else {
+                            countdownEl.textContent = '🎉 Arrived!';
+                        }
+                    };
+                    tick();
+
+                    const deliveryEndsAt = Date.now() + 12 * 60 * 1000;
+                    const deliveryUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
+                    setActiveDeliveryForUser(deliveryUserId, {
+                        endsAt: deliveryEndsAt,
+                        orderId: paymentData.orderId,
+                        amount: paymentData.amount,
+                        paymentStatus: 'unpaid'
+                    });
+
+                    localStorage.removeItem('grocerymartCart');
+
+                    try {
+                        await saveOrderRecord(paymentData, codResult.transactionId);
+                    } catch (orderError) {
+                        console.error('Error saving COD order:', orderError);
+                    }
+
+                    const paymentInfo = {
+                        orderId: paymentData.orderId,
+                        amount: paymentData.amount,
+                        method: currentPaymentMethod,
+                        transactionId: codResult.transactionId,
+                        timestamp: codResult.timestamp
+                    };
+                    localStorage.setItem('lastPayment', JSON.stringify(paymentInfo));
+                    window.location.href = 'index.html';
+                    return;
                 }
 
                 // Call payment API
@@ -715,29 +1027,47 @@
                 if (result.success) {
                     // Show success with transaction ID
                     document.getElementById('transactionId').textContent = result.transactionId;
-                    
+
+                    // Personalised greeting
+                    const profile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
+                    const firstName = (profile.name || 'Guest').split(' ')[0];
+                    document.getElementById('successGreeting').textContent =
+                        `Hey ${firstName}, your fresh groceries are on their way! 🛍️`;
+
+                    // Delivery countdown: 12 minutes (minute-only display)
+                    let totalSeconds = 12 * 60;
+                    const countdownEl = document.getElementById('deliveryCountdown');
+                    const tick = () => {
+                        const minutes = Math.ceil(totalSeconds / 60);
+                        countdownEl.textContent = `${minutes} min`;
+                        if (totalSeconds > 0) {
+                            totalSeconds--;
+                            setTimeout(tick, 1000);
+                        } else {
+                            countdownEl.textContent = '🎉 Arrived!';
+                        }
+                    };
+                    tick();
+                    // ── Persist delivery so tracker widget works on other pages ──
+                    const deliveryUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
+                    const existingDelivery = getActiveDeliveryForUser(deliveryUserId) || {};
+                    const activeEndsAt = existingDelivery.endsAt && existingDelivery.endsAt > Date.now()
+                        ? existingDelivery.endsAt
+                        : Date.now() + 12 * 60 * 1000;
+
+                    setActiveDeliveryForUser(deliveryUserId, {
+                        endsAt: activeEndsAt,
+                        orderId: paymentData.orderId,
+                        amount: paymentData.amount,
+                        paymentStatus: 'paid'
+                    });
+
+                    // ── Clear the cart so no duplicate orders can sneak in ──
+                    localStorage.removeItem('grocerymartCart');                    
                     // Save order to backend with payment info
                     try {
-                        const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
-                        const orderResponse = await fetch('/api/orders', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                userId: 'guest-user', // Replace with actual user ID from session
-                                items: pendingOrder.items || [],
-                                totalAmount: pendingOrder.totalAmount || paymentData.amount,
-                                paymentMethod: currentPaymentMethod,
-                                paymentId: result.transactionId,
-                                status: 'confirmed'
-                            })
-                        });
-                        
-                        if (orderResponse.ok) {
-                            const orderResult = await orderResponse.json();
-                            console.log('Order saved:', orderResult);
-                            localStorage.removeItem('pendingOrder');
+                        if (!isPayNowMode) {
+                            await saveOrderRecord(paymentData, result.transactionId);
                         }
                     } catch (orderError) {
                         console.error('Error saving order:', orderError);
@@ -769,6 +1099,12 @@
                 
                 console.error('Payment error:', error);
                 alert('Payment processing failed. Please try again.');
+            } finally {
+                isProcessingPayment = false;
+                if (payButton) {
+                    payButton.disabled = false;
+                    payButton.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
             }
         }
 
@@ -807,17 +1143,38 @@ Thank you for your order!
 
         // Initialize
         window.addEventListener('load', () => {
+            setupQrUpload();
+
+            if (isPayNowMode) {
+                selectPaymentMethod('card');
+            }
+            updatePayAction();
+
             // Get order data from URL parameters or localStorage
             const urlParams = new URLSearchParams(window.location.search);
+            const pendingOrder = safeParseJSON(localStorage.getItem('pendingOrder') || '{}', {});
+
             const orderId = urlParams.get('orderId') || localStorage.getItem('currentOrderId') || '#ORD-' + Date.now().toString().slice(-8);
-            const amount = urlParams.get('amount') || localStorage.getItem('currentOrderAmount');
+            const amountSource = urlParams.get('amount') || localStorage.getItem('currentOrderAmount') || pendingOrder.totalAmount;
+            const parsedAmount = parseFloat(amountSource);
+            const normalizedAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : null;
+
+            currentOrderContext = {
+                orderId,
+                amount: normalizedAmount || 0,
+                items: Array.isArray(pendingOrder.items) ? pendingOrder.items : [],
+                userId: urlParams.get('userId') || pendingOrder.userId || defaultProfile.id || 'guest-user',
+                deliveryAddress: pendingOrder.deliveryAddress || ''
+            };
             
             document.getElementById('orderId').textContent = orderId;
             
             // If amount is provided in URL, update the display
-            if (amount) {
-                const amountFloat = parseFloat(amount);
-                document.getElementById('subtotal').textContent = amountFloat.toFixed(2);
+            if (normalizedAmount) {
+                document.getElementById('subtotal').textContent = normalizedAmount.toFixed(2);
+                document.getElementById('deliveryFee').textContent = '0.00';
+                document.getElementById('gst').textContent = '0.00';
+                document.getElementById('discount').textContent = '0.00';
                 calculateTotals();
             } else {
                 calculateTotals();

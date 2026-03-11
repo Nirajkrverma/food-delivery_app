@@ -346,9 +346,13 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Your cart is empty!'); 
             return; 
         } 
+
+        const orderId = '#ORD-' + Date.now().toString().slice(-8);
+        const totalAmount = calculateTotal();
         
         // Save cart data to localStorage
         const orderData = {
+            userId: userProfile.id || 'guest-user',
             items: cart.map(item => ({
                 productId: item.productId,
                 name: item.name,
@@ -356,15 +360,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 price: item.price,
                 unit: item.unit || 'piece'
             })),
-            totalAmount: calculateTotal()
+            totalAmount,
+            deliveryAddress: userProfile.address || ''
         };
         
         localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-        localStorage.setItem('currentOrderId', '#ORD-' + Date.now().toString().slice(-8));
-        localStorage.setItem('currentOrderAmount', calculateTotal().toString());
+        localStorage.setItem('currentOrderId', orderId);
+        localStorage.setItem('currentOrderAmount', totalAmount.toString());
         
         // Redirect to payment page
-        window.location.href = `payment.html?orderId=${encodeURIComponent('#ORD-' + Date.now().toString().slice(-8))}&amount=${calculateTotal()}`;
+        window.location.href = `payment.html?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(totalAmount.toFixed(2))}`;
     };
     productGrid.addEventListener('click', (e) => { const target = e.target.closest('button'); if (!target) return; const productCard = target.closest('.product-card'); const productId = parseInt(productCard.dataset.productId); const variantSelect = productCard.querySelector('.variant-select'); const selectedVariant = products.find(p => p.id === productId).variants[variantSelect.value]; if (target.classList.contains('add-btn') || target.classList.contains('inc-btn')) { addToCart(productId, selectedVariant.unit); } else if (target.classList.contains('dec-btn')) { removeFromCart(productId, selectedVariant.unit); } });
     productGrid.addEventListener('change', (e) => { if (e.target.classList.contains('variant-select')) { const productCard = e.target.closest('.product-card'); const productId = parseInt(productCard.dataset.productId); const product = products.find(p => p.id === productId); const selectedVariant = product.variants[e.target.value]; productCard.querySelector('.price-display').textContent = `₹${selectedVariant.price.toFixed(2)}`; updateProductCardUI(productId); } });

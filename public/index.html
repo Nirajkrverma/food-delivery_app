@@ -18,9 +18,6 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    
-    <!-- Clerk Authentication - Local Script -->
-    <script src="./clerk.browser.js"></script>
 
     <style>
         /* Define CSS variables for theming */
@@ -400,6 +397,108 @@
             filter: brightness(1.2);
         }
 
+        /* User switcher circular chips */
+        .user-switch-shell {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.4rem;
+            border: 1px solid var(--border-light);
+            border-radius: 9999px;
+            background: var(--card-bg-light);
+            max-width: 280px;
+        }
+        .user-active-label {
+            max-width: 86px;
+            font-size: 0.72rem;
+            line-height: 1;
+            font-weight: 700;
+            color: var(--subtle-text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-chip-row {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-snap-type: x proximity;
+        }
+        .user-chip-row::-webkit-scrollbar {
+            display: none;
+        }
+        .user-chip {
+            width: 36px;
+            height: 36px;
+            border-radius: 9999px;
+            border: 2px solid var(--border-light);
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            transition: all 0.22s ease;
+        }
+        .user-chip:hover {
+            transform: translateY(-1px) scale(1.05);
+            border-color: var(--accent-color-1);
+        }
+        .user-chip.active {
+            border-color: var(--accent-color-1);
+            box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.22);
+            transform: scale(1.08);
+        }
+        .user-chip.add {
+            border-style: dashed;
+            color: var(--accent-color-1);
+            font-size: 1rem;
+        }
+        .user-switch-pop {
+            animation: userSwitchPop 280ms ease;
+        }
+        @keyframes userSwitchPop {
+            0% { transform: scale(0.84); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Delivery tracker loading effect */
+        .tracker-loading {
+            position: relative;
+            overflow: hidden;
+            animation: trackerPulse 1.8s ease-in-out infinite;
+        }
+        .tracker-draggable {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+        .tracker-draggable.dragging {
+            cursor: grabbing;
+        }
+        .tracker-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -130%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+            transform: skewX(-20deg);
+            animation: trackerShine 2.2s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes trackerPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.20); }
+            50% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0.08); }
+        }
+        @keyframes trackerShine {
+            0% { left: -130%; }
+            100% { left: 160%; }
+        }
+
         /* ============================================ */
         /* MOBILE RESPONSIVE ENHANCEMENTS */
         /* ============================================ */
@@ -409,10 +508,57 @@
             body {
                 padding-bottom: 100px; /* Account for fixed cart */
             }
+
+            #delivery-tracker {
+                right: 0.75rem !important;
+                bottom: 5.75rem !important;
+            }
+
+            #delivery-tracker .tracker-loading {
+                width: min(88vw, 260px);
+                padding: 0.75rem;
+            }
+
+            #tracker-countdown {
+                font-size: 1.75rem;
+                line-height: 1;
+            }
+
+            #cart-footer .max-w-5xl {
+                gap: 0.75rem;
+            }
+
+            #cart-summary {
+                font-size: 0.92rem;
+                line-height: 1.2;
+            }
+
+            #view-cart-btn {
+                padding: 0.65rem 0.9rem !important;
+                font-size: 0.85rem;
+            }
+
+            #cart-modal h2 {
+                font-size: 1.5rem;
+            }
             
             /* Mobile header */
             header h1 {
                 font-size: 1.25rem !important;
+            }
+
+            .user-switch-shell {
+                max-width: 180px;
+                padding: 0.2rem 0.35rem;
+                gap: 0.35rem;
+            }
+            .user-active-label {
+                display: none;
+            }
+            .user-chip {
+                width: 31px;
+                height: 31px;
+                font-size: 0.72rem;
             }
             
             /* Mobile theme toggle */
@@ -617,7 +763,7 @@
         <header class="sticky top-0 z-50 flex justify-between items-center mb-6 py-3 glass-effect -mx-4 sm:-mx-6 px-4 sm:px-6">
             <a href="/" class="flex items-center gap-2 sm:gap-3 md:gap-4 cursor-pointer no-underline group">
                 <!-- Logo Image -->
-                <img src="./Grocery2.png" alt="Grocery Mart Logo" class="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.style.display='none'; console.error('Logo failed to load');">
+                <img id="logo-img" src="./GroceryL.png" alt="Grocery Mart Logo" class="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.src='https://placehold.co/64x64/a3e635/1a2e05?text=GM';">
                 <div class="flex flex-col justify-center">
                     <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight themed-text transition-all duration-300 group-hover:text-[color:var(--accent-color-1)]">
                         Grocery Mart
@@ -778,7 +924,7 @@
                         <div class="text-center mb-6">
                             <img id="profile-avatar" src="https://placehold.co/128x128/a3e635/1a2e05?text=G" alt="User Avatar" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 border-4 border-[color:var(--accent-color-1)]">
                             <h3 id="profile-name" class="text-xl sm:text-2xl font-bold">Guest User</h3>
-                            <p id="profile-email" class="themed-subtle-text text-sm sm:text-base">guest.user@email.com</p>
+                            <p id="profile-email" class="themed-subtle-text text-sm sm:text-base">+91 0000000000</p>
                         </div>
                         
                         <div class="text-left bg-white dark:bg-slate-800 border themed-border p-4 rounded-lg mb-6">
@@ -817,8 +963,8 @@
                         <input type="text" id="edit-name" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
                     </div>
                     <div>
-                        <label for="edit-email" class="block text-sm font-medium themed-subtle-text">Email</label>
-                        <input type="email" id="edit-email" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
+                        <label for="edit-email" class="block text-sm font-medium themed-subtle-text">Phone Number</label>
+                        <input type="tel" id="edit-email" placeholder="10-digit mobile number" class="mt-1 block w-full themed-bg border themed-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)] focus:border-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
                     </div>
                     <div>
                         <label for="edit-address" class="block text-sm font-medium themed-subtle-text">Address</label>
@@ -843,6 +989,39 @@
         </div>
     </div>
 
+    <!-- User Registration Modal -->
+    <div id="user-register-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden items-center justify-center p-4">
+        <div class="themed-card-bg border themed-border rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-2xl font-bold mb-2">Create Your Profile</h3>
+            <p class="themed-subtle-text text-sm mb-5">Register with name and phone number to continue shopping.</p>
+            <form id="user-register-form" class="space-y-4">
+                <div>
+                    <label for="register-name" class="block text-sm font-medium themed-subtle-text">Name</label>
+                    <input id="register-name" type="text" required class="mt-1 block w-full themed-bg border themed-border rounded-md py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)]" placeholder="Enter full name">
+                </div>
+                <div>
+                    <label for="register-phone" class="block text-sm font-medium themed-subtle-text">Phone Number</label>
+                    <input id="register-phone" type="tel" required class="mt-1 block w-full themed-bg border themed-border rounded-md py-2 px-3 focus:outline-none focus:ring-[color:var(--accent-color-1)]" placeholder="10-digit mobile number">
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="register-cancel-btn" class="themed-card-bg border themed-border font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" class="btn-primary font-bold py-2 px-6 rounded-lg">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Floating Delivery Tracker (bottom-right) ── -->
+    <div id="delivery-tracker" class="fixed bottom-28 right-4 z-50 hidden tracker-draggable">
+        <div class="tracker-loading bg-white dark:bg-slate-800 border-2 border-green-400 rounded-2xl shadow-2xl p-4 w-56">
+            <p id="tracker-countdown" class="text-3xl font-black text-green-500 tabular-nums text-center">12 min</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center truncate" id="tracker-order-id">Groceries are on the way</p>
+            <button id="tracker-pay-now-btn" onclick="goToPendingPayment()" class="hidden mt-3 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold py-2 rounded-lg hover:opacity-90 transition">
+                Pay Now
+            </button>
+        </div>
+    </div>
+
 <script>
 
 const API_BASE_URL = '/api';
@@ -851,6 +1030,182 @@ const API_BASE_URL = '/api';
 let cart = [];
 let pastOrders = [];
 let userProfile = {};
+
+// Safe localStorage helper
+const safeParseLS = (key, fallback = null) => {
+    try { return JSON.parse(localStorage.getItem(key)); } catch { return fallback; }
+};
+
+const getActiveDeliveryStorageKey = (userId) => `activeDelivery_${userId || 'guest-user'}`;
+const getActiveDeliveryForCurrentUser = () => {
+    const currentUserId = userProfile?.id || localStorage.getItem(ACTIVE_USER_ID_KEY) || 'guest-user';
+    return safeParseLS(getActiveDeliveryStorageKey(currentUserId), null);
+};
+
+const USERS_STORAGE_KEY = 'grocerymartUsers';
+const ACTIVE_USER_ID_KEY = 'grocerymartActiveUserId';
+const LOGGED_IN_USERS_KEY = 'grocerymartLoggedInUserIds';
+
+// ── Delivery tracker widget ──────────────────────────────────────────────────
+let trackerInterval = null;
+let trackerDragBound = false;
+const TRACKER_POSITION_KEY = 'deliveryTrackerPosition';
+
+function getClampedTrackerPosition(left, top, widget) {
+    const margin = 8;
+    const maxLeft = Math.max(margin, window.innerWidth - widget.offsetWidth - margin);
+    const maxTop = Math.max(margin, window.innerHeight - widget.offsetHeight - margin);
+    return {
+        left: Math.min(Math.max(left, margin), maxLeft),
+        top: Math.min(Math.max(top, margin), maxTop)
+    };
+}
+
+function applySavedTrackerPosition() {
+    const widget = document.getElementById('delivery-tracker');
+    const savedPosition = safeParseLS(TRACKER_POSITION_KEY, null);
+    if (!widget || !savedPosition) return;
+
+    const { left, top } = getClampedTrackerPosition(savedPosition.left || 0, savedPosition.top || 0, widget);
+    widget.style.left = `${left}px`;
+    widget.style.top = `${top}px`;
+    widget.style.right = 'auto';
+    widget.style.bottom = 'auto';
+}
+
+function enableTrackerDrag() {
+    if (trackerDragBound) return;
+    const widget = document.getElementById('delivery-tracker');
+    if (!widget) return;
+
+    trackerDragBound = true;
+    applySavedTrackerPosition();
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    const getPoint = (event) => (event.touches ? event.touches[0] : event);
+
+    const onMove = (event) => {
+        if (!dragging) return;
+        event.preventDefault();
+        const point = getPoint(event);
+        const rawLeft = startLeft + (point.clientX - startX);
+        const rawTop = startTop + (point.clientY - startY);
+        const { left, top } = getClampedTrackerPosition(rawLeft, rawTop, widget);
+        widget.style.left = `${left}px`;
+        widget.style.top = `${top}px`;
+    };
+
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        widget.classList.remove('dragging');
+
+        const rect = widget.getBoundingClientRect();
+        localStorage.setItem(TRACKER_POSITION_KEY, JSON.stringify({
+            left: Math.round(rect.left),
+            top: Math.round(rect.top)
+        }));
+
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+    };
+
+    const onStart = (event) => {
+        if (event.touches && event.touches.length > 1) return;
+        const point = getPoint(event);
+        const rect = widget.getBoundingClientRect();
+
+        dragging = true;
+        widget.classList.add('dragging');
+
+        startX = point.clientX;
+        startY = point.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+
+        widget.style.left = `${rect.left}px`;
+        widget.style.top = `${rect.top}px`;
+        widget.style.right = 'auto';
+        widget.style.bottom = 'auto';
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+    };
+
+    widget.addEventListener('mousedown', onStart);
+    widget.addEventListener('touchstart', onStart, { passive: true });
+
+    window.addEventListener('resize', applySavedTrackerPosition);
+}
+
+function initDeliveryTracker() {
+    if (trackerInterval) {
+        clearInterval(trackerInterval);
+        trackerInterval = null;
+    }
+
+    const active = getActiveDeliveryForCurrentUser();
+    const widget   = document.getElementById('delivery-tracker');
+    const payNowBtn = document.getElementById('tracker-pay-now-btn');
+    if (!widget) return;
+
+    if (!active || !active.endsAt || Date.now() >= active.endsAt) {
+        widget.classList.add('hidden');
+        return;
+    }
+
+    widget.classList.remove('hidden');
+    const orderEl    = document.getElementById('tracker-order-id');
+    const countdownEl= document.getElementById('tracker-countdown');
+    if (orderEl) orderEl.textContent = 'Groceries are on the way';
+    if (payNowBtn) {
+        if (active.paymentStatus === 'unpaid') {
+            payNowBtn.classList.remove('hidden');
+        } else {
+            payNowBtn.classList.add('hidden');
+        }
+    }
+
+    trackerInterval = setInterval(() => {
+        const remaining = active.endsAt - Date.now();
+        if (remaining <= 0) {
+            clearInterval(trackerInterval);
+            trackerInterval = null;
+            if (countdownEl) countdownEl.textContent = '\uD83C\uDF89 Arrived!';
+            localStorage.removeItem(getActiveDeliveryStorageKey(userProfile?.id));
+            setTimeout(() => widget.classList.add('hidden'), 4000);
+            return;
+        }
+        const minutes = Math.ceil(remaining / 60000);
+        if (countdownEl) countdownEl.textContent = `${minutes} min`;
+    }, 1000);
+}
+
+function goToPendingPayment() {
+    const active = getActiveDeliveryForCurrentUser();
+    if (!active) return;
+
+    const orderId = encodeURIComponent(active.orderId || '');
+    const amount = encodeURIComponent(Number(active.amount || 0).toFixed(2));
+    const userId = encodeURIComponent(userProfile?.id || localStorage.getItem(ACTIVE_USER_ID_KEY) || 'guest-user');
+    window.location.href = `payment.html?payNow=1&orderId=${orderId}&amount=${amount}&userId=${userId}`;
+}
+
+function dismissTracker() {
+    const widget = document.getElementById('delivery-tracker');
+    if (widget) widget.classList.add('hidden');
+    clearInterval(trackerInterval);
+    trackerInterval = null;
+}
 
 // Global functions that need to be accessible
 const calculateTotal = () => {
@@ -876,189 +1231,205 @@ const loadOrderHistory = async (userId = 'guest-user') => {
 };
 
 document.addEventListener('DOMContentLoaded', async() => {
-    
-    // Initialize Clerk Authentication
-    let clerk;
-    let currentUser = null;
-    
-    async function initializeClerk() {
-        try {
-            console.log('🔄 Initializing Clerk...');
-            
-            // Get Clerk configuration from our API
-            const configResponse = await fetch('/api/config');
-            console.log('📡 Config response status:', configResponse.status);
-            
-            if (!configResponse.ok) {
-                throw new Error(`Config API failed: ${configResponse.status}`);
+    let allUsers = [];
+    let activeUserId = null;
+    let loggedInUserIds = [];
+
+    const authContainer = document.getElementById('auth-container');
+    const userRegisterModal = document.getElementById('user-register-modal');
+    const userRegisterForm = document.getElementById('user-register-form');
+    const registerNameInput = document.getElementById('register-name');
+    const registerPhoneInput = document.getElementById('register-phone');
+    const registerCancelBtn = document.getElementById('register-cancel-btn');
+
+    const saveUsersToStorage = () => localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(allUsers));
+    const saveLoggedInUsersToStorage = () => localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInUserIds));
+    const getVisibleUsers = () => allUsers.filter((user) => loggedInUserIds.includes(user.id));
+
+    const openUserRegistrationModal = () => {
+        if (!userRegisterModal) return;
+        userRegisterModal.classList.remove('hidden');
+        userRegisterModal.classList.add('flex');
+        if (registerNameInput) registerNameInput.focus();
+    };
+
+    const closeUserRegistrationModal = () => {
+        if (!userRegisterModal) return;
+        userRegisterModal.classList.add('hidden');
+        userRegisterModal.classList.remove('flex');
+    };
+
+    const updateAuthContainer = () => {
+        if (!authContainer) return;
+        const visibleUsers = getVisibleUsers();
+        const activeUser = visibleUsers.find(u => u.id === activeUserId) || visibleUsers[0] || null;
+        const chips = visibleUsers.map((u) => {
+            const initial = (u.name || 'U').charAt(0).toUpperCase();
+            const activeClass = u.id === activeUserId ? 'active' : '';
+            return `<button class="user-chip ${activeClass}" data-user-id="${u.id}" title="${u.name} (${u.phone})">${initial}</button>`;
+        }).join('');
+
+        authContainer.innerHTML = `
+            <div class="user-switch-shell">
+                <div class="user-active-label" title="${activeUser ? activeUser.name : 'User'}">${activeUser ? activeUser.name : 'User'}</div>
+                <div class="flex items-center gap-2 overflow-x-auto user-chip-row">
+                    ${chips}
+                    <button id="add-user-btn" class="user-chip add" title="Add User">+</button>
+                </div>
+            </div>
+        `;
+
+        const switchButtons = authContainer.querySelectorAll('[data-user-id]');
+        const addUserBtn = document.getElementById('add-user-btn');
+
+        if (switchButtons.length) {
+            switchButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    setActiveUser(button.dataset.userId);
+                    triggerUserSwitchEffect();
+                    renderProfile();
+                    renderPastOrders();
+                });
+            });
+        }
+
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', openUserRegistrationModal);
+        }
+    };
+
+    const triggerUserSwitchEffect = () => {
+        const targets = [
+            document.getElementById('header-avatar'),
+            document.getElementById('profile-avatar')
+        ];
+
+        targets.forEach((target) => {
+            if (!target) return;
+            target.classList.remove('user-switch-pop');
+            void target.offsetWidth;
+            target.classList.add('user-switch-pop');
+        });
+    };
+
+    const setActiveUser = (userId) => {
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) return;
+
+        if (!loggedInUserIds.includes(user.id)) {
+            loggedInUserIds.push(user.id);
+            saveLoggedInUsersToStorage();
+        }
+
+        activeUserId = user.id;
+        localStorage.setItem(ACTIVE_USER_ID_KEY, activeUserId);
+
+        userProfile = {
+            id: user.id,
+            name: user.name,
+            phone: user.phone,
+            email: user.phone,
+            address: user.address || '123 Market Street<br>New Town, West Bengal<br>India'
+        };
+
+        localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
+        updateAuthContainer();
+        initDeliveryTracker();
+    };
+
+    const createOrSelectUser = (name, phone) => {
+        const normalizedPhone = String(phone).replace(/\D/g, '').slice(-10);
+        const existing = allUsers.find(u => u.phone.replace(/\D/g, '').slice(-10) === normalizedPhone);
+
+        if (existing) {
+            if (!loggedInUserIds.includes(existing.id)) {
+                loggedInUserIds.push(existing.id);
+                saveLoggedInUsersToStorage();
             }
-            
-            const config = await configResponse.json();
-            console.log('⚙️ Config received:', config);
-            
-            if (!config.CLERK_PUBLISHABLE_KEY) {
-                console.error('❌ No Clerk publishable key found in config');
-                updateUIForSignedOutUser();
+            setActiveUser(existing.id);
+            return;
+        }
+
+        const newUser = {
+            id: `usr-${Date.now()}`,
+            name: name.trim(),
+            phone: normalizedPhone,
+            address: '123 Market Street<br>New Town, West Bengal<br>India'
+        };
+        allUsers.push(newUser);
+        saveUsersToStorage();
+        loggedInUserIds.push(newUser.id);
+        saveLoggedInUsersToStorage();
+        setActiveUser(newUser.id);
+    };
+
+    const initializeLocalUsers = () => {
+        allUsers = safeParseLS(USERS_STORAGE_KEY, []);
+        activeUserId = localStorage.getItem(ACTIVE_USER_ID_KEY);
+        loggedInUserIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
+
+        if (!Array.isArray(allUsers) || allUsers.length === 0) {
+            allUsers = [];
+            saveUsersToStorage();
+            loggedInUserIds = [];
+            saveLoggedInUsersToStorage();
+            updateAuthContainer();
+            openUserRegistrationModal();
+            return;
+        }
+
+        if (!Array.isArray(loggedInUserIds) || loggedInUserIds.length === 0) {
+            loggedInUserIds = allUsers.map((user) => user.id);
+            saveLoggedInUsersToStorage();
+        }
+
+        loggedInUserIds = loggedInUserIds.filter((id) => allUsers.some((user) => user.id === id));
+        if (loggedInUserIds.length === 0) {
+            loggedInUserIds = allUsers.map((user) => user.id);
+        }
+        saveLoggedInUsersToStorage();
+
+        if (!activeUserId || !loggedInUserIds.includes(activeUserId)) {
+            activeUserId = loggedInUserIds[0];
+        }
+
+        setActiveUser(activeUserId);
+    };
+
+    if (userRegisterForm) {
+        userRegisterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = registerNameInput?.value?.trim() || '';
+            const phone = registerPhoneInput?.value?.trim() || '';
+
+            if (!name) {
+                alert('Please enter your name.');
                 return;
             }
-            
-            console.log('🔑 Clerk key found:', config.CLERK_PUBLISHABLE_KEY.substring(0, 20) + '...');
-            
-            // Wait for Clerk to be available
-            if (!window.Clerk) {
-                console.log('⏳ Waiting for Clerk to load...');
-                await new Promise(resolve => {
-                    const checkClerk = () => {
-                        if (window.Clerk) {
-                            resolve();
-                        } else {
-                            setTimeout(checkClerk, 100);
-                        }
-                    };
-                    checkClerk();
-                });
+            if (phone.replace(/\D/g, '').length < 10) {
+                alert('Please enter a valid 10-digit phone number.');
+                return;
             }
-            
-            // Initialize Clerk
-            clerk = window.Clerk;
-            console.log('🏗️ Loading Clerk with key...');
-            
-            await clerk.load({
-                publishableKey: config.CLERK_PUBLISHABLE_KEY
-            });
-            
-            console.log('✅ Clerk loaded successfully');
-            
-            // Check if user is already signed in
-            if (clerk.user) {
-                currentUser = clerk.user;
-                console.log('👤 User is signed in:', currentUser.firstName);
-                updateUIForSignedInUser();
-            } else {
-                console.log('👤 User is not signed in');
-                updateUIForSignedOutUser();
-            }
-            
-            // Listen for authentication state changes
-            clerk.addListener(({ user }) => {
-                currentUser = user;
-                if (user) {
-                    console.log('👤 User signed in:', user.firstName);
-                    updateUIForSignedInUser();
-                } else {
-                    console.log('👤 User signed out');
-                    updateUIForSignedOutUser();
-                }
-            });
-            
-        } catch (error) {
-            console.error('❌ Error initializing Clerk:', error);
-            updateUIForSignedOutUser();
-        }
-    }
-    
-    // Call initialization
-    initializeClerk();
-    
-    // Authentication UI helper functions
-    function updateUIForSignedInUser() {
-        // Update user profile with Clerk user data
-        userProfile = {
-            id: currentUser.id,
-            name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
-            email: currentUser.emailAddresses?.[0]?.emailAddress || '',
-            firstName: currentUser.firstName || '',
-            lastName: currentUser.lastName || ''
-        };
-        
-        // Update UI
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm font-medium">Hello, ${currentUser.firstName || 'User'}!</span>
-                    <button id="sign-out-btn" class="text-sm text-red-600 hover:text-red-800">Sign Out</button>
-                </div>
-            `;
-            
-            document.getElementById('sign-out-btn').addEventListener('click', () => {
-                clerk.signOut();
-            });
-        }
-        
-        // Update profile display elements
-        updateProfileDisplay();
-    }
-    
-    function updateProfileDisplay() {
-        // Update any profile-related UI elements
-        const profileNameElements = document.querySelectorAll('.profile-name');
-        const profileEmailElements = document.querySelectorAll('.profile-email');
-        
-        profileNameElements.forEach(el => {
-            el.textContent = userProfile.name || 'Guest User';
+
+            createOrSelectUser(name, phone);
+            closeUserRegistrationModal();
+            renderProfile();
+            renderPastOrders();
+            userRegisterForm.reset();
         });
-        
-        profileEmailElements.forEach(el => {
-            el.textContent = userProfile.email || '';
+    }
+
+    if (registerCancelBtn) {
+        registerCancelBtn.addEventListener('click', () => {
+            if (allUsers.length === 0) {
+                alert('Please register at least one user to continue.');
+                return;
+            }
+            closeUserRegistrationModal();
         });
-        
-        // Update header avatar
-        const headerAvatar = document.getElementById('header-avatar');
-        if (headerAvatar && userProfile.name) {
-            const initial = userProfile.name.charAt(0).toUpperCase();
-            const headerAvatarUrl = `https://placehold.co/32x32/a3e635/1a2e05?text=${initial}`;
-            headerAvatar.src = headerAvatarUrl;
-        }
     }
-    
-    function updateUIForSignedOutUser() {
-        // Reset user profile to default guest user
-        userProfile = {
-            id: 'guest-user',
-            name: 'Guest User',
-            email: '',
-            firstName: 'Guest',
-            lastName: 'User'
-        };
-        
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <button id="sign-in-btn" class="text-sm font-medium text-[color:var(--accent-color-1)] hover:opacity-80">Sign In</button>
-                    <span class="themed-subtle-text">|</span>
-                    <button id="sign-up-btn" class="text-sm font-medium text-[color:var(--accent-color-1)] hover:opacity-80">Sign Up</button>
-                </div>
-            `;
-            
-            const signInBtn = document.getElementById('sign-in-btn');
-            const signUpBtn = document.getElementById('sign-up-btn');
-            
-            if (signInBtn) {
-                signInBtn.addEventListener('click', () => {
-                    if (clerk) {
-                        clerk.openSignIn();
-                    } else {
-                        console.error('Clerk not initialized');
-                    }
-                });
-            }
-            
-            if (signUpBtn) {
-                signUpBtn.addEventListener('click', () => {
-                    if (clerk) {
-                        clerk.openSignUp();
-                    } else {
-                        console.error('Clerk not initialized');
-                    }
-                });
-            }
-        }
-        
-        // Update profile display
-        updateProfileDisplay();
-    }
+
+    initializeLocalUsers();
     
     let products = [
         // Fruits
@@ -1120,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', async() => {
 
         // Beauty & wellness 
 
-        { id: 600, name: 'Bronson Professional Face Pack Brush', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/788aef31-0cd2-4ed6-afbe-eb545bab8484.jpeg', category: 'Beauty & wellness', variants: [{unit: '1 pc', price: 84}, {unit: '2 pc'}] },
+        { id: 600, name: 'Bronson Professional Face Pack Brush', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/788aef31-0cd2-4ed6-afbe-eb545bab8484.jpeg', category: 'Beauty & wellness', variants: [{unit: '1 pc', price: 84}, {unit: '2 pc', price: 159}] },
         { id: 601, name: 'Maybelline New York Colossal Kajal Black Fix With Aloe Vera', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/1b71153b-c3ce-4eb8-bd63-1c7aa01dc980.jpeg', category: 'Beauty & wellness', variants: [{unit: '0.35 g', price: 141}] },
         { id: 602, name: 'Lakme 9 To 5 Weightless Mousse Foundation | Rose | Ivory', image: 'https://cdn.zeptonow.com/production/ik-seo/tr:w-470,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/ab21bb27-0d63-4c59-87a1-b6f792938ae9/Lakme-9-To-5-Weightless-Mousse-Foundation-Rose-Ivory.jpeg', category: 'Beauty & wellness', variants: [{unit: '6 g', price: 182}] },
         { id: 603, name: 'Maybelline New York Compact Powder - Ivory | Resists Humidity', image: 'https://cdn.zeptonow.com/production/ik-seo/tr:w-470,ar-1000-1000,pr-true,f-auto,q-80/cms/product_variant/795942fd-2830-4c50-af0e-475e53c1fc35/Maybelline-New-York-Compact-Powder-Ivory-Resists-Humidity.jpeg', category: 'Beauty & wellness', variants: [{unit: '6 g', price: 269}] },
@@ -1353,32 +1724,9 @@ document.addEventListener('DOMContentLoaded', async() => {
             saveOrdersToStorage();
         }
 
-        const savedProfile = localStorage.getItem('grocerymartProfile');
-        
-        // If user is authenticated via Clerk, use their data instead of localStorage
-        if (currentUser) {
-            userProfile = {
-                id: currentUser.id,
-                name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
-                email: currentUser.emailAddresses?.[0]?.emailAddress || '',
-                firstName: currentUser.firstName || '',
-                lastName: currentUser.lastName || '',
-                address: savedProfile ? JSON.parse(savedProfile).address : '123 Market Street<br>New Town, West Bengal<br>India'
-            };
-        } else if (savedProfile) {
-            userProfile = JSON.parse(savedProfile);
-            // Ensure guest user has an ID
-            if (!userProfile.id) {
-                userProfile.id = 'guest-user';
-            }
-        } else {
-            userProfile = {
-                id: 'guest-user',
-                name: 'Guest User',
-                email: 'guest.user@email.com',
-                address: '123 Market Street<br>New Town, West Bengal<br>India'
-            };
-            saveProfileToStorage();
+        const savedProfile = safeParseLS('grocerymartProfile', null);
+        if (savedProfile && savedProfile.id) {
+            userProfile = savedProfile;
         }
     };
 
@@ -1627,10 +1975,10 @@ document.addEventListener('DOMContentLoaded', async() => {
     };
 
     const renderProfile = () => {
-        profileName.textContent = userProfile.name;
-        profileEmail.textContent = userProfile.email;
-        profileAddress.innerHTML = userProfile.address;
-        const initial = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'G';
+        profileName.textContent = userProfile.name || 'Guest User';
+        profileEmail.textContent = userProfile.phone ? `+91 ${userProfile.phone}` : '';
+        profileAddress.innerHTML = userProfile.address || '<span class="text-gray-400 italic">No address saved</span>';
+        const initial = (userProfile.name || 'G').charAt(0).toUpperCase();
         const avatarUrl = `https://placehold.co/128x128/a3e635/1a2e05?text=${initial}`;
         const headerAvatarUrl = `https://placehold.co/32x32/a3e635/1a2e05?text=${initial}`;
         profileAvatar.src = avatarUrl;
@@ -1696,88 +2044,52 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     };
 
-    // MongoDB-enabled checkout function
+    // Checkout flow: hand off to payment page
     const checkout = async () => {
         if (cart.length === 0) {
             alert('Your cart is empty!');
             return;
         }
 
-        // Validate location before proceeding
-        if (!validateLocationForOrder()) {
+        // ── Duplicate order guard ────────────────────────────────────────
+        const existingDelivery = getActiveDeliveryForCurrentUser();
+        if (existingDelivery && existingDelivery.endsAt && Date.now() < existingDelivery.endsAt) {
+            const remaining = Math.ceil((existingDelivery.endsAt - Date.now()) / 60000);
+            alert(`\u26a0\ufe0f You already have an active order arriving in ~${remaining} min.\nPlease wait until your current order is delivered before placing a new one.`);
             return;
         }
 
-        try {
-            const orderData = {
-                userId: userProfile.id || 'guest-user',
-                items: cart.map(item => ({
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    price: item.price,
-                    unit: item.unit || 'piece'
-                })),
-                totalAmount: calculateTotal(),
-                status: 'pending'
-            };
-
-            const response = await fetch(`${API_BASE_URL}/orders`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
-
-            if (response.ok) {
-                const savedOrder = await response.json();
-                console.log('Order saved to MongoDB:', savedOrder);
-                
-                // Also save to localStorage for immediate display
-                const newOrder = {
-                    id: savedOrder._id || `GM${Math.floor(Math.random() * 1000) + 5000}`,
-                    date: new Date().toISOString().split('T')[0],
-                    total: calculateTotal(),
-                    items: cart.map(item => ({ name: item.name, unit: item.unit }))
-                };
-                
-                pastOrders.unshift(newOrder);
-                saveOrdersToStorage();
-                
-                // Clear cart and show success
-                cart = [];
-                updateCartView();
-                handleFilter();
-                hideCartModal();
-                checkoutSuccessModal.classList.remove('hidden');
-                checkoutSuccessModal.classList.add('flex');
-                document.body.classList.add('modal-open');
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        // Soft location check — warn but still allow checkout
+        if (!userLocation.address) {
+            const proceed = confirm('You haven\'t set a delivery location yet.\nYour order will be placed for the default service area.\n\nProceed to payment anyway?');
+            if (!proceed) {
+                showLocationModal();
+                return;
             }
-        } catch (error) {
-            console.error('Error placing order:', error);
-            
-            // Fallback to localStorage only
-            alert('Unable to connect to server. Order saved locally.');
-            const newOrder = {
-                id: `GM${Math.floor(Math.random() * 1000) + 5000}`,
-                date: new Date().toISOString().split('T')[0],
-                total: calculateTotal(),
-                items: cart.map(item => ({ name: item.name, unit: item.unit }))
-            };
-            
-            pastOrders.unshift(newOrder);
-            saveOrdersToStorage();
-            
-            cart = [];
-            updateCartView();
-            handleFilter();
-            hideCartModal();
-            checkoutSuccessModal.classList.remove('hidden');
-            checkoutSuccessModal.classList.add('flex');
-            document.body.classList.add('modal-open');
         }
+
+        const orderId = `#ORD-${Date.now().toString().slice(-8)}`;
+        const totalAmount = calculateTotal();
+
+        const orderData = {
+            userId: userProfile.id || 'guest-user',
+            items: cart.map(item => ({
+                productId: item.productId,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+                unit: item.unit || 'piece'
+            })),
+            totalAmount,
+            deliveryAddress: userProfile.address || '',
+            status: 'pending'
+        };
+
+        localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+        localStorage.setItem('currentOrderId', orderId);
+        localStorage.setItem('currentOrderAmount', totalAmount.toString());
+
+        window.location.href = `payment.html?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(totalAmount.toFixed(2))}`;
     };
 
     productGrid.addEventListener('click', (e) => {
@@ -1880,7 +2192,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     };
     const showEditProfileModal = () => {
         editNameInput.value = userProfile.name;
-        editEmailInput.value = userProfile.email;
+        editEmailInput.value = userProfile.phone || userProfile.email || '';
         editAddressInput.value = userProfile.address.replace(/<br>/g, '\n');
         editProfileModal.classList.remove('hidden');
         editProfileModal.classList.add('flex');
@@ -1910,9 +2222,34 @@ document.addEventListener('DOMContentLoaded', async() => {
 
     editProfileForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        userProfile.name = editNameInput.value;
-        userProfile.email = editEmailInput.value;
+        const editedName = editNameInput.value.trim();
+        const editedPhone = editEmailInput.value.replace(/\D/g, '').slice(-10);
+        if (!editedName) {
+            alert('Name is required.');
+            return;
+        }
+        if (editedPhone.length < 10) {
+            alert('Please enter a valid 10-digit phone number.');
+            return;
+        }
+
+        userProfile.name = editedName;
+        userProfile.phone = editedPhone;
+        userProfile.email = editedPhone;
         userProfile.address = editAddressInput.value.replace(/\n/g, '<br>');
+
+        const userIndex = allUsers.findIndex(u => u.id === userProfile.id);
+        if (userIndex !== -1) {
+            allUsers[userIndex] = {
+                ...allUsers[userIndex],
+                name: userProfile.name,
+                phone: userProfile.phone,
+                address: userProfile.address
+            };
+            saveUsersToStorage();
+            updateAuthContainer();
+        }
+
         saveProfileToStorage();
         renderProfile();
         hideEditProfileModal();
@@ -1954,6 +2291,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     const profileBackIcon = document.getElementById('profile-back-icon');
     const htmlEl = document.documentElement;
 
+    const logoImg = document.getElementById('logo-img');
+    const applyLogoTheme = (isDark) => {
+        if (logoImg) {
+            logoImg.src = isDark ? './GroceryD.png' : './GroceryL.png';
+        }
+    };
+
     const toggleTheme = () => {
         // Toggle dark mode immediately
         htmlEl.classList.toggle('dark');
@@ -1967,7 +2311,8 @@ document.addEventListener('DOMContentLoaded', async() => {
             moonIcon.classList.add('hidden');
             sunIcon.classList.remove('hidden');
         }
-        
+
+        applyLogoTheme(isDarkMode);
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
     };
 
@@ -1980,6 +2325,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         sunIcon.classList.add('hidden');
         moonIcon.classList.remove('hidden');
     }
+    applyLogoTheme(isDarkMode);
     
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', toggleTheme);
@@ -2047,6 +2393,8 @@ document.addEventListener('DOMContentLoaded', async() => {
     renderProducts();
     updateCartView();
     renderProfile();
+    enableTrackerDrag();
+    initDeliveryTracker();
     
     // Start auto-suggestion after products are loaded
     startAutoSuggestion();

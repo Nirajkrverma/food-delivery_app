@@ -460,6 +460,28 @@
             body {
                 padding-bottom: 80px;
             }
+
+            #profile-content {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            #orders-section > .p-6.border-b.themed-border.flex.items-center.justify-between {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            #orders-section select {
+                width: 100%;
+            }
+
+            #logout-btn,
+            #delete-profile-btn {
+                padding-top: 0.75rem !important;
+                padding-bottom: 0.75rem !important;
+                font-size: 0.95rem;
+            }
             
             /* Header adjustments */
             header h1 {
@@ -890,6 +912,11 @@
                 <button id="logout-btn" class="w-full themed-card-bg border themed-border rounded-xl shadow-lg p-4 font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2">
                     <i class="ph ph-sign-out"></i>
                     Logout
+                </button>
+
+                <button id="delete-profile-btn" class="w-full themed-card-bg border themed-border rounded-xl shadow-lg p-4 font-medium text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center gap-2">
+                    <i class="ph ph-trash"></i>
+                    Delete Profile
                 </button>
             </div>
 
@@ -1483,9 +1510,49 @@
         let clerk;
         let currentUser = null;
         let isSignedIn = false;
+        let localActiveUser = null;
+
+        const USERS_STORAGE_KEY = 'grocerymartUsers';
+        const ACTIVE_USER_ID_KEY = 'grocerymartActiveUserId';
+        const LOGGED_IN_USERS_KEY = 'grocerymartLoggedInUserIds';
+
+        function getLocalUsers() {
+            try {
+                const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+                return Array.isArray(users) ? users : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function getLoggedInUserIds() {
+            try {
+                const ids = JSON.parse(localStorage.getItem(LOGGED_IN_USERS_KEY) || '[]');
+                return Array.isArray(ids) ? ids : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function getActiveLocalUser() {
+            const users = getLocalUsers();
+            const activeId = localStorage.getItem(ACTIVE_USER_ID_KEY);
+            if (!activeId) return null;
+            return users.find((user) => user.id === activeId) || null;
+        }
 
         async function initializeClerk() {
             try {
+                localActiveUser = getActiveLocalUser();
+                if (localActiveUser) {
+                    isSignedIn = true;
+                    loadUserProfile();
+                    updateProfileUI();
+                    showProfileContent();
+                    loadOrderHistory();
+                    return;
+                }
+
                 console.log('🔄 Initializing Clerk on profile page...');
                 
                 // Get Clerk configuration from our API
@@ -1626,6 +1693,9 @@
             if (currentUser && currentUser.id) {
                 return `${baseKey}_${currentUser.id}`;
             }
+            if (localActiveUser && localActiveUser.id) {
+                return `${baseKey}_${localActiveUser.id}`;
+            }
             return baseKey; // Guest users use non-specific key
         }
 
@@ -1639,6 +1709,22 @@
         function loadUserProfile() {
             const profileKey = getUserStorageKey('grocerymartProfile');
             const savedProfile = localStorage.getItem(profileKey);
+
+            if (localActiveUser) {
+                userProfile = {
+                    id: localActiveUser.id,
+                    name: localActiveUser.name || 'User',
+                    phone: localActiveUser.phone || '',
+                    email: localActiveUser.phone || 'user@email.com',
+                    address: localActiveUser.address || '123 Market Street<br>New Town, West Bengal<br>India'
+                };
+                if (savedProfile) {
+                    const parsed = JSON.parse(savedProfile);
+                    userProfile = { ...userProfile, ...parsed };
+                }
+                localStorage.setItem(profileKey, JSON.stringify(userProfile));
+                return;
+            }
             
             if (currentUser) {
                 // Authenticated user - use Clerk data as primary source
@@ -1674,6 +1760,7 @@
         const editProfileForm = document.getElementById('edit-profile-form');
         const cancelEdit = document.getElementById('cancel-edit');
         const logoutBtn = document.getElementById('logout-btn');
+        const deleteProfileBtn = document.getElementById('delete-profile-btn');
         const orderHistoryContainer = document.getElementById('order-history-container');
 
         // Theme toggle - simplified and smooth with consistent icon colors
@@ -1990,6 +2077,24 @@
         // Handle user logout
         logoutBtn.addEventListener('click', async () => {
             try {
+                if (localActiveUser) {
+                    const activeId = localActiveUser.id;
+                    const loggedInIds = getLoggedInUserIds().filter((id) => id !== activeId);
+                    localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInIds));
+
+                    if (loggedInIds.length > 0) {
+                        localStorage.setItem(ACTIVE_USER_ID_KEY, loggedInIds[0]);
+                    } else {
+                        localStorage.removeItem(ACTIVE_USER_ID_KEY);
+                    }
+
+                    showNotification('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = './index.html';
+                    }, 350);
+                    return;
+                }
+
                 if (clerk && currentUser) {
                     await clerk.signOut();
                 }
@@ -2014,6 +2119,46 @@
                 showNotification('Logout failed. Please try again.', 'error');
             }
         });
+
+        if (deleteProfileBtn) {
+            deleteProfileBtn.addEventListener('click', () => {
+                if (!localActiveUser) {
+                    showNotification('No local profile selected to delete.', 'error');
+                    return;
+                }
+
+                const shouldDelete = confirm('Delete this profile permanently? This cannot be undone.');
+                if (!shouldDelete) return;
+
+                const activeId = localActiveUser.id;
+                const remainingUsers = getLocalUsers().filter((user) => user.id !== activeId);
+                localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(remainingUsers));
+
+                const loggedInIds = getLoggedInUserIds().filter((id) => id !== activeId && remainingUsers.some((user) => user.id === id));
+                localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInIds));
+
+                if (loggedInIds.length > 0) {
+                    localStorage.setItem(ACTIVE_USER_ID_KEY, loggedInIds[0]);
+                } else {
+                    localStorage.removeItem(ACTIVE_USER_ID_KEY);
+                }
+
+                const keysToRemove = [
+                    `grocerymartProfile_${activeId}`,
+                    `grocerymartOrders_${activeId}`,
+                    `grocerymartAddresses_${activeId}`,
+                    `activeDelivery_${activeId}`,
+                    `walletConnected_${activeId}`,
+                    `walletAddress_${activeId}`
+                ];
+                keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+                showNotification('Profile deleted successfully', 'success');
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 350);
+            });
+        }
 
         // Add item to cart (reorder functionality)
         function addToCart(item) {
