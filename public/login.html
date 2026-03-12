@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Grocery Mart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-light: #f7fee7;
+            --text-light: #1a2e05;
+            --card-bg-light: #ffffff;
+            --border-light: #dcfce7;
+            --subtle-text-light: #4d5e42;
+            --accent-color-1: #84cc16;
+            --accent-color-2: #a3e635;
+            --bg-dark: #0f172a;
+            --bg-dark-secondary: #1e293b;
+            --text-dark: #ecfccb;
+            --card-bg-dark: #1e293b;
+            --border-dark: #334155;
+            --subtle-text-dark: #94a3b8;
+            --glass-bg-light: rgba(255, 255, 255, 0.85);
+            --glass-bg-dark: rgba(30, 41, 59, 0.75);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #d9f99d 0%, #f7fee7 45%, #ecfccb 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        html.dark body {
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+
+        .glass-effect {
+            background-color: var(--glass-bg-light);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            backdrop-filter: blur(16px) saturate(180%);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        html.dark .glass-effect {
+            background-color: var(--glass-bg-dark);
+            border-color: rgba(71, 85, 105, 0.6);
+        }
+
+        .btn-primary {
+            background-image: linear-gradient(45deg, var(--accent-color-1), var(--accent-color-2), var(--accent-color-1));
+            background-size: 200% auto;
+            color: #1a2e05;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-position: right center;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen relative overflow-hidden flex items-center justify-center p-4 sm:p-6">
+        <div class="absolute -top-20 -left-20 w-56 h-56 sm:w-72 sm:h-72 bg-lime-300/30 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-20 w-56 h-56 sm:w-80 sm:h-80 bg-lime-400/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <main class="relative w-full max-w-md sm:max-w-lg glass-effect border rounded-3xl p-5 sm:p-7 md:p-8 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <a href="./index.html" class="inline-flex items-center gap-2 text-sm font-semibold hover:underline">
+                    <i class="ph ph-arrow-left"></i> Back to Home
+                </a>
+                <button id="theme-toggle" class="w-10 h-10 rounded-xl border border-lime-300 dark:border-slate-600 flex items-center justify-center">
+                    <i id="sun-icon" class="ph ph-sun text-xl text-lime-600"></i>
+                    <i id="moon-icon" class="ph ph-moon text-xl text-lime-300 hidden"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 mb-5">
+                <img src="./GroceryL.png" alt="Grocery Mart" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/64x64/a3e635/1a2e05?text=GM';">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold">Grocery Mart Login</h1>
+                    <p class="text-xs sm:text-sm text-lime-700 dark:text-lime-300">Registered users can sign in quickly</p>
+                </div>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-phone" class="block text-sm font-medium mb-1">Phone Number</label>
+                    <input id="login-phone" type="tel" required placeholder="Enter your 10-digit phone" class="w-full rounded-xl border border-lime-200 dark:border-slate-600 bg-white/90 dark:bg-slate-800/80 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <button type="submit" class="btn-primary w-full py-3 rounded-xl">Sign In</button>
+            </form>
+
+            <p id="login-message" class="text-sm mt-4 min-h-6"></p>
+
+            <div class="my-5 h-px bg-lime-200 dark:bg-slate-700"></div>
+
+            <h2 class="text-lg sm:text-xl font-bold mb-1">Create New Account</h2>
+            <p class="text-sm mb-4 text-lime-800 dark:text-slate-300">Register with name and phone number</p>
+            <form id="register-form" class="space-y-4">
+                <div>
+                    <label for="register-name" class="block text-sm font-medium mb-1">Full Name</label>
+                    <input id="register-name" type="text" required placeholder="Enter your name" class="w-full rounded-xl border border-lime-200 dark:border-slate-600 bg-white/90 dark:bg-slate-800/80 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <label for="register-phone" class="block text-sm font-medium mb-1">Phone Number</label>
+                    <input id="register-phone" type="tel" required placeholder="10-digit mobile number" class="w-full rounded-xl border border-lime-200 dark:border-slate-600 bg-white/90 dark:bg-slate-800/80 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl font-semibold border border-lime-400 text-lime-700 dark:text-lime-300 hover:bg-lime-50 dark:hover:bg-slate-700 transition">Create Account</button>
+            </form>
+
+            <div class="mt-5 p-3 sm:p-4 rounded-2xl border border-lime-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50">
+                <p class="text-sm font-semibold mb-3 text-lime-800 dark:text-slate-300">Registered Users</p>
+                <div id="registered-users" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+
+                <a href="./index.html?fromLogin=1" class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-lime-700 dark:text-lime-300 hover:underline">
+                Continue as guest <i class="ph ph-arrow-right"></i>
+            </a>
+        </main>
+        </div>
+    </div>
+
+    <script>
+        const USERS_STORAGE_KEY = 'grocerymartUsers';
+        const ACTIVE_USER_ID_KEY = 'grocerymartActiveUserId';
+        const LOGGED_IN_USERS_KEY = 'grocerymartLoggedInUserIds';
+
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginMessage = document.getElementById('login-message');
+        const registeredUsersContainer = document.getElementById('registered-users');
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        const redirectTo = new URLSearchParams(window.location.search).get('redirect') || './index.html';
+
+        const buildLoginApprovedRedirect = (targetUrl) => {
+            const separator = targetUrl.includes('?') ? '&' : '?';
+            return `${targetUrl}${separator}fromLogin=1`;
+        };
+
+        const safeParseLS = (key, fallback = null) => {
+            try { return JSON.parse(localStorage.getItem(key)); } catch { return fallback; }
+        };
+
+        const saveUsers = (users) => localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+        const saveLoggedInUsers = (ids) => localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(ids));
+
+        const normalizePhone = (value) => String(value || '').replace(/\D/g, '').slice(-10);
+
+        const setSessionForUser = (user, allUsers, loggedInIds) => {
+            const nextLoggedInIds = Array.isArray(loggedInIds) ? [...loggedInIds] : [];
+            if (!nextLoggedInIds.includes(user.id)) nextLoggedInIds.push(user.id);
+
+            localStorage.setItem(ACTIVE_USER_ID_KEY, user.id);
+            saveLoggedInUsers(nextLoggedInIds);
+            saveUsers(allUsers);
+
+            const profilePayload = {
+                id: user.id,
+                name: user.name,
+                phone: user.phone,
+                email: user.phone,
+                address: user.address || '123 Market Street<br>New Town, West Bengal<br>India'
+            };
+            localStorage.setItem('grocerymartProfile', JSON.stringify(profilePayload));
+        };
+
+        const showMessage = (text, isSuccess = false) => {
+            loginMessage.textContent = text;
+            loginMessage.className = `text-sm mt-4 min-h-6 ${isSuccess ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+        };
+
+        const renderRegisteredUsers = () => {
+            const users = safeParseLS(USERS_STORAGE_KEY, []);
+            if (!Array.isArray(users) || users.length === 0) {
+                registeredUsersContainer.innerHTML = '<p class="text-sm text-lime-800 dark:text-slate-300">No registered users yet. Create one from this page.</p>';
+                return;
+            }
+
+            registeredUsersContainer.innerHTML = users.slice(0, 6).map((user) => {
+                const initial = (user.name || 'U').charAt(0).toUpperCase();
+                const maskedPhone = String(user.phone || '').replace(/(\d{2})\d{6}(\d{2})/, '$1******$2');
+                return `
+                    <button type="button" data-user-id="${user.id}" class="quick-login w-full flex items-center gap-3 rounded-xl border border-lime-200 dark:border-slate-600 px-3 py-2 hover:bg-lime-50 dark:hover:bg-slate-700 transition" title="Tap to continue as ${user.name || 'User'}">
+                        <span class="w-9 h-9 rounded-full bg-lime-200 dark:bg-slate-600 flex items-center justify-center font-bold text-lime-800 dark:text-lime-200">${initial}</span>
+                        <span class="text-left">
+                            <span class="block font-semibold">${user.name || 'User'}</span>
+                            <span class="block text-xs text-lime-700 dark:text-slate-300">${maskedPhone || 'No phone'}</span>
+                        </span>
+                    </button>
+                `;
+            }).join('');
+
+            const quickLoginButtons = document.querySelectorAll('.quick-login');
+            quickLoginButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const usersList = safeParseLS(USERS_STORAGE_KEY, []);
+                    const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
+                    const selectedUser = Array.isArray(usersList)
+                        ? usersList.find((user) => user.id === btn.dataset.userId)
+                        : null;
+
+                    if (!selectedUser) {
+                        showMessage('Selected user was not found. Please try again.');
+                        return;
+                    }
+
+                    setSessionForUser(selectedUser, usersList, loggedInIds);
+                    showMessage(`Welcome ${selectedUser.name}! Redirecting...`, true);
+                    setTimeout(() => {
+                        window.location.href = buildLoginApprovedRedirect(redirectTo);
+                    }, 500);
+                });
+            });
+        };
+
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const enteredPhone = normalizePhone(document.getElementById('login-phone').value);
+
+            if (enteredPhone.length < 10) {
+                showMessage('Please enter a valid 10-digit phone number.');
+                return;
+            }
+
+            const users = safeParseLS(USERS_STORAGE_KEY, []);
+            const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
+            const matchedUser = Array.isArray(users)
+                ? users.find((user) => normalizePhone(user.phone) === enteredPhone)
+                : null;
+
+            if (!matchedUser) {
+                showMessage('No registered account found with this phone number.');
+                return;
+            }
+
+            setSessionForUser(matchedUser, users, loggedInIds);
+            showMessage(`Welcome back, ${matchedUser.name}! Redirecting...`, true);
+            setTimeout(() => {
+                window.location.href = buildLoginApprovedRedirect(redirectTo);
+            }, 700);
+        });
+
+        registerForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const name = document.getElementById('register-name').value.trim();
+            const phone = normalizePhone(document.getElementById('register-phone').value);
+
+            if (!name) {
+                showMessage('Please enter your full name.');
+                return;
+            }
+            if (phone.length < 10) {
+                showMessage('Please enter a valid 10-digit phone number.');
+                return;
+            }
+
+            const users = safeParseLS(USERS_STORAGE_KEY, []);
+            const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
+            const userList = Array.isArray(users) ? users : [];
+
+            const existingUser = userList.find((user) => normalizePhone(user.phone) === phone);
+            if (existingUser) {
+                setSessionForUser(existingUser, userList, loggedInIds);
+                showMessage('Account already exists. Signed you in successfully.', true);
+                setTimeout(() => {
+                    window.location.href = buildLoginApprovedRedirect(redirectTo);
+                }, 700);
+                return;
+            }
+
+            const newUser = {
+                id: `usr-${Date.now()}`,
+                name,
+                phone,
+                address: '123 Market Street<br>New Town, West Bengal<br>India'
+            };
+            const nextUsers = [...userList, newUser];
+
+            setSessionForUser(newUser, nextUsers, loggedInIds);
+            showMessage('Account created successfully. Redirecting...', true);
+            renderRegisteredUsers();
+            registerForm.reset();
+            setTimeout(() => {
+                window.location.href = buildLoginApprovedRedirect(redirectTo);
+            }, 700);
+        });
+
+        const applyTheme = () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            sunIcon.classList.toggle('hidden', savedTheme === 'dark');
+            moonIcon.classList.toggle('hidden', savedTheme !== 'dark');
+        };
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            applyTheme();
+        });
+
+        applyTheme();
+        renderRegisteredUsers();
+    </script>
+</body>
+</html>

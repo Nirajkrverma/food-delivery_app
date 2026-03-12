@@ -739,7 +739,7 @@
         <!-- Header -->
         <header class="sticky top-0 z-50 flex justify-between items-center mb-8 py-4 glass-effect -mx-4 sm:-mx-6 px-4 sm:px-6 rounded-lg">
             <div class="flex items-center gap-3">
-                <button onclick="window.location.href='./index.html'" class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all" title="Back to Home">
+                <button onclick="window.location.href='./index.html?fromLogin=1'" class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all" title="Back to Home">
                     <i class="ph ph-arrow-left text-2xl text-[#1a2e05] dark:text-[#bef264]"></i>
                 </button>
                 <h1 class="text-2xl sm:text-3xl font-bold">My Profile</h1>
@@ -1963,7 +1963,7 @@
                     <div class="text-7xl mb-4">�</div>
                     <h3 class="text-xl font-bold themed-text mb-2">No orders yet</h3>
                     <p class="themed-subtle-text mb-6">Start shopping to see your order history here!</p>
-                    <a href="./index.html" class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform">
+                    <a href="./index.html?fromLogin=1" class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform">
                         <i class="ph ph-shopping-cart text-xl"></i>
                         Start Shopping
                     </a>
@@ -2090,7 +2090,9 @@
 
                     showNotification('Logged out successfully', 'success');
                     setTimeout(() => {
-                        window.location.href = './index.html';
+                        window.location.href = loggedInIds.length > 0
+                            ? './index.html?fromLogin=1'
+                            : './login.html?redirect=./index.html';
                     }, 350);
                     return;
                 }
@@ -2155,7 +2157,9 @@
 
                 showNotification('Profile deleted successfully', 'success');
                 setTimeout(() => {
-                    window.location.href = './index.html';
+                    window.location.href = loggedInIds.length > 0
+                        ? './index.html?fromLogin=1'
+                        : './login.html?redirect=./index.html';
                 }, 350);
             });
         }

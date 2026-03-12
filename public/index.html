@@ -772,6 +772,10 @@
                 </div>
             </a>
             <div class="flex items-center gap-3">
+                <a href="./login.html?redirect=./index.html" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border themed-border text-sm font-semibold hover:bg-lime-50 dark:hover:bg-slate-700 transition" title="Login">
+                    <i class="ph ph-sign-in"></i>
+                    <span class="hidden sm:inline">Login</span>
+                </a>
                 <!-- Authentication Container -->
                 <div id="auth-container" class="mr-4">
                     <!-- Auth buttons will be inserted here -->
@@ -1231,6 +1235,18 @@ const loadOrderHistory = async (userId = 'guest-user') => {
 };
 
 document.addEventListener('DOMContentLoaded', async() => {
+    const currentParams = new URLSearchParams(window.location.search);
+    const cameFromLogin = currentParams.get('fromLogin') === '1';
+    if (!cameFromLogin) {
+        window.location.href = './login.html?redirect=./index.html';
+        return;
+    }
+
+    currentParams.delete('fromLogin');
+    const cleanedQuery = currentParams.toString();
+    const cleanedUrl = `${window.location.pathname}${cleanedQuery ? `?${cleanedQuery}` : ''}${window.location.hash || ''}`;
+    window.history.replaceState({}, document.title, cleanedUrl);
+
     let allUsers = [];
     let activeUserId = null;
     let loggedInUserIds = [];
@@ -1245,6 +1261,9 @@ document.addEventListener('DOMContentLoaded', async() => {
     const saveUsersToStorage = () => localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(allUsers));
     const saveLoggedInUsersToStorage = () => localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInUserIds));
     const getVisibleUsers = () => allUsers.filter((user) => loggedInUserIds.includes(user.id));
+    const redirectToLoginPage = () => {
+        window.location.href = './login.html?redirect=./index.html';
+    };
 
     const openUserRegistrationModal = () => {
         if (!userRegisterModal) return;
@@ -1262,54 +1281,30 @@ document.addEventListener('DOMContentLoaded', async() => {
     const updateAuthContainer = () => {
         if (!authContainer) return;
         const visibleUsers = getVisibleUsers();
+
+        if (visibleUsers.length === 0) {
+            authContainer.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <a href="./login.html?redirect=./index.html" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border themed-border text-sm font-semibold hover:bg-lime-50 dark:hover:bg-slate-700 transition">
+                        <i class="ph ph-sign-in"></i>
+                        Login
+                    </a>
+                </div>
+            `;
+            return;
+        }
+
         const activeUser = visibleUsers.find(u => u.id === activeUserId) || visibleUsers[0] || null;
-        const chips = visibleUsers.map((u) => {
-            const initial = (u.name || 'U').charAt(0).toUpperCase();
-            const activeClass = u.id === activeUserId ? 'active' : '';
-            return `<button class="user-chip ${activeClass}" data-user-id="${u.id}" title="${u.name} (${u.phone})">${initial}</button>`;
-        }).join('');
+        const activeInitial = (activeUser?.name || 'U').charAt(0).toUpperCase();
 
         authContainer.innerHTML = `
-            <div class="user-switch-shell">
-                <div class="user-active-label" title="${activeUser ? activeUser.name : 'User'}">${activeUser ? activeUser.name : 'User'}</div>
-                <div class="flex items-center gap-2 overflow-x-auto user-chip-row">
-                    ${chips}
-                    <button id="add-user-btn" class="user-chip add" title="Add User">+</button>
+            <div class="user-switch-shell" title="${activeUser ? `${activeUser.name} (${activeUser.phone})` : 'User'}">
+                <div class="flex items-center gap-2 px-2 py-1 rounded-full border themed-border">
+                    <span class="w-7 h-7 rounded-full bg-lime-200 dark:bg-slate-600 text-lime-800 dark:text-lime-200 text-xs font-bold flex items-center justify-center">${activeInitial}</span>
+                    <span class="user-active-label">${activeUser ? activeUser.name : 'User'}</span>
                 </div>
             </div>
         `;
-
-        const switchButtons = authContainer.querySelectorAll('[data-user-id]');
-        const addUserBtn = document.getElementById('add-user-btn');
-
-        if (switchButtons.length) {
-            switchButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    setActiveUser(button.dataset.userId);
-                    triggerUserSwitchEffect();
-                    renderProfile();
-                    renderPastOrders();
-                });
-            });
-        }
-
-        if (addUserBtn) {
-            addUserBtn.addEventListener('click', openUserRegistrationModal);
-        }
-    };
-
-    const triggerUserSwitchEffect = () => {
-        const targets = [
-            document.getElementById('header-avatar'),
-            document.getElementById('profile-avatar')
-        ];
-
-        targets.forEach((target) => {
-            if (!target) return;
-            target.classList.remove('user-switch-pop');
-            void target.offsetWidth;
-            target.classList.add('user-switch-pop');
-        });
     };
 
     const setActiveUser = (userId) => {
@@ -1373,19 +1368,29 @@ document.addEventListener('DOMContentLoaded', async() => {
             saveUsersToStorage();
             loggedInUserIds = [];
             saveLoggedInUsersToStorage();
-            updateAuthContainer();
-            openUserRegistrationModal();
+            redirectToLoginPage();
             return;
         }
 
-        if (!Array.isArray(loggedInUserIds) || loggedInUserIds.length === 0) {
-            loggedInUserIds = allUsers.map((user) => user.id);
-            saveLoggedInUsersToStorage();
+        if (!Array.isArray(loggedInUserIds)) {
+            loggedInUserIds = [];
         }
 
         loggedInUserIds = loggedInUserIds.filter((id) => allUsers.some((user) => user.id === id));
         if (loggedInUserIds.length === 0) {
-            loggedInUserIds = allUsers.map((user) => user.id);
+            activeUserId = null;
+            localStorage.removeItem(ACTIVE_USER_ID_KEY);
+            userProfile = {
+                id: 'guest-user',
+                name: 'Guest User',
+                phone: '',
+                email: 'guest.user@email.com',
+                address: '123 Market Street<br>New Town, West Bengal<br>India'
+            };
+            localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
+            saveLoggedInUsersToStorage();
+            redirectToLoginPage();
+            return;
         }
         saveLoggedInUsersToStorage();
 
