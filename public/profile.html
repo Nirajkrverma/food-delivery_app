@@ -2078,21 +2078,13 @@
         logoutBtn.addEventListener('click', async () => {
             try {
                 if (localActiveUser) {
-                    const activeId = localActiveUser.id;
-                    const loggedInIds = getLoggedInUserIds().filter((id) => id !== activeId);
-                    localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInIds));
-
-                    if (loggedInIds.length > 0) {
-                        localStorage.setItem(ACTIVE_USER_ID_KEY, loggedInIds[0]);
-                    } else {
-                        localStorage.removeItem(ACTIVE_USER_ID_KEY);
-                    }
+                    localStorage.removeItem(ACTIVE_USER_ID_KEY);
+                    localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify([]));
+                    localActiveUser = null;
 
                     showNotification('Logged out successfully', 'success');
                     setTimeout(() => {
-                        window.location.href = loggedInIds.length > 0
-                            ? './index.html?fromLogin=1'
-                            : './login.html?redirect=./index.html';
+                        window.location.href = './login.html?redirect=./index.html';
                     }, 350);
                     return;
                 }

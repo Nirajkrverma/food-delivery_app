@@ -1311,10 +1311,8 @@ document.addEventListener('DOMContentLoaded', async() => {
         const user = allUsers.find(u => u.id === userId);
         if (!user) return;
 
-        if (!loggedInUserIds.includes(user.id)) {
-            loggedInUserIds.push(user.id);
-            saveLoggedInUsersToStorage();
-        }
+        loggedInUserIds = [user.id];
+        saveLoggedInUsersToStorage();
 
         activeUserId = user.id;
         localStorage.setItem(ACTIVE_USER_ID_KEY, activeUserId);
@@ -1337,10 +1335,6 @@ document.addEventListener('DOMContentLoaded', async() => {
         const existing = allUsers.find(u => u.phone.replace(/\D/g, '').slice(-10) === normalizedPhone);
 
         if (existing) {
-            if (!loggedInUserIds.includes(existing.id)) {
-                loggedInUserIds.push(existing.id);
-                saveLoggedInUsersToStorage();
-            }
             setActiveUser(existing.id);
             return;
         }
@@ -1353,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         };
         allUsers.push(newUser);
         saveUsersToStorage();
-        loggedInUserIds.push(newUser.id);
+        loggedInUserIds = [newUser.id];
         saveLoggedInUsersToStorage();
         setActiveUser(newUser.id);
     };
@@ -1377,7 +1371,10 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
 
         loggedInUserIds = loggedInUserIds.filter((id) => allUsers.some((user) => user.id === id));
-        if (loggedInUserIds.length === 0) {
+        const hasValidActive = activeUserId && allUsers.some((user) => user.id === activeUserId);
+        const nextActiveId = hasValidActive ? activeUserId : (loggedInUserIds[0] || null);
+
+        if (!nextActiveId) {
             activeUserId = null;
             localStorage.removeItem(ACTIVE_USER_ID_KEY);
             userProfile = {
@@ -1392,13 +1389,8 @@ document.addEventListener('DOMContentLoaded', async() => {
             redirectToLoginPage();
             return;
         }
-        saveLoggedInUsersToStorage();
 
-        if (!activeUserId || !loggedInUserIds.includes(activeUserId)) {
-            activeUserId = loggedInUserIds[0];
-        }
-
-        setActiveUser(activeUserId);
+        setActiveUser(nextActiveId);
     };
 
     if (userRegisterForm) {

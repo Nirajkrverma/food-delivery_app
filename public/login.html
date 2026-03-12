@@ -75,10 +75,7 @@
         <div class="absolute -bottom-24 -right-20 w-56 h-56 sm:w-80 sm:h-80 bg-lime-400/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <main class="relative w-full max-w-md sm:max-w-lg glass-effect border rounded-3xl p-5 sm:p-7 md:p-8 shadow-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <a href="./index.html" class="inline-flex items-center gap-2 text-sm font-semibold hover:underline">
-                    <i class="ph ph-arrow-left"></i> Back to Home
-                </a>
+            <div class="flex items-center justify-end mb-6">
                 <button id="theme-toggle" class="w-10 h-10 rounded-xl border border-lime-300 dark:border-slate-600 flex items-center justify-center">
                     <i id="sun-icon" class="ph ph-sun text-xl text-lime-600"></i>
                     <i id="moon-icon" class="ph ph-moon text-xl text-lime-300 hidden"></i>
@@ -160,12 +157,9 @@
 
         const normalizePhone = (value) => String(value || '').replace(/\D/g, '').slice(-10);
 
-        const setSessionForUser = (user, allUsers, loggedInIds) => {
-            const nextLoggedInIds = Array.isArray(loggedInIds) ? [...loggedInIds] : [];
-            if (!nextLoggedInIds.includes(user.id)) nextLoggedInIds.push(user.id);
-
+        const setSessionForUser = (user, allUsers) => {
             localStorage.setItem(ACTIVE_USER_ID_KEY, user.id);
-            saveLoggedInUsers(nextLoggedInIds);
+            saveLoggedInUsers([user.id]);
             saveUsers(allUsers);
 
             const profilePayload = {
@@ -208,7 +202,6 @@
             quickLoginButtons.forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const usersList = safeParseLS(USERS_STORAGE_KEY, []);
-                    const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
                     const selectedUser = Array.isArray(usersList)
                         ? usersList.find((user) => user.id === btn.dataset.userId)
                         : null;
@@ -218,7 +211,7 @@
                         return;
                     }
 
-                    setSessionForUser(selectedUser, usersList, loggedInIds);
+                    setSessionForUser(selectedUser, usersList);
                     showMessage(`Welcome ${selectedUser.name}! Redirecting...`, true);
                     setTimeout(() => {
                         window.location.href = buildLoginApprovedRedirect(redirectTo);
@@ -237,7 +230,6 @@
             }
 
             const users = safeParseLS(USERS_STORAGE_KEY, []);
-            const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
             const matchedUser = Array.isArray(users)
                 ? users.find((user) => normalizePhone(user.phone) === enteredPhone)
                 : null;
@@ -247,7 +239,7 @@
                 return;
             }
 
-            setSessionForUser(matchedUser, users, loggedInIds);
+            setSessionForUser(matchedUser, users);
             showMessage(`Welcome back, ${matchedUser.name}! Redirecting...`, true);
             setTimeout(() => {
                 window.location.href = buildLoginApprovedRedirect(redirectTo);
@@ -270,12 +262,11 @@
             }
 
             const users = safeParseLS(USERS_STORAGE_KEY, []);
-            const loggedInIds = safeParseLS(LOGGED_IN_USERS_KEY, []);
             const userList = Array.isArray(users) ? users : [];
 
             const existingUser = userList.find((user) => normalizePhone(user.phone) === phone);
             if (existingUser) {
-                setSessionForUser(existingUser, userList, loggedInIds);
+                setSessionForUser(existingUser, userList);
                 showMessage('Account already exists. Signed you in successfully.', true);
                 setTimeout(() => {
                     window.location.href = buildLoginApprovedRedirect(redirectTo);
@@ -291,7 +282,7 @@
             };
             const nextUsers = [...userList, newUser];
 
-            setSessionForUser(newUser, nextUsers, loggedInIds);
+            setSessionForUser(newUser, nextUsers);
             showMessage('Account created successfully. Redirecting...', true);
             renderRegisteredUsers();
             registerForm.reset();
