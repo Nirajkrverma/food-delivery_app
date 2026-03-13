@@ -654,11 +654,28 @@
             }
         }
 
+        function generateFriendlyOrderId() {
+            const tsPart = Date.now().toString(36).toUpperCase().slice(-4);
+            const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
+            return `OD-${tsPart}${randomPart}`;
+        }
+
+        function formatOrderIdForDisplay(orderId) {
+            const value = String(orderId || '').trim();
+            if (!value) return generateFriendlyOrderId();
+            if (value.length <= 12) return value;
+
+            const compact = value.replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
+            return compact ? `OD-${compact}` : value.slice(-12);
+        }
+
         const paymentPageParams = new URLSearchParams(window.location.search);
         const isPayNowMode = paymentPageParams.get('payNow') === '1';
+        const preferredPaymentMethod = paymentPageParams.get('preferredMethod') || '';
         const defaultProfile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
         const pendingOrderSeed = safeParseJSON(localStorage.getItem('pendingOrder') || '{}', {});
         const payNowUserId = paymentPageParams.get('userId') || pendingOrderSeed.userId || defaultProfile.id || 'guest-user';
+        const getOrdersStorageKey = (userId) => `grocerymartOrders_${userId || 'guest-user'}`;
         let currentOrderContext = {
             orderId: '',
             amount: 0,
@@ -718,6 +735,9 @@
             if (currentPaymentMethod === 'cod') {
                 actionText.textContent = 'Place COD Order';
                 actionIcon.className = 'ph-hand-coins text-xl';
+            } else if (currentPaymentMethod === 'upi') {
+                actionText.textContent = 'Pay with UPI';
+                actionIcon.className = 'ph-qr-code text-xl';
             } else {
                 actionText.textContent = 'Pay';
                 actionIcon.className = 'ph-lock text-xl';
@@ -844,7 +864,34 @@
                 localStorage.removeItem('pendingOrder');
                 localStorage.removeItem('currentOrderId');
                 localStorage.removeItem('currentOrderAmount');
+                return orderResult;
             }
+
+            return null;
+        }
+
+        function storeOrderHistoryEntry(paymentData, transactionId) {
+            const historyUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
+            const storageKey = getOrdersStorageKey(historyUserId);
+            const savedOrders = safeParseJSON(localStorage.getItem(storageKey) || '[]', []);
+            const nextOrders = Array.isArray(savedOrders) ? savedOrders : [];
+            const normalizedOrderId = String(currentOrderContext.orderId || paymentData.orderId || transactionId || '');
+
+            if (nextOrders.some((order) => String(order.orderId || order.id || '') === normalizedOrderId)) {
+                return;
+            }
+
+            nextOrders.unshift({
+                id: normalizedOrderId,
+                orderId: normalizedOrderId,
+                createdAt: new Date().toISOString(),
+                total: Number(currentOrderContext.amount || paymentData.amount || 0),
+                paymentMethod: currentPaymentMethod,
+                items: Array.isArray(currentOrderContext.items) ? currentOrderContext.items : [],
+                transactionId
+            });
+
+            localStorage.setItem(storageKey, JSON.stringify(nextOrders));
         }
 
         // Process Payment
@@ -947,7 +994,7 @@
                     paymentData.bankCode = document.querySelector('input[name="bank"]:checked').value;
                 }
 
-                // COD flow (no gateway hit)
+                // COD flow (place order now, payment stays pending)
                 if (currentPaymentMethod === 'cod') {
                     const codResult = {
                         success: true,
@@ -981,9 +1028,12 @@
                     tick();
 
                     const deliveryEndsAt = Date.now() + 12 * 60 * 1000;
+                    const deliveryStartedAt = Date.now();
                     const deliveryUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
                     setActiveDeliveryForUser(deliveryUserId, {
+                        startedAt: deliveryStartedAt,
                         endsAt: deliveryEndsAt,
+                        totalDurationMs: 12 * 60 * 1000,
                         orderId: paymentData.orderId,
                         amount: paymentData.amount,
                         paymentStatus: 'unpaid'
@@ -993,8 +1043,10 @@
 
                     try {
                         await saveOrderRecord(paymentData, codResult.transactionId);
+                        storeOrderHistoryEntry(paymentData, codResult.transactionId);
                     } catch (orderError) {
                         console.error('Error saving COD order:', orderError);
+                        storeOrderHistoryEntry(paymentData, codResult.transactionId);
                     }
 
                     const paymentInfo = {
@@ -1054,9 +1106,14 @@
                     const activeEndsAt = existingDelivery.endsAt && existingDelivery.endsAt > Date.now()
                         ? existingDelivery.endsAt
                         : Date.now() + 12 * 60 * 1000;
+                    const activeStartedAt = existingDelivery.startedAt
+                        ? existingDelivery.startedAt
+                        : activeEndsAt - (existingDelivery.totalDurationMs || (12 * 60 * 1000));
 
                     setActiveDeliveryForUser(deliveryUserId, {
+                        startedAt: activeStartedAt,
                         endsAt: activeEndsAt,
+                        totalDurationMs: existingDelivery.totalDurationMs || (12 * 60 * 1000),
                         orderId: paymentData.orderId,
                         amount: paymentData.amount,
                         paymentStatus: 'paid'
@@ -1068,10 +1125,13 @@
                     try {
                         if (!isPayNowMode) {
                             await saveOrderRecord(paymentData, result.transactionId);
+                            storeOrderHistoryEntry(paymentData, result.transactionId);
                         }
                     } catch (orderError) {
                         console.error('Error saving order:', orderError);
-                        // Continue anyway - payment was successful
+                        if (!isPayNowMode) {
+                            storeOrderHistoryEntry(paymentData, result.transactionId);
+                        }
                     }
                     
                     // Show success modal
@@ -1111,7 +1171,7 @@
         // Download Receipt
         function downloadReceipt() {
             const receipt = {
-                orderId: document.getElementById('orderId').textContent,
+                orderId: currentOrderContext.orderId || document.getElementById('orderId').textContent,
                 transactionId: document.getElementById('transactionId').textContent,
                 amount: document.getElementById('totalAmount').textContent,
                 date: new Date().toLocaleString(),
@@ -1146,7 +1206,13 @@ Thank you for your order!
             setupQrUpload();
 
             if (isPayNowMode) {
-                selectPaymentMethod('card');
+                selectPaymentMethod(preferredPaymentMethod || 'upi');
+                const upiInput = document.getElementById('upiId');
+                if ((preferredPaymentMethod || 'upi') === 'upi' && upiInput) {
+                    upiInput.focus();
+                }
+            } else if (preferredPaymentMethod) {
+                selectPaymentMethod(preferredPaymentMethod);
             }
             updatePayAction();
 
@@ -1154,7 +1220,7 @@ Thank you for your order!
             const urlParams = new URLSearchParams(window.location.search);
             const pendingOrder = safeParseJSON(localStorage.getItem('pendingOrder') || '{}', {});
 
-            const orderId = urlParams.get('orderId') || localStorage.getItem('currentOrderId') || '#ORD-' + Date.now().toString().slice(-8);
+            const orderId = urlParams.get('orderId') || localStorage.getItem('currentOrderId') || generateFriendlyOrderId();
             const amountSource = urlParams.get('amount') || localStorage.getItem('currentOrderAmount') || pendingOrder.totalAmount;
             const parsedAmount = parseFloat(amountSource);
             const normalizedAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : null;
@@ -1167,7 +1233,7 @@ Thank you for your order!
                 deliveryAddress: pendingOrder.deliveryAddress || ''
             };
             
-            document.getElementById('orderId').textContent = orderId;
+            document.getElementById('orderId').textContent = formatOrderIdForDisplay(orderId);
             
             // If amount is provided in URL, update the display
             if (normalizedAmount) {

@@ -15,7 +15,7 @@ console.log('╚═════════════════════�
 const websiteProducts = [
     // Fruits
     { id: 1, name: 'Fresh Apples', category: 'Fruits', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1024,pr-true,f-auto,q-80/cms/product_variant/8758d987-e101-46d3-9c9b-f2babc5d6389.jpeg' },
-    { id: 2, name: 'Ripe Bananas', category: 'Fruits', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/2ce10ffc-348b-4f20-a0c4-6f004c162c90.jpeg' },
+    { id: 2, name: 'Bananas', category: 'Fruits', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/2ce10ffc-348b-4f20-a0c4-6f004c162c90.jpeg' },
     { id: 13, name: 'Mangoes', category: 'Fruits', image: 'https://www.bbassets.com/media/uploads/p/m/10000343_9-fresho-mango-neelam.jpg?tr=w-154,q-80' },
     { id: 14, name: 'Pineapple', category: 'Fruits', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-1024-1536,pr-true,f-auto,q-80/cms/product_variant/088cb923-8d1a-431f-98ea-2f01259b3545.png' },
     { id: 15, name: 'Papaya', category: 'Fruits', image: 'https://cdn.zeptonow.com/production/tr:w-403,ar-3000-3000,pr-true,f-auto,q-80/cms/product_variant/14beced9-a7d1-4a3f-b9bb-ab0a150876f6.jpeg' },
