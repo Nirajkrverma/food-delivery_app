@@ -58,6 +58,7 @@
             background-color: var(--bg-light);
             color: var(--text-light);
             padding-bottom: 120px;
+            overflow-x: hidden;
             background-image: var(--bg-image-light);
             background-size: cover;
             background-attachment: fixed;
@@ -600,6 +601,32 @@
                 padding-bottom: 100px; /* Account for fixed cart */
             }
 
+            .page-shell {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+
+            .header-shell {
+                gap: 0.5rem;
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+
+            .header-brand {
+                min-width: 0;
+                max-width: calc(100vw - 190px);
+            }
+
+            .header-actions {
+                gap: 0.35rem;
+                flex-shrink: 0;
+            }
+
+            #auth-container {
+                margin-right: 0 !important;
+                max-width: 138px;
+            }
+
             #delivery-tracker {
                 right: 0.75rem !important;
                 bottom: 5.75rem !important;
@@ -617,6 +644,7 @@
 
             #cart-footer .max-w-5xl {
                 gap: 0.75rem;
+                align-items: center;
             }
 
             #cart-summary {
@@ -627,6 +655,7 @@
             #view-cart-btn {
                 padding: 0.65rem 0.9rem !important;
                 font-size: 0.85rem;
+                white-space: nowrap;
             }
 
             #cart-modal h2 {
@@ -736,8 +765,17 @@
         
         /* Mobile: Extra small devices (320px and down) */
         @media (max-width: 380px) {
+            .header-brand {
+                max-width: calc(100vw - 168px);
+            }
+
             header h1 {
                 font-size: 1.1rem !important;
+            }
+
+            #product-grid {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+                gap: 0.85rem;
             }
             
             .product-card {
@@ -848,38 +886,38 @@
 </head>
 <body class="themed-bg themed-text">
 
-    <!-- Main content container -->
-    <div class="w-full max-w-5xl mx-auto p-4 sm:p-6">
-        <!-- Header -->
-        <header class="sticky top-0 z-50 flex justify-between items-center mb-6 py-3 glass-effect -mx-4 sm:-mx-6 px-4 sm:px-6">
-            <a href="/" class="flex items-center gap-2 sm:gap-3 md:gap-4 cursor-pointer no-underline group">
+    <!-- Full-width Header (outside page-shell) -->
+    <header class="header-shell sticky top-0 z-50 w-full glass-effect py-4 sm:py-5">
+        <div class="w-full px-4 sm:px-6 flex justify-between items-center gap-4">
+            <a href="/" class="header-brand flex-1 min-w-0 flex items-center gap-3 sm:gap-4 cursor-pointer no-underline group">
                 <!-- Logo Image -->
-                <img id="logo-img" src="./GroceryL.png" alt="Grocery Mart Logo" class="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.src='https://placehold.co/64x64/a3e635/1a2e05?text=GM';">
+                <img id="logo-img" src="./GroceryL.png" alt="Grocery Mart Logo" class="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.src='https://placehold.co/80x80/a3e635/1a2e05?text=GM';">
                 <div class="flex flex-col justify-center">
-                    <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight themed-text transition-all duration-300 group-hover:text-[color:var(--accent-color-1)]">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight themed-text transition-all duration-300 group-hover:text-[color:var(--accent-color-1)]">
                         Grocery Mart
                     </h1>
-                    <p class="hidden sm:block text-xs md:text-sm themed-subtle-text font-medium">Fresh groceries delivered fast</p>
+                    <p class="text-xs sm:text-sm md:text-base themed-subtle-text font-medium mt-0.5">Fresh groceries delivered fast</p>
                 </div>
             </a>
-            <div class="flex items-center gap-3">
-                <a href="./login.html?redirect=./index.html" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border themed-border text-sm font-semibold hover:bg-lime-50 dark:hover:bg-slate-700 transition" title="Login">
-                    <i class="ph ph-sign-in"></i>
-                    <span class="hidden sm:inline">Login</span>
-                </a>
+            <div class="header-actions flex items-center gap-2 sm:gap-3">
                 <!-- Authentication Container -->
-                <div id="auth-container" class="mr-4">
+                <div id="auth-container">
                     <!-- Auth buttons will be inserted here -->
                 </div>
-                <button id="theme-toggle" class="p-2 rounded-lg transition-all" title="Toggle theme">
-                    <i id="sun-icon" class="ph ph-sun text-3xl text-[#84cc16]"></i>
-                    <i id="moon-icon" class="ph ph-moon text-3xl text-[#84cc16] hidden"></i>
+                <button id="theme-toggle" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border themed-border transition-all hover:bg-lime-50 dark:hover:bg-slate-700" title="Toggle theme">
+                    <i id="sun-icon" class="ph ph-sun text-xl text-[#84cc16]"></i>
+                    <i id="moon-icon" class="ph ph-moon text-xl text-[#84cc16] hidden"></i>
+                    <span id="theme-label" class="hidden sm:inline text-xs font-semibold themed-subtle-text">Light</span>
                 </button>
                 <button id="profile-btn" class="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--bg-light)] focus:ring-[color:var(--accent-color-1)] transition-transform transform hover:scale-110">
-                    <img id="header-avatar" src="https://placehold.co/32x32/a3e635/1a2e05?text=G" alt="Profile" class="w-9 h-9 rounded-full border-2 themed-border">
+                    <img id="header-avatar" src="https://placehold.co/40x40/a3e635/1a2e05?text=G" alt="Profile" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 themed-border">
                 </button>
             </div>
-        </header>
+        </div>
+    </header>
+
+    <!-- Main content container -->
+    <div class="page-shell w-full max-w-5xl mx-auto p-4 sm:p-6 pt-6">
 
         <!-- Delivery Time & Search Banner -->
         <div class="themed-card-bg border themed-border rounded-xl p-4 mb-8 shadow-sm">
@@ -909,11 +947,16 @@
                 </button>
             </div>
             <div class="relative group">
+                <button id="search-btn" type="button"
+                    class="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full hover:bg-lime-100 dark:hover:bg-slate-600 transition-all"
+                    title="Search">
+                    <i class="ph ph-magnifying-glass text-2xl text-lime-600 dark:text-lime-400"></i>
+                </button>
                 <input 
                     type="text" 
                     id="search-bar" 
                     list="product-search-suggestions"
-                    placeholder="Search for products..." 
+                    placeholder="Search for products" 
                     class="w-full pl-14 pr-4 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
                            bg-white dark:bg-gray-700
                            text-gray-900 dark:text-gray-100
@@ -923,7 +966,6 @@
                            focus:ring-[color:var(--accent-color-1)]
                            dark:focus:ring-lime-400
                            hover:border-lime-400 dark:hover:border-lime-500">
-                <i class="ph-magnifying-glass-bold search-icon absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-lime-600 dark:text-lime-400 pointer-events-none"></i>
             </div>
             <datalist id="product-search-suggestions"></datalist>
         </div>
@@ -938,7 +980,7 @@
 
         <!-- Product Grid -->
         <main>
-            <h2 class="text-2xl sm:text-3xl font-bold mb-6">All Products</h2>
+            <h2 id="product-section-title" class="text-2xl sm:text-3xl font-bold mb-6">All Products</h2>
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <!-- Products will be dynamically inserted here -->
             </div>
@@ -1919,6 +1961,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     const searchBar = document.getElementById('search-bar');
     const searchSuggestionList = document.getElementById('product-search-suggestions');
     const noResults = document.getElementById('no-results');
+    const productSectionTitle = document.getElementById('product-section-title');
     const cartFooter = document.getElementById('cart-footer');
     const cartSummary = document.getElementById('cart-summary');
     const cartTotal = document.getElementById('cart-total');
@@ -1952,7 +1995,12 @@ document.addEventListener('DOMContentLoaded', async() => {
     const profileTabs = document.querySelectorAll('.profile-tab');
     const profileDetailsTab = document.getElementById('profile-details-tab');
     const orderHistoryTab = document.getElementById('order-history-tab');
-    
+
+    const setProductSectionTitle = (title) => {
+        if (productSectionTitle) {
+            productSectionTitle.textContent = title;
+        }
+    };
 
     // --- DATA PERSISTENCE ---
     const loadDataFromStorage = () => {
@@ -2015,6 +2063,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             productGrid.appendChild(productCard);
             updateProductCardUI(product.id);
         });
+
     };
     
     const updateProductCardUI = (productId) => {
@@ -2260,6 +2309,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             const matchesSearch = product.name.toLowerCase().includes(searchTerm);
             return matchesCategory && matchesSearch;
         });
+        setProductSectionTitle('All Products');
         renderProducts(filteredProducts);
     };
 
@@ -2430,6 +2480,18 @@ document.addEventListener('DOMContentLoaded', async() => {
     
     searchBar.addEventListener('input', handleFilter);
 
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            searchBar.focus();
+            handleFilter();
+        });
+    }
+
+    searchBar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleFilter();
+    });
+
     // Modal Logic
     const hideCartModal = () => {
         cartModal.classList.add('hidden');
@@ -2562,6 +2624,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     const themeToggleBtn = document.getElementById('theme-toggle');
     const sunIcon = document.getElementById('sun-icon');
     const moonIcon = document.getElementById('moon-icon');
+    const themeLabel = document.getElementById('theme-label');
     const profileBackIcon = document.getElementById('profile-back-icon');
     const htmlEl = document.documentElement;
 
@@ -2585,6 +2648,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             moonIcon.classList.add('hidden');
             sunIcon.classList.remove('hidden');
         }
+        if (themeLabel) themeLabel.textContent = isDarkMode ? 'Dark' : 'Light';
 
         applyLogoTheme(isDarkMode);
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
@@ -2599,6 +2663,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         sunIcon.classList.add('hidden');
         moonIcon.classList.remove('hidden');
     }
+    if (themeLabel) themeLabel.textContent = isDarkMode ? 'Dark' : 'Light';
     applyLogoTheme(isDarkMode);
     
     if (themeToggleBtn) {
@@ -2615,14 +2680,14 @@ document.addEventListener('DOMContentLoaded', async() => {
         // Get all product names
         const productNames = products.map(p => p.name);
         if (productNames.length === 0) {
-            searchBar.placeholder = 'Search for products...';
+            searchBar.placeholder = 'Search for products';
             return;
         }
         
         // Function to update placeholder
         const updatePlaceholder = () => {
             if (searchBar.value === '') { // Only update if search is empty
-                searchBar.placeholder = `Search for \"${productNames[suggestionIndex]}\"...`;
+                searchBar.placeholder = `Search for \"${productNames[suggestionIndex]}\"`;  
                 suggestionIndex = (suggestionIndex + 1) % productNames.length;
             }
         };
@@ -2638,7 +2703,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     searchBar.addEventListener('focus', () => {
         clearInterval(suggestionInterval);
         if (searchBar.value === '') {
-            searchBar.placeholder = 'Search for products...';
+            searchBar.placeholder = 'Search for products';
         }
     });
     

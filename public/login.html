@@ -82,11 +82,11 @@
                 </button>
             </div>
 
-            <div class="flex items-center gap-3 mb-5">
-                <img src="./GroceryL.png" alt="Grocery Mart" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/64x64/a3e635/1a2e05?text=GM';">
+            <div class="flex flex-col items-center text-center gap-3 mb-7">
+                <img id="login-logo" src="./GroceryL.png" alt="Grocery Mart" class="w-28 h-28 object-contain mix-blend-multiply dark:mix-blend-normal transition-all duration-300" onerror="this.src='https://placehold.co/80x80/a3e635/1a2e05?text=GM';">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-extrabold">Grocery Mart Login</h1>
-                    <p class="text-xs sm:text-sm text-lime-700 dark:text-lime-300">Registered users can sign in quickly</p>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Grocery Mart</h1>
+                    <p class="text-sm sm:text-base text-lime-700 dark:text-lime-300 mt-1">Sign in to your account</p>
                 </div>
             </div>
 
@@ -291,11 +291,18 @@
             }, 700);
         });
 
+        const loginLogo = document.getElementById('login-logo');
+
         const applyTheme = () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-            sunIcon.classList.toggle('hidden', savedTheme === 'dark');
-            moonIcon.classList.toggle('hidden', savedTheme !== 'dark');
+            const isDark = savedTheme === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
+            sunIcon.classList.toggle('hidden', isDark);
+            moonIcon.classList.toggle('hidden', !isDark);
+            if (loginLogo) {
+                loginLogo.src = isDark ? './GroceryD.png' : './GroceryL.png';
+                loginLogo.style.mixBlendMode = isDark ? 'normal' : 'multiply';
+            }
         };
 
         themeToggle.addEventListener('click', () => {
