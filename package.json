@@ -5,14 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "vercel dev",
-    "build": "echo 'No build step required for static site'",
-    "test:system": "node scripts/test-system.js",
-    "test:product-code": "node utils/product-code-generator.js",
-    "test:qr-code": "node utils/qr-code-generator.js",
-    "register": "node scripts/register-product.js",
-    "bulk-register": "node scripts/bulk-register.js",
-    "generate-website-qr": "node scripts/generate-website-qr.js",
-    "verify-env": "node scripts/verify-env.js"
+    "build": "echo 'No build step required for static site'"
   },
   "dependencies": {
     "@clerk/clerk-js": "^5.99.0",

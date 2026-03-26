@@ -31,7 +31,7 @@ A modern, responsive grocery delivery application built with vanilla JavaScript,
 2. **Set up Clerk** (see [QUICK_START_CLERK.md](./QUICK_START_CLERK.md)):
    - Create Clerk account at https://clerk.com
    - Get your API keys from dashboard
-   - Create `.env` file with your keys
+   - Create `.env.local` file with your keys
 
 3. **Start development server**:
    ```bash
@@ -57,9 +57,9 @@ A modern, responsive grocery delivery application built with vanilla JavaScript,
 grocery-mart-delivery/
 ├── public/                        # Frontend files
 │   ├── index.html                 # Main app with products & cart
-│   ├── profile.html               # User profile page (NEW!)
-│   ├── items.html                 # Product catalog
-│   └── prototype.html             # Demo page
+│   ├── login.html                 # Login flow
+│   ├── profile.html               # User profile page
+│   └── payment.html               # Checkout payment page
 ├── api/                           # Serverless API functions
 │   ├── config.js                  # Clerk configuration endpoint
 │   ├── products.js                # Product management

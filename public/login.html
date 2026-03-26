@@ -18,7 +18,7 @@
             --text-light: #1a2e05;
             --card-bg-light: #ffffff;
             --border-light: #dcfce7;
-            --subtle-text-light: #4d5e42;
+            --subtle-text-light: #334155;
             --accent-color-1: #84cc16;
             --accent-color-2: #a3e635;
             --bg-dark: #0f172a;
@@ -54,6 +54,12 @@
             background-color: var(--glass-bg-dark);
             border-color: rgba(71, 85, 105, 0.6);
         }
+
+        /* Light-mode readability guardrails */
+        html:not(.dark) .text-gray-500 { color: #475569 !important; }
+        html:not(.dark) .text-gray-600 { color: #334155 !important; }
+        html:not(.dark) .text-lime-700 { color: #3f6212 !important; }
+        html:not(.dark) .text-lime-800 { color: #365314 !important; }
 
         .btn-primary {
             background-image: linear-gradient(45deg, var(--accent-color-1), var(--accent-color-2), var(--accent-color-1));
@@ -121,11 +127,10 @@
                 <div id="registered-users" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
             </div>
 
-                <a href="./index.html?fromLogin=1" class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-lime-700 dark:text-lime-300 hover:underline">
+                <a id="continue-as-guest" href="./index.html?fromLogin=1" class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-lime-700 dark:text-lime-300 hover:underline">
                 Continue as guest <i class="ph ph-arrow-right"></i>
             </a>
         </main>
-        </div>
     </div>
 
     <script>
@@ -140,8 +145,10 @@
         const themeToggle = document.getElementById('theme-toggle');
         const sunIcon = document.getElementById('sun-icon');
         const moonIcon = document.getElementById('moon-icon');
+        const continueAsGuestBtn = document.getElementById('continue-as-guest');
 
         const redirectTo = new URLSearchParams(window.location.search).get('redirect') || './index.html';
+        const USERS_REFRESH_INTERVAL_MS = 5000;
 
         const buildLoginApprovedRedirect = (targetUrl) => {
             const separator = targetUrl.includes('?') ? '&' : '?';
@@ -157,6 +164,99 @@
 
         const normalizePhone = (value) => String(value || '').replace(/\D/g, '').slice(-10);
 
+        const mapApiUserToLocalUser = (user) => {
+            const userId = user.user_id || user.id || `usr-${Date.now()}`;
+            const normalizedPhone = normalizePhone(user.phone || user.email || user.user_id || '');
+
+            return {
+                id: userId,
+                name: user.name || 'User',
+                phone: normalizedPhone,
+                address: user.address || ''
+            };
+        };
+
+        const mergeUsersById = (baseUsers, incomingUsers) => {
+            const merged = new Map();
+            (Array.isArray(baseUsers) ? baseUsers : []).forEach((user) => {
+                if (user && user.id) merged.set(user.id, user);
+            });
+
+            (Array.isArray(incomingUsers) ? incomingUsers : []).forEach((user) => {
+                if (user && user.id) {
+                    merged.set(user.id, {
+                        ...merged.get(user.id),
+                        ...user
+                    });
+                }
+            });
+
+            return Array.from(merged.values());
+        };
+
+        const fetchRegisteredUsersFromApi = async () => {
+            try {
+                const response = await fetch('/api/users?list=1&limit=50', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Users list failed: ${response.status}`);
+                }
+
+                const apiUsers = await response.json();
+                if (!Array.isArray(apiUsers)) return null;
+
+                return apiUsers.map(mapApiUserToLocalUser).filter((user) => user.id);
+            } catch (error) {
+                console.warn('Users list refresh warning:', error.message);
+                return null;
+            }
+        };
+
+        const getLatestUsers = async () => {
+            const hasLocalUsersKey = localStorage.getItem(USERS_STORAGE_KEY) !== null;
+            const localUsers = safeParseLS(USERS_STORAGE_KEY, []);
+
+            // Respect explicit local state, including an intentionally empty list ([]).
+            if (hasLocalUsersKey) {
+                return Array.isArray(localUsers) ? localUsers : [];
+            }
+
+            // First-load fallback: hydrate from API only when local key does not exist.
+            const apiUsers = await fetchRegisteredUsersFromApi();
+            if (apiUsers && Array.isArray(apiUsers) && apiUsers.length > 0) {
+                saveUsers(apiUsers);
+                return apiUsers;
+            }
+
+            return [];
+        };
+
+        const syncUserToApi = async (user) => {
+            if (!user?.id) return null;
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        name: user.name || '',
+                        email: user.phone || '',
+                        address: user.address || ''
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`User sync failed: ${response.status}`);
+                }
+
+                const saved = await response.json();
+                return mapApiUserToLocalUser(saved);
+            } catch (error) {
+                console.warn('User sync warning:', error.message);
+                return null;
+            }
+        };
+
         const setSessionForUser = (user, allUsers) => {
             localStorage.setItem(ACTIVE_USER_ID_KEY, user.id);
             saveLoggedInUsers([user.id]);
@@ -167,7 +267,7 @@
                 name: user.name,
                 phone: user.phone,
                 email: user.phone,
-                address: user.address || '123 Market Street<br>New Town, West Bengal<br>India'
+                address: user.address || ''
             };
             localStorage.setItem('grocerymartProfile', JSON.stringify(profilePayload));
         };
@@ -177,8 +277,8 @@
             loginMessage.className = `text-sm mt-4 min-h-6 ${isSuccess ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
         };
 
-        const renderRegisteredUsers = () => {
-            const users = safeParseLS(USERS_STORAGE_KEY, []);
+        const renderRegisteredUsers = (inputUsers = null) => {
+            const users = Array.isArray(inputUsers) ? inputUsers : safeParseLS(USERS_STORAGE_KEY, []);
             if (!Array.isArray(users) || users.length === 0) {
                 registeredUsersContainer.innerHTML = '<p class="text-sm text-lime-800 dark:text-slate-300">No registered users yet. Create one from this page.</p>';
                 return;
@@ -220,7 +320,12 @@
             });
         };
 
-        loginForm.addEventListener('submit', (event) => {
+        const refreshRegisteredUsers = async () => {
+            const latestUsers = await getLatestUsers();
+            renderRegisteredUsers(latestUsers);
+        };
+
+        loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const enteredPhone = normalizePhone(document.getElementById('login-phone').value);
 
@@ -229,7 +334,7 @@
                 return;
             }
 
-            const users = safeParseLS(USERS_STORAGE_KEY, []);
+            const users = await getLatestUsers();
             const matchedUser = Array.isArray(users)
                 ? users.find((user) => normalizePhone(user.phone) === enteredPhone)
                 : null;
@@ -246,7 +351,7 @@
             }, 700);
         });
 
-        registerForm.addEventListener('submit', (event) => {
+        registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const name = document.getElementById('register-name').value.trim();
@@ -261,7 +366,7 @@
                 return;
             }
 
-            const users = safeParseLS(USERS_STORAGE_KEY, []);
+            const users = await getLatestUsers();
             const userList = Array.isArray(users) ? users : [];
 
             const existingUser = userList.find((user) => normalizePhone(user.phone) === phone);
@@ -278,13 +383,15 @@
                 id: `usr-${Date.now()}`,
                 name,
                 phone,
-                address: '123 Market Street<br>New Town, West Bengal<br>India'
+                address: ''
             };
-            const nextUsers = [...userList, newUser];
+            const syncedUser = await syncUserToApi(newUser);
+            const finalUser = syncedUser || newUser;
+            const nextUsers = [...userList, finalUser];
 
-            setSessionForUser(newUser, nextUsers);
+            setSessionForUser(finalUser, nextUsers);
             showMessage('Account created successfully. Redirecting...', true);
-            renderRegisteredUsers();
+            await refreshRegisteredUsers();
             registerForm.reset();
             setTimeout(() => {
                 window.location.href = buildLoginApprovedRedirect(redirectTo);
@@ -292,6 +399,13 @@
         });
 
         const loginLogo = document.getElementById('login-logo');
+
+        const continueAsGuest = () => {
+            localStorage.removeItem(ACTIVE_USER_ID_KEY);
+            localStorage.removeItem(LOGGED_IN_USERS_KEY);
+            localStorage.removeItem('grocerymartProfile');
+            window.location.href = buildLoginApprovedRedirect(redirectTo);
+        };
 
         const applyTheme = () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -311,8 +425,16 @@
             applyTheme();
         });
 
+        if (continueAsGuestBtn) {
+            continueAsGuestBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                continueAsGuest();
+            });
+        }
+
         applyTheme();
-        renderRegisteredUsers();
+        refreshRegisteredUsers();
+        setInterval(refreshRegisteredUsers, USERS_REFRESH_INTERVAL_MS);
     </script>
 </body>
 </html>

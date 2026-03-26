@@ -26,7 +26,7 @@
             --text-light: #1a2e05; /* dark green */
             --card-bg-light: #ffffff;
             --border-light: #dcfce7; /* green-100 */
-            --subtle-text-light: #4d5e42; /* darker green-gray for better contrast */
+            --subtle-text-light: #334155; /* stronger slate tone for better light-mode readability */
             --accent-color-1: #84cc16; /* lime-500 */
             --accent-color-2: #a3e635; /* lime-400 */
 
@@ -130,6 +130,120 @@
 
         html.dark .search-icon:hover {
             filter: drop-shadow(0 0 12px rgba(190, 242, 100, 0.8));
+        }
+
+        /* Advanced Search Dropdown */
+        #search-suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            max-height: 420px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+
+        #search-suggestions-dropdown.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        html.dark #search-suggestions-dropdown {
+            background: var(--card-bg-dark);
+            border-color: var(--border-dark);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-dropdown-section {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        html.dark .search-dropdown-section {
+            border-bottom-color: var(--border-dark);
+        }
+
+        .search-dropdown-section:last-child {
+            border-bottom: none;
+        }
+
+        .search-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--subtle-text-light);
+            padding: 0.5rem 1rem 0.25rem 1rem;
+        }
+
+        html.dark .search-section-title {
+            color: var(--subtle-text-dark);
+        }
+
+        .search-suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background-color 0.15s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font: inherit;
+            color: inherit;
+        }
+
+        .search-suggestion-item:hover {
+            background-color: rgba(132, 204, 22, 0.08);
+        }
+
+        html.dark .search-suggestion-item:hover {
+            background-color: rgba(190, 242, 100, 0.1);
+        }
+
+        .search-suggestion-item.popular {
+            font-weight: 600;
+        }
+
+        .suggestion-icon {
+            font-size: 1rem;
+            color: var(--accent-color-1);
+            flex-shrink: 0;
+        }
+
+        .suggestion-text {
+            flex: 1;
+            min-width: 0;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .suggestion-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            background: rgba(132, 204, 22, 0.2);
+            color: var(--accent-color-1);
+            border-radius: 9999px;
+            flex-shrink: 0;
+        }
+
+        html.dark .suggestion-badge {
+            background: rgba(190, 242, 100, 0.15);
+            color: #d9f99d;
         }
 
         /* Search bar focus effect - make icon brighter when input is focused */
@@ -268,6 +382,12 @@
         html.dark .themed-subtle-text {
             color: var(--subtle-text-dark);
         }
+
+        /* Light-mode readability guardrails for utility text colors */
+        html:not(.dark) .text-gray-400 { color: #64748b !important; }
+        html:not(.dark) .text-gray-500 { color: #475569 !important; }
+        html:not(.dark) .text-gray-600 { color: #334155 !important; }
+        html:not(.dark) .text-gray-700 { color: #1f2937 !important; }
         
         /* Smooth transitions for all interactive elements */
         button, a, input, select, textarea {
@@ -300,6 +420,44 @@
             background-position: right center; /* change the direction of the change here */
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(132, 204, 22, 0.2), 0 4px 6px -4px rgba(132, 204, 22, 0.1);
+        }
+
+        /* Highlighted pin-address action near delivery location */
+        .address-pin-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.28rem 0.72rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(132, 204, 22, 0.45);
+            background: linear-gradient(135deg, rgba(236, 252, 203, 0.95), rgba(217, 249, 157, 0.95));
+            color: #3f6212;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 10px rgba(132, 204, 22, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.25s ease;
+        }
+
+        .address-pin-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(132, 204, 22, 0.28);
+            filter: saturate(1.08);
+        }
+
+        .address-pin-chip i {
+            font-size: 0.95rem;
+        }
+
+        html.dark .address-pin-chip {
+            border-color: rgba(190, 242, 100, 0.45);
+            background: linear-gradient(135deg, rgba(101, 163, 13, 0.25), rgba(77, 124, 15, 0.3));
+            color: #d9f99d;
+            box-shadow: 0 6px 16px rgba(101, 163, 13, 0.22);
+        }
+
+        html.dark .address-pin-chip:hover {
+            box-shadow: 0 10px 24px rgba(132, 204, 22, 0.28);
         }
 
         /* Custom card styles with smooth transitions */
@@ -358,12 +516,19 @@
             transition: all 0.3s ease,
                         background-color var(--theme-transition-duration) var(--theme-transition-easing),
                         color var(--theme-transition-duration) var(--theme-transition-easing);
+            min-height: 44px;
+            line-height: 1.1;
         }
         .category-btn.active {
             background-color: var(--accent-color-1);
             color: #1a2e05;
             font-weight: 700;
-            box-shadow: 0 4px 14px 0 rgba(132, 204, 22, 0.2);
+            box-shadow: inset 0 0 0 2px rgba(26, 46, 5, 0.2);
+            transform: none;
+        }
+        html.dark .category-btn.active {
+            border-color: rgba(190, 242, 100, 0.95);
+            box-shadow: inset 0 0 0 2px rgba(11, 18, 32, 0.45);
         }
         .category-btn {
              border: 1px solid var(--border-light);
@@ -910,7 +1075,7 @@
                     <span id="theme-label" class="hidden sm:inline text-xs font-semibold themed-subtle-text">Light</span>
                 </button>
                 <button id="profile-btn" class="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--bg-light)] focus:ring-[color:var(--accent-color-1)] transition-transform transform hover:scale-110">
-                    <img id="header-avatar" src="https://placehold.co/40x40/a3e635/1a2e05?text=G" alt="Profile" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 themed-border">
+                    <img id="header-avatar" src="./customer-avatar.svg" alt="Customer profile" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 themed-border">
                 </button>
             </div>
         </div>
@@ -928,6 +1093,10 @@
                     <p class="font-semibold text-sm">Deliver to</p>
                     <div id="location-display" class="flex items-center gap-2">
                         <span id="current-location" class="text-sm themed-subtle-text">Select delivery location</span>
+                        <button id="pin-address-btn" onclick="getPreciseLocation()" class="address-pin-chip" title="Pin my current address">
+                            <i class="ph ph-map-pin"></i>
+                            <span>Pin Address</span>
+                        </button>
                         <button id="change-location-btn" onclick="showLocationModal()" class="text-xs text-[color:var(--accent-color-1)] font-medium hover:underline">
                             Change
                         </button>
@@ -946,7 +1115,7 @@
                     <span class="hidden sm:inline">Stores</span>
                 </button>
             </div>
-            <div class="relative group">
+            <div class="relative">
                 <button id="search-btn" type="button"
                     class="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full hover:bg-lime-100 dark:hover:bg-slate-600 transition-all"
                     title="Search">
@@ -955,8 +1124,8 @@
                 <input 
                     type="text" 
                     id="search-bar" 
-                    list="product-search-suggestions"
-                    placeholder="Search for products" 
+                    placeholder="Search for products, e.g. apple, milk, bread..." 
+                    autocomplete="off"
                     class="w-full pl-14 pr-4 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
                            bg-white dark:bg-gray-700
                            text-gray-900 dark:text-gray-100
@@ -966,8 +1135,10 @@
                            focus:ring-[color:var(--accent-color-1)]
                            dark:focus:ring-lime-400
                            hover:border-lime-400 dark:hover:border-lime-500">
+                <div id="search-suggestions-dropdown" class="absolute left-0 right-0 top-full mt-2 rounded-lg bg-white dark:bg-slate-800 border themed-border shadow-lg max-h-96 overflow-y-auto z-50 hidden">
+                    <!-- Suggestions will be inserted here dynamically -->
+                </div>
             </div>
-            <datalist id="product-search-suggestions"></datalist>
         </div>
 
         <!-- Categories -->
@@ -1059,14 +1230,14 @@
                     <!-- Profile Details Tab -->
                     <div id="profile-details-tab">
                         <div class="text-center mb-6">
-                            <img id="profile-avatar" src="https://placehold.co/128x128/a3e635/1a2e05?text=G" alt="User Avatar" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 border-4 border-[color:var(--accent-color-1)]">
+                            <img id="profile-avatar" src="./customer-avatar.svg" alt="Customer profile" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 border-4 border-[color:var(--accent-color-1)]">
                             <h3 id="profile-name" class="text-xl sm:text-2xl font-bold">Guest User</h3>
                             <p id="profile-email" class="themed-subtle-text text-sm sm:text-base">+91 0000000000</p>
                         </div>
                         
                         <div class="text-left bg-white dark:bg-slate-800 border themed-border p-4 rounded-lg mb-6">
                             <p class="font-semibold mb-2 text-gray-900 dark:text-white">Delivery Address:</p>
-                            <p id="profile-address" class="text-gray-700 dark:text-gray-300 text-sm">123 Market Street<br>New Town, West Bengal<br>India</p>
+                            <p id="profile-address" class="text-gray-700 dark:text-gray-300 text-sm"><span class="text-gray-400 italic">No address saved</span></p>
                         </div>
                         
                         <button id="edit-profile-btn" class="w-full text-center btn-primary font-bold py-3 rounded-lg">Edit Profile</button>
@@ -1171,6 +1342,7 @@
 <script>
 
 const API_BASE_URL = '/api';
+const LEGACY_DEFAULT_ADDRESS = '123 Market Street<br>New Town, West Bengal<br>India';
 
 // Global variables that will be accessible inside DOMContentLoaded
 let cart = [];
@@ -1192,6 +1364,111 @@ const USERS_STORAGE_KEY = 'grocerymartUsers';
 const ACTIVE_USER_ID_KEY = 'grocerymartActiveUserId';
 const LOGGED_IN_USERS_KEY = 'grocerymartLoggedInUserIds';
 const getOrdersStorageKey = (userId) => `grocerymartOrders_${userId || 'guest-user'}`;
+
+const normalizeSavedAddress = (value = '') => {
+    const normalized = String(value || '').trim();
+    if (!normalized || normalized === LEGACY_DEFAULT_ADDRESS) {
+        return '';
+    }
+    return normalized;
+};
+
+const parseAddressToPayload = (addressValue = '') => {
+    const cleanedAddress = normalizeSavedAddress(addressValue);
+    const lines = String(cleanedAddress)
+        .replace(/<br\s*\/?>/gi, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    const firstLine = lines[0] || '';
+    const secondLine = lines[1] || '';
+    const cityStatePinLine = lines[2] || '';
+    const cityStatePinParts = cityStatePinLine.split(',').map(part => part.trim()).filter(Boolean);
+    const pincodeMatch = cityStatePinLine.match(/\b\d{6}\b/);
+    const derivedState = cityStatePinParts[1] || '';
+    const derivedCity = cityStatePinParts[0] || '';
+
+    return {
+        address: cleanedAddress,
+        addressLine1: firstLine,
+        addressLine2: secondLine,
+        city: derivedCity,
+        state: derivedState,
+        pincode: pincodeMatch ? pincodeMatch[0] : '',
+        country: lines[3] || 'India'
+    };
+};
+
+const syncUserAddressToApi = async (profile = userProfile) => {
+    if (!profile?.id) return;
+
+    const parsedAddress = parseAddressToPayload(profile.address || '');
+    const payload = {
+        userId: profile.id,
+        name: profile.name || '',
+        email: profile.email || profile.phone || '',
+        address: parsedAddress.address,
+        addressLine1: profile.addressLine1 || parsedAddress.addressLine1 || '',
+        addressLine2: profile.addressLine2 || parsedAddress.addressLine2 || '',
+        city: profile.city || parsedAddress.city || '',
+        state: profile.state || parsedAddress.state || '',
+        pincode: profile.pincode || parsedAddress.pincode || '',
+        country: profile.country || parsedAddress.country || 'India'
+    };
+
+    try {
+        await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.warn('Address sync warning:', error.message);
+    }
+};
+
+const persistRealtimeAddressToProfile = (locationData = {}) => {
+    const normalizedAddress = normalizeSavedAddress(locationData.address || '');
+    if (!normalizedAddress) return;
+
+    userProfile = {
+        ...userProfile,
+        address: normalizedAddress,
+        addressLine1: locationData.addressLine1 || userProfile.addressLine1 || '',
+        addressLine2: locationData.addressLine2 || userProfile.addressLine2 || '',
+        street: locationData.street || userProfile.street || '',
+        place: locationData.place || userProfile.place || '',
+        locality: locationData.locality || userProfile.locality || '',
+        city: locationData.city || userProfile.city || '',
+        state: locationData.state || userProfile.state || '',
+        pincode: locationData.pincode || userProfile.pincode || '',
+        country: locationData.country || userProfile.country || 'India'
+    };
+
+    localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
+
+    const activeUserId = localStorage.getItem(ACTIVE_USER_ID_KEY);
+    const savedUsers = safeParseLS(USERS_STORAGE_KEY, []);
+    if (activeUserId && Array.isArray(savedUsers)) {
+        const nextUsers = savedUsers.map((user) => (
+            user.id === activeUserId
+                ? {
+                    ...user,
+                    address: normalizedAddress
+                }
+                : user
+        ));
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(nextUsers));
+    }
+
+    const profileAddressEl = document.getElementById('profile-address');
+    if (profileAddressEl) {
+        profileAddressEl.innerHTML = normalizedAddress || '<span class="text-gray-400 italic">No address saved</span>';
+    }
+
+    syncUserAddressToApi(userProfile);
+};
 
 // ── Delivery tracker widget ──────────────────────────────────────────────────
 let trackerInterval = null;
@@ -1613,7 +1890,16 @@ document.addEventListener('DOMContentLoaded', async() => {
             name: user.name,
             phone: user.phone,
             email: user.phone,
-            address: user.address || '123 Market Street<br>New Town, West Bengal<br>India'
+            address: normalizeSavedAddress(user.address || ''),
+            addressLine1: user.addressLine1 || '',
+            addressLine2: user.addressLine2 || '',
+            street: user.street || '',
+            place: user.place || '',
+            locality: user.locality || '',
+            city: user.city || '',
+            state: user.state || '',
+            pincode: user.pincode || '',
+            country: user.country || 'India'
         };
 
         localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
@@ -1634,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             id: `usr-${Date.now()}`,
             name: name.trim(),
             phone: normalizedPhone,
-            address: '123 Market Street<br>New Town, West Bengal<br>India'
+            address: ''
         };
         allUsers.push(newUser);
         saveUsersToStorage();
@@ -1653,6 +1939,19 @@ document.addEventListener('DOMContentLoaded', async() => {
             saveUsersToStorage();
             loggedInUserIds = [];
             saveLoggedInUsersToStorage();
+            if (cameFromLogin) {
+                userProfile = {
+                    id: 'guest-user',
+                    name: 'Guest User',
+                    phone: '',
+                    email: 'guest.user@email.com',
+                    address: ''
+                };
+                localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
+                updateAuthContainer();
+                initDeliveryTracker();
+                return;
+            }
             redirectToLoginPage();
             return;
         }
@@ -1673,10 +1972,15 @@ document.addEventListener('DOMContentLoaded', async() => {
                 name: 'Guest User',
                 phone: '',
                 email: 'guest.user@email.com',
-                address: '123 Market Street<br>New Town, West Bengal<br>India'
+                address: ''
             };
             localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
             saveLoggedInUsersToStorage();
+            if (cameFromLogin) {
+                updateAuthContainer();
+                initDeliveryTracker();
+                return;
+            }
             redirectToLoginPage();
             return;
         }
@@ -1959,8 +2263,37 @@ document.addEventListener('DOMContentLoaded', async() => {
     const productGrid = document.getElementById('product-grid');
     const categoryContainer = document.getElementById('category-container');
     const searchBar = document.getElementById('search-bar');
-    const searchSuggestionList = document.getElementById('product-search-suggestions');
+    const searchDropdown = document.getElementById('search-suggestions-dropdown');
     const noResults = document.getElementById('no-results');
+
+    let recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]').slice(0, 5);
+    const saveRecentSearch = (term) => {
+        const normalized = normalizeSearchText(term);
+        if (!normalized) return;
+        recentSearches = [normalized, ...recentSearches.filter(s => s !== normalized)].slice(0, 5);
+        localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+    };
+
+    const getSearchFrequency = () => {
+        const freq = new Map();
+        cart.forEach(item => {
+            const product = products.find(p => p.id === item.productId);
+            if (product) freq.set(product.id, (freq.get(product.id) || 0) + item.quantity);
+        });
+        return freq;
+    };
+
+    const getTop5PopularProducts = () => {
+        const frequency = getSearchFrequency();
+        return Array.from(frequency.entries())
+            .map(([id, freq]) => ({ ...products.find(p => p.id === id), popularity: freq }))
+            .filter(Boolean)
+            .sort((a, b) => b.popularity - a.popularity)
+            .slice(0, 5);
+    };
+
+    const showSearchDropdown = () => searchDropdown.classList.remove('hidden');
+    const hideSearchDropdown = () => searchDropdown.classList.add('hidden');
     const productSectionTitle = document.getElementById('product-section-title');
     const cartFooter = document.getElementById('cart-footer');
     const cartSummary = document.getElementById('cart-summary');
@@ -2002,6 +2335,157 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     };
 
+    const normalizeSearchText = (value = '') => String(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const SMART_SEARCH_GROUPS = [
+        {
+            trigger: ['apple', 'apples'],
+            aliases: ['apple', 'apples', 'fresh apple', 'fresh apples', 'apple gourd', 'tinda', 'bottle gourd', 'bottlegourd', 'boootlground']
+        },
+        {
+            trigger: ['gourd', 'lauki', 'tinda', 'parwal', 'turai'],
+            aliases: ['gourd', 'bottle gourd', 'apple gourd', 'lauki', 'tinda', 'parwal', 'turai']
+        }
+    ];
+
+    const expandSearchTerms = (query) => {
+        const normalizedQuery = normalizeSearchText(query);
+        if (!normalizedQuery) return [];
+
+        const terms = new Set([normalizedQuery]);
+        const queryTokens = normalizedQuery.split(' ').filter(Boolean);
+
+        SMART_SEARCH_GROUPS.forEach(group => {
+            const triggered = group.trigger.some(trigger => {
+                const normalizedTrigger = normalizeSearchText(trigger);
+                return normalizedQuery.includes(normalizedTrigger) || queryTokens.includes(normalizedTrigger);
+            });
+
+            if (triggered) {
+                group.aliases.forEach(alias => terms.add(normalizeSearchText(alias)));
+            }
+        });
+
+        return Array.from(terms).filter(Boolean).sort((a, b) => b.length - a.length);
+    };
+
+    const tokenizeSearchText = (value = '') => normalizeSearchText(value).split(' ').filter(Boolean);
+
+    const levenshteinDistance = (a = '', b = '') => {
+        if (a === b) return 0;
+        if (!a.length) return b.length;
+        if (!b.length) return a.length;
+
+        const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+
+        for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+        for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return matrix[a.length][b.length];
+    };
+
+    const isNearTokenMatch = (queryToken, candidateToken) => {
+        if (!queryToken || !candidateToken) return false;
+        if (candidateToken === queryToken) return true;
+        if (candidateToken.startsWith(queryToken) || candidateToken.includes(queryToken)) return true;
+
+        const lengthDiff = Math.abs(queryToken.length - candidateToken.length);
+        if (lengthDiff > 2 || queryToken.length < 4 || candidateToken.length < 4) return false;
+
+        const distance = levenshteinDistance(queryToken, candidateToken);
+        return distance <= (queryToken.length >= 7 ? 2 : 1);
+    };
+
+    const getProductSearchTerms = (product) => {
+        const terms = new Set([
+            normalizeSearchText(product.name || ''),
+            normalizeSearchText(product.category || '')
+        ]);
+
+        const productText = normalizeSearchText(`${product.name || ''} ${product.category || ''}`);
+        SMART_SEARCH_GROUPS.forEach(group => {
+            const matchesGroup = group.trigger.some(trigger => productText.includes(normalizeSearchText(trigger)));
+            if (matchesGroup) {
+                group.aliases.forEach(alias => terms.add(normalizeSearchText(alias)));
+            }
+        });
+
+        return Array.from(terms).filter(Boolean);
+    };
+
+    const getSmartSearchScore = (product, searchTerm) => {
+        const normalizedQuery = normalizeSearchText(searchTerm);
+        if (!normalizedQuery) return 0;
+
+        const productName = normalizeSearchText(product.name || '');
+        const productCategory = normalizeSearchText(product.category || '');
+        const productTerms = getProductSearchTerms(product);
+        const expandedTerms = expandSearchTerms(normalizedQuery);
+        const queryTokens = tokenizeSearchText(normalizedQuery);
+        const productTokens = tokenizeSearchText(productTerms.join(' '));
+
+        let score = 0;
+        let strongMatch = false;
+
+        if (productName === normalizedQuery) {
+            score += 250;
+            strongMatch = true;
+        }
+        if (productName.startsWith(normalizedQuery)) {
+            score += 170;
+            strongMatch = true;
+        }
+        if (productName.includes(normalizedQuery)) {
+            score += 120;
+            strongMatch = true;
+        }
+        if (productCategory.includes(normalizedQuery)) {
+            score += 40;
+        }
+
+        expandedTerms.forEach(term => {
+            if (productTerms.some(productTerm => productTerm.includes(term))) {
+                score += term === normalizedQuery ? 80 : 45;
+                strongMatch = true;
+            }
+        });
+
+        let matchedTokenCount = 0;
+        queryTokens.forEach(queryToken => {
+            if (productTokens.some(productToken => isNearTokenMatch(queryToken, productToken))) {
+                matchedTokenCount += 1;
+                score += 35;
+            }
+        });
+
+        if (queryTokens.length > 1 && matchedTokenCount === queryTokens.length) {
+            score += 40;
+            strongMatch = true;
+        }
+
+        const hasAnyTokenMatch = matchedTokenCount > 0;
+        if (!strongMatch && !hasAnyTokenMatch) {
+            return -1;
+        }
+
+        return score;
+    };
+
     // --- DATA PERSISTENCE ---
     const loadDataFromStorage = () => {
         const savedCart = localStorage.getItem('grocerymartCart');
@@ -2009,7 +2493,10 @@ document.addEventListener('DOMContentLoaded', async() => {
 
         const savedProfile = safeParseLS('grocerymartProfile', null);
         if (savedProfile && savedProfile.id) {
-            userProfile = savedProfile;
+            userProfile = {
+                ...savedProfile,
+                address: normalizeSavedAddress(savedProfile.address || '')
+            };
         }
         const orderOwnerId = savedProfile?.id || localStorage.getItem(ACTIVE_USER_ID_KEY) || 'guest-user';
         
@@ -2030,6 +2517,40 @@ document.addEventListener('DOMContentLoaded', async() => {
         localStorage.setItem(getOrdersStorageKey(targetUserId), JSON.stringify(pastOrders));
     };
     const saveProfileToStorage = () => localStorage.setItem('grocerymartProfile', JSON.stringify(userProfile));
+
+    const parseAddressToParams = (addressValue = '') => parseAddressToPayload(addressValue);
+
+    const syncUserProfileToApi = async () => {
+        if (!userProfile?.id) return;
+
+        const parsedAddress = parseAddressToParams(userProfile.address || '');
+        const payload = {
+            userId: userProfile.id,
+            name: userProfile.name || '',
+            email: userProfile.email || userProfile.phone || '',
+            address: normalizeSavedAddress(userProfile.address || ''),
+            addressLine1: userProfile.addressLine1 || parsedAddress.addressLine1 || '',
+            addressLine2: userProfile.addressLine2 || parsedAddress.addressLine2 || '',
+            city: userProfile.city || parsedAddress.city || '',
+            state: userProfile.state || parsedAddress.state || '',
+            pincode: userProfile.pincode || parsedAddress.pincode || '',
+            country: userProfile.country || parsedAddress.country || 'India'
+        };
+
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Profile sync failed: ${response.status}`);
+            }
+        } catch (error) {
+            console.warn('Profile sync warning:', error.message);
+        }
+    };
 
     // --- RENDER FUNCTIONS ---
     const renderProducts = (filteredProducts = products) => {
@@ -2113,7 +2634,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         categoryContainer.innerHTML = '';
         categories.forEach(category => {
             const categoryButton = document.createElement('button');
-            categoryButton.className = 'category-btn shrink-0 themed-card-bg border themed-border rounded-full px-4 py-2 text-sm font-semibold hover:bg-[color:var(--accent-color-1)] hover:text-[#1a2e05] transition-colors shadow-sm text-gray-900 dark:text-gray-100 dark:hover:text-gray-900';
+            categoryButton.className = 'category-btn shrink-0 themed-card-bg border themed-border rounded-full px-5 py-2 text-sm font-semibold hover:bg-[color:var(--accent-color-1)] hover:text-[#1a2e05] transition-colors shadow-sm text-gray-900 dark:text-gray-100 dark:hover:text-gray-900';
             categoryButton.textContent = category;
             categoryButton.dataset.category = category;
             if (category === 'All') {
@@ -2123,14 +2644,65 @@ document.addEventListener('DOMContentLoaded', async() => {
         });
     };
 
+    const getAdvancedSearchSuggestions = (query) => {
+        const normalized = normalizeSearchText(query);
+        if (!normalized) return { recent: recentSearches, popular: getTop5PopularProducts() };
+        const frequency = getSearchFrequency();
+        const scored = products.map(p => {
+            const score = getSmartSearchScore(p, query);
+            if (score < 0) return null;
+            const boost = frequency.has(p.id) ? frequency.get(p.id) * 3 : 0;
+            return { ...p, totalScore: score + boost };
+        }).filter(Boolean).sort((a, b) => b.totalScore - a.totalScore).slice(0, 6);
+        return { matched: scored };
+    };
+
+    const renderSearchSuggestions = (sug) => {
+        searchDropdown.innerHTML = '';
+        if (sug.matched?.length) {
+            const sec = document.createElement('div');
+            sec.className = 'search-dropdown-section';
+            sec.innerHTML = '<div class="search-section-title">Results</div>';
+            sug.matched.forEach(p => {
+                const b = document.createElement('button');
+                b.className = 'search-suggestion-item';
+                b.innerHTML = `<i class="ph ph-bag suggestion-icon"></i><span class="suggestion-text">${p.name}</span>`;
+                b.onclick = () => { searchBar.value = p.name; hideSearchDropdown(); handleFilter(); };
+                sec.appendChild(b);
+            });
+            searchDropdown.appendChild(sec);
+        } else {
+            if (sug.recent?.length) {
+                const sec = document.createElement('div');
+                sec.className = 'search-dropdown-section';
+                sec.innerHTML = '<div class="search-section-title">Recent</div>';
+                sug.recent.forEach(q => {
+                    const b = document.createElement('button');
+                    b.className = 'search-suggestion-item';
+                    b.innerHTML = `<i class="ph ph-clock suggestion-icon"></i><span class="suggestion-text">${q}</span>`;
+                    b.onclick = () => { searchBar.value = q; hideSearchDropdown(); handleFilter(); };
+                    sec.appendChild(b);
+                });
+                searchDropdown.appendChild(sec);
+            }
+            if (sug.popular?.length) {
+                const sec = document.createElement('div');
+                sec.className = 'search-dropdown-section';
+                sec.innerHTML = '<div class="search-section-title">Trending</div>';
+                sug.popular.forEach(p => {
+                    const b = document.createElement('button');
+                    b.className = 'search-suggestion-item popular';
+                    b.innerHTML = `<i class="ph ph-fire suggestion-icon"></i><span class="suggestion-text">${p.name}</span><span class="suggestion-badge">Popular</span>`;
+                    b.onclick = () => { searchBar.value = p.name; hideSearchDropdown(); handleFilter(); };
+                    sec.appendChild(b);
+                });
+                searchDropdown.appendChild(sec);
+            }
+        }
+    };
+
     const populateSearchSuggestionList = () => {
-        if (!searchSuggestionList) return;
-        searchSuggestionList.innerHTML = '';
-        products.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.name;
-            searchSuggestionList.appendChild(option);
-        });
+        // Advanced search system handles this
     };
     
     const updateCartView = () => {
@@ -2288,12 +2860,9 @@ document.addEventListener('DOMContentLoaded', async() => {
     const renderProfile = () => {
         profileName.textContent = userProfile.name || 'Guest User';
         profileEmail.textContent = userProfile.phone ? `+91 ${userProfile.phone}` : '';
-        profileAddress.innerHTML = userProfile.address || '<span class="text-gray-400 italic">No address saved</span>';
-        const initial = (userProfile.name || 'G').charAt(0).toUpperCase();
-        const avatarUrl = `https://placehold.co/128x128/a3e635/1a2e05?text=${initial}`;
-        const headerAvatarUrl = `https://placehold.co/32x32/a3e635/1a2e05?text=${initial}`;
-        profileAvatar.src = avatarUrl;
-        headerAvatar.src = headerAvatarUrl;
+        profileAddress.innerHTML = normalizeSavedAddress(userProfile.address || '') || '<span class="text-gray-400 italic">No address saved</span>';
+        profileAvatar.src = './customer-avatar.svg';
+        headerAvatar.src = './customer-avatar.svg';
     };
 
     // --- EVENT HANDLERS & LOGIC ---
@@ -2301,15 +2870,36 @@ document.addEventListener('DOMContentLoaded', async() => {
         const activeCategoryEl = document.querySelector('.category-btn.active');
         if (!activeCategoryEl) return;
         
-        const searchTerm = searchBar.value.toLowerCase();
+        const searchTerm = searchBar.value;
         const activeCategory = activeCategoryEl.dataset.category;
+        const hasSearchQuery = normalizeSearchText(searchTerm).length > 0;
+        const frequency = getSearchFrequency();
 
-        const filteredProducts = products.filter(product => {
-            const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
-            const matchesSearch = product.name.toLowerCase().includes(searchTerm);
-            return matchesCategory && matchesSearch;
-        });
-        setProductSectionTitle('All Products');
+        const filteredProducts = products
+            .map(product => {
+                const matchesCategory = hasSearchQuery ? true : (activeCategory === 'All' || product.category === activeCategory);
+                if (!matchesCategory) return null;
+
+                const searchScore = hasSearchQuery ? getSmartSearchScore(product, searchTerm) : 0;
+                if (hasSearchQuery && searchScore < 0) return null;
+
+                const popularityBoost = frequency.has(product.id) ? frequency.get(product.id) * 2 : 0;
+                return { product, searchScore: searchScore + popularityBoost };
+            })
+            .filter(Boolean)
+            .sort((a, b) => {
+                if (b.searchScore !== a.searchScore) return b.searchScore - a.searchScore;
+                return String(a.product.name || '').localeCompare(String(b.product.name || ''));
+            })
+            .map(entry => entry.product);
+
+        if (hasSearchQuery) {
+            setProductSectionTitle(`Search Results (${filteredProducts.length} found)`);
+            if (searchTerm.trim()) saveRecentSearch(searchTerm);
+        } else {
+            setProductSectionTitle('All Products');
+        }
+
         renderProducts(filteredProducts);
     };
 
@@ -2388,6 +2978,11 @@ document.addEventListener('DOMContentLoaded', async() => {
 
         const orderId = generateFriendlyOrderId();
         const totalAmount = calculateTotal();
+        const estimatedDeliveryMinutes = Number(
+            nearestWarehouse?.estimatedDeliveryTime
+            || nearestWarehouse?.avgDeliveryTime
+            || 12
+        );
 
         const orderData = {
             userId: userProfile.id || 'guest-user',
@@ -2399,6 +2994,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                 unit: item.unit || 'piece'
             })),
             totalAmount,
+            estimatedDeliveryMinutes,
             deliveryAddress: userProfile.address || '',
             status: 'pending'
         };
@@ -2406,8 +3002,9 @@ document.addEventListener('DOMContentLoaded', async() => {
         localStorage.setItem('pendingOrder', JSON.stringify(orderData));
         localStorage.setItem('currentOrderId', orderId);
         localStorage.setItem('currentOrderAmount', totalAmount.toString());
+        localStorage.setItem('currentOrderEtaMinutes', String(estimatedDeliveryMinutes));
 
-        window.location.href = `payment.html?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(totalAmount.toFixed(2))}`;
+        window.location.href = `payment.html?orderId=${encodeURIComponent(orderId)}&amount=${encodeURIComponent(totalAmount.toFixed(2))}&eta=${encodeURIComponent(String(estimatedDeliveryMinutes))}`;
     };
 
     productGrid.addEventListener('click', (e) => {
@@ -2478,7 +3075,24 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     });
     
-    searchBar.addEventListener('input', handleFilter);
+    searchBar.addEventListener('input', (e) => {
+        const sug = getAdvancedSearchSuggestions(e.target.value);
+        renderSearchSuggestions(sug);
+        if (e.target.value.trim()) showSearchDropdown();
+        handleFilter();
+    });
+
+    searchBar.addEventListener('focus', () => {
+        const sug = getAdvancedSearchSuggestions(searchBar.value);
+        renderSearchSuggestions(sug);
+        showSearchDropdown();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!searchBar.contains(e.target) && !searchDropdown.contains(e.target)) {
+            hideSearchDropdown();
+        }
+    });
 
     const searchBtn = document.getElementById('search-btn');
     if (searchBtn) {
@@ -2556,7 +3170,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         showProfileModal();
     });
 
-    editProfileForm.addEventListener('submit', (e) => {
+    editProfileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const editedName = editNameInput.value.trim();
         const editedPhone = editEmailInput.value.replace(/\D/g, '').slice(-10);
@@ -2572,7 +3186,15 @@ document.addEventListener('DOMContentLoaded', async() => {
         userProfile.name = editedName;
         userProfile.phone = editedPhone;
         userProfile.email = editedPhone;
-        userProfile.address = editAddressInput.value.replace(/\n/g, '<br>');
+        userProfile.address = normalizeSavedAddress(editAddressInput.value.replace(/\n/g, '<br>'));
+
+        const parsedEditedAddress = parseAddressToPayload(userProfile.address || '');
+        userProfile.addressLine1 = parsedEditedAddress.addressLine1;
+        userProfile.addressLine2 = parsedEditedAddress.addressLine2;
+        userProfile.city = parsedEditedAddress.city;
+        userProfile.state = parsedEditedAddress.state;
+        userProfile.pincode = parsedEditedAddress.pincode;
+        userProfile.country = parsedEditedAddress.country;
 
         const userIndex = allUsers.findIndex(u => u.id === userProfile.id);
         if (userIndex !== -1) {
@@ -2587,6 +3209,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
 
         saveProfileToStorage();
+        await syncUserProfileToApi();
         renderProfile();
         hideEditProfileModal();
         showProfileModal();
@@ -2763,10 +3386,72 @@ document.addEventListener('DOMContentLoaded', async() => {
 // Location Functions
 let userLocation = {
     address: '',
+    addressLine1: '',
+    addressLine2: '',
+    street: '',
+    society: '',
+    institution: '',
+    landmark: '',
+    place: '',
+    locality: '',
     city: '',
+    state: '',
     pincode: '',
+    country: 'India',
     coordinates: null
 };
+
+function getStructuredAddressDetails(addressObj = {}, fallback = '') {
+    const houseNumber = addressObj.house_number || '';
+    const road = addressObj.road || addressObj.street || addressObj.pedestrian || '';
+    const building = addressObj.building || addressObj.amenity || '';
+    const society = addressObj.residential || addressObj.apartment || addressObj.condominium || '';
+    const institution = addressObj.college || addressObj.university || addressObj.school || '';
+    const landmark = addressObj.landmark || addressObj.attraction || addressObj.tourism || '';
+    const locality = addressObj.suburb || addressObj.neighbourhood || addressObj.quarter || '';
+    const place = addressObj.village || addressObj.town || addressObj.hamlet || addressObj.municipality || '';
+    const city = addressObj.city || addressObj.county || addressObj.state_district || place || '';
+    const state = addressObj.state || addressObj.region || '';
+    const pincode = addressObj.postcode || addressObj.pincode || '';
+    const country = addressObj.country || 'India';
+    const street = [houseNumber, road].filter(Boolean).join(' ').trim() || road || '';
+    const complexLike = /complex|society|apartment|apartments|residency|enclave|heights|tower/i.test(building || '') ? building : '';
+
+    const addressLine1 = street || society || complexLike || institution || building || fallback || '';
+    const addressLine2 = [
+        society && society !== addressLine1 ? society : '',
+        complexLike && complexLike !== addressLine1 ? complexLike : '',
+        institution && institution !== addressLine1 ? institution : '',
+        landmark,
+        locality,
+        place
+    ]
+        .filter(Boolean)
+        .join(', ');
+
+    const addressLines = [
+        addressLine1,
+        addressLine2,
+        [city, state, pincode].filter(Boolean).join(', '),
+        country
+    ].filter(Boolean);
+
+    return {
+        address: normalizeSavedAddress(addressLines.join('<br>') || String(fallback || '').replace(/\n/g, '<br>')),
+        addressLine1,
+        addressLine2,
+        street,
+        society,
+        institution,
+        landmark,
+        place,
+        locality,
+        city,
+        state,
+        pincode,
+        country
+    };
+}
 
 // Warehouse/Store Locations
 const warehouses = [
@@ -3067,21 +3752,23 @@ function getCurrentLocation(buttonElement) {
                 let addressData = await getAddressFromCoordinates(lat, lng, accuracy);
                 
                 if (addressData) {
+                    const structured = getStructuredAddressDetails({}, addressData.formattedAddress || '');
                     userLocation = {
-                        address: addressData.formattedAddress,
-                        city: addressData.city,
-                        state: addressData.state,
-                        pincode: addressData.pincode,
-                        country: addressData.country,
-                        coordinates: { 
+                        ...structured,
+                        city: addressData.city || structured.city,
+                        state: addressData.state || structured.state,
+                        pincode: addressData.pincode || structured.pincode,
+                        country: addressData.country || structured.country,
+                        coordinates: {
                             lat: lat.toFixed(6),
-                            lng: lng.toFixed(6), 
+                            lng: lng.toFixed(6),
                             accuracy: Math.round(accuracy)
                         }
                     };
                     
                     updateLocationDisplay();
                     saveLocationToStorage();
+                    persistRealtimeAddressToProfile(userLocation);
                     closeLocationModal();
                     showNotification(`Location set successfully!`, 'success');
                 } else {
@@ -3091,13 +3778,13 @@ function getCurrentLocation(buttonElement) {
             } catch (error) {
                 console.error('Geocoding error:', error);
                 userLocation = {
-                    address: `Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`,
+                    ...getStructuredAddressDetails({}, `Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`),
                     city: 'Unknown',
-                    pincode: '',
                     coordinates: { lat: lat.toFixed(6), lng: lng.toFixed(6), accuracy: Math.round(accuracy) }
                 };
                 updateLocationDisplay();
                 saveLocationToStorage();
+                persistRealtimeAddressToProfile(userLocation);
                 showNotification('Location detected. Please add address manually.', 'warning');
                 closeLocationModal();
             } finally {
@@ -3334,13 +4021,30 @@ async function getPreciseLocation() {
                         );
                         const osmData = await detailedResponse.json();
                         const osmAddr = osmData.address || {};
-                        const resolvedAddress = osmData.display_name || data.formattedAddress || `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                        const resolvedCity = osmAddr.city || osmAddr.town || osmAddr.municipality || osmAddr.locality || data.city || '';
-                        const resolvedPincode = osmAddr.postcode || osmAddr.pincode || data.pincode || '';
-                        useThisPreciseLocation(resolvedAddress, resolvedCity, resolvedPincode, lat, lng, accuracy);
+                        const structured = getStructuredAddressDetails(osmAddr, osmData.display_name || data.formattedAddress || '');
+                        useThisPreciseLocation({
+                            ...structured,
+                            city: structured.city || data.city || '',
+                            state: structured.state || data.state || '',
+                            pincode: structured.pincode || data.pincode || '',
+                            country: structured.country || data.country || 'India',
+                            lat,
+                            lng,
+                            accuracy
+                        });
                     } catch (error) {
                         // If detailed fetch fails, show basic data
-                        useThisPreciseLocation(data.formattedAddress || `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, data.city || '', data.pincode || '', lat, lng, accuracy);
+                        const structured = getStructuredAddressDetails({}, data.formattedAddress || `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                        useThisPreciseLocation({
+                            ...structured,
+                            city: data.city || structured.city || '',
+                            state: data.state || structured.state || '',
+                            pincode: data.pincode || structured.pincode || '',
+                            country: data.country || structured.country || 'India',
+                            lat,
+                            lng,
+                            accuracy
+                        });
                     }
                 } else {
                     throw new Error('Unable to fetch address details');
@@ -3377,20 +4081,34 @@ async function getPreciseLocation() {
 }
 
 // Use the precise location details
-function useThisPreciseLocation(address, city, pincode, lat, lng, accuracy) {
+function useThisPreciseLocation(locationData = {}) {
+    const latNum = Number(locationData.lat);
+    const lngNum = Number(locationData.lng);
+
     userLocation = {
-        address: address,
-        city: city,
-        pincode: pincode,
-        coordinates: { 
-            lat: lat.toFixed(7), 
-            lng: lng.toFixed(7), 
-            accuracy: Math.round(accuracy) 
+        address: normalizeSavedAddress(locationData.address || ''),
+        addressLine1: locationData.addressLine1 || '',
+        addressLine2: locationData.addressLine2 || '',
+        street: locationData.street || '',
+        society: locationData.society || '',
+        institution: locationData.institution || '',
+        landmark: locationData.landmark || '',
+        place: locationData.place || '',
+        locality: locationData.locality || '',
+        city: locationData.city || '',
+        state: locationData.state || '',
+        pincode: locationData.pincode || '',
+        country: locationData.country || 'India',
+        coordinates: {
+            lat: Number.isFinite(latNum) ? latNum.toFixed(7) : '0.0000000',
+            lng: Number.isFinite(lngNum) ? lngNum.toFixed(7) : '0.0000000',
+            accuracy: Math.round(locationData.accuracy || 0)
         }
     };
     
     updateLocationDisplay();
     saveLocationToStorage();
+    persistRealtimeAddressToProfile(userLocation);
     closeLocationModal();
     showNotification('Precise location set successfully!', 'success');
 }
@@ -3462,7 +4180,7 @@ function setManualLocation() {
     }
     
     userLocation = {
-        address: address,
+        ...getStructuredAddressDetails({}, address),
         city: city,
         pincode: pincode,
         coordinates: null
@@ -3470,6 +4188,7 @@ function setManualLocation() {
     
     updateLocationDisplay();
     saveLocationToStorage();
+    persistRealtimeAddressToProfile(userLocation);
     closeLocationModal();
     
     // Clear inputs
@@ -3482,7 +4201,7 @@ function setQuickLocation(address, pincode) {
     const city = address.split(', ')[1];
     
     userLocation = {
-        address: address,
+        ...getStructuredAddressDetails({}, address),
         city: city,
         pincode: pincode,
         coordinates: null
@@ -3490,6 +4209,7 @@ function setQuickLocation(address, pincode) {
     
     updateLocationDisplay();
     saveLocationToStorage();
+    persistRealtimeAddressToProfile(userLocation);
     closeLocationModal();
 }
 
@@ -3498,46 +4218,45 @@ function updateLocationDisplay() {
     const viewMapBtn = document.getElementById('view-map-btn');
     
     if (userLocation.address) {
-        // Build comprehensive display text without duplicated city/state/pincode
+        // Keep header address concise but still descriptive of the area.
         const displayParts = [];
-        const seenNormalized = new Set();
-        const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-        const normalizedAddress = ` ${normalize(userLocation.address)} `;
-
-        const addUniquePart = (value) => {
-            const normalized = normalize(value);
-            if (!normalized || seenNormalized.has(normalized)) {
-                return;
-            }
-            seenNormalized.add(normalized);
-            displayParts.push(value);
+        const seen = new Set();
+        const addDisplayPart = (value) => {
+            const text = String(value || '').trim();
+            const key = text.toLowerCase();
+            if (!text || seen.has(key)) return;
+            seen.add(key);
+            displayParts.push(text);
         };
 
-        addUniquePart(userLocation.address);
-
-        if (userLocation.city) {
-            const normalizedCity = normalize(userLocation.city);
-            if (normalizedCity && !normalizedAddress.includes(` ${normalizedCity} `)) {
-                addUniquePart(userLocation.city);
-            }
+        // Preferred order: society/complex/college/landmark context first.
+        addDisplayPart(userLocation.society);
+        addDisplayPart(userLocation.institution);
+        if (userLocation.landmark) {
+            addDisplayPart(`Near ${userLocation.landmark}`);
         }
-
-        if (userLocation.state) {
-            const normalizedState = normalize(userLocation.state);
-            if (normalizedState && !normalizedAddress.includes(` ${normalizedState} `)) {
-                addUniquePart(userLocation.state);
-            }
-        }
+        addDisplayPart(userLocation.place);
+        addDisplayPart(userLocation.locality);
+        addDisplayPart(userLocation.city);
+        addDisplayPart(userLocation.addressLine2);
+        addDisplayPart(userLocation.addressLine1);
 
         if (userLocation.pincode) {
-            const normalizedPincode = String(userLocation.pincode).replace(/\D/g, '');
-            const addressHasPincode = normalizedPincode && normalizedAddress.includes(normalizedPincode);
-            if (!addressHasPincode) {
-                addUniquePart(`PIN: ${userLocation.pincode}`);
-            }
+            addDisplayPart(`PIN ${userLocation.pincode}`);
         }
-        
-        const displayText = displayParts.join(', ');
+
+        // Fallback when structured fields are unavailable.
+        if (displayParts.length === 0) {
+            const addressSegments = String(userLocation.address)
+                .replace(/<br\s*\/?>/gi, ',')
+                .split(',')
+                .map(part => part.trim())
+                .filter(Boolean);
+            addDisplayPart(addressSegments[0] || 'Location selected');
+            addDisplayPart(addressSegments[1] || '');
+        }
+
+        const displayText = displayParts.slice(0, 4).join(', ');
         
         // Update main location display
         locationElement.textContent = displayText;

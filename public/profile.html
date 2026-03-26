@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - Grocery Mart</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
         }
     </script>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->   
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,12 +21,6 @@
     <!-- Clerk Authentication - Local Script -->
     <script src="./clerk.browser.js"></script>
     
-    <!-- Ethers.js v6 - LOCAL FILE (not CDN) -->
-    <script src="./ethers.min.js"></script>
-    
-    <!-- Supply Chain Web3 Integration -->
-    <script src="./supplychain-web3.js?v=3"></script>
-
     <style>
         /* Define CSS variables for theming */
         :root {
@@ -34,7 +28,7 @@
             --text-light: #1a2e05; /* dark green */
             --card-bg-light: #ffffff;
             --border-light: #dcfce7; /* green-100 */
-            --subtle-text-light: #4d5e42; /* darker green-gray for better contrast */
+            --subtle-text-light: #334155; /* stronger slate tone for better light-mode readability */
             --accent-color-1: #84cc16; /* lime-500 */
             --accent-color-2: #a3e635; /* lime-400 */
 
@@ -60,12 +54,20 @@
             --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        html {
+            background-color: var(--bg-light);
+            min-height: 100%;
+        }
+
         /* Apply light theme by default with smooth transitions */
         body {
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
             background-color: var(--bg-light);
             color: var(--text-light);
-            background-image: var(--bg-image-light);
+            background-image: linear-gradient(180deg, #f7fee7 0%, #eef9da 100%), var(--bg-image-light);
+            background-blend-mode: normal, multiply;
             background-size: cover;
             background-attachment: fixed;
             transition: background-color var(--theme-transition-duration) var(--theme-transition-easing),
@@ -75,12 +77,17 @@
 
         /* Enhanced dark mode with gradient overlay */
         html.dark body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background-color: #0b1220;
+            background-image: linear-gradient(135deg, #0f172a 0%, #17253a 50%, #0f172a 100%), var(--bg-image-dark);
+            background-blend-mode: soft-light, normal;
             background-size: 200% 200%;
             background-attachment: fixed;
             color: var(--text-dark);
-            background-image: var(--bg-image-dark);
             animation: gradientShift 15s ease infinite;
+        }
+
+        html.dark {
+            background-color: #0b1220;
         }
 
         /* Subtle gradient animation for dark mode */
@@ -116,6 +123,12 @@
         html.dark .themed-subtle-text {
             color: var(--subtle-text-dark);
         }
+
+        /* Light-mode readability guardrails for utility text colors */
+        html:not(.dark) .text-gray-400 { color: #64748b !important; }
+        html:not(.dark) .text-gray-500 { color: #475569 !important; }
+        html:not(.dark) .text-gray-600 { color: #334155 !important; }
+        html:not(.dark) .text-gray-700 { color: #1f2937 !important; }
         
         .themed-border {
             border-color: var(--border-light);
@@ -276,6 +289,45 @@
             transform: scale(1.2);
         }
 
+        /* Keep Profile tab active state subtle (no bright highlight) */
+        .nav-menu-item[data-section="profile"].active,
+        html.dark .nav-menu-item[data-section="profile"].active {
+            background: transparent;
+            border-left: 4px solid rgba(148, 163, 184, 0.45);
+            box-shadow: none;
+        }
+
+        .nav-menu-item[data-section="profile"].active > span,
+        html.dark .nav-menu-item[data-section="profile"].active > span {
+            color: inherit;
+            text-shadow: none;
+            font-weight: 600;
+        }
+
+        .nav-menu-item[data-section="profile"].active > div,
+        html.dark .nav-menu-item[data-section="profile"].active > div {
+            background: rgba(148, 163, 184, 0.12) !important;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-menu-item[data-section="profile"].active i,
+        html.dark .nav-menu-item[data-section="profile"].active i {
+            color: inherit !important;
+            transform: none;
+            filter: none;
+        }
+
+        /* Improve section menu icon visibility in light mode */
+        .nav-menu-item i {
+            color: #4d5e42;
+        }
+
+        html.dark .nav-menu-item i {
+            color: #cbd5e1;
+        }
+
         /* Icon transitions */
         i {
             transition: color var(--theme-transition-duration) var(--theme-transition-easing),
@@ -351,19 +403,6 @@
             box-shadow: inset 0 2px 8px rgba(190, 242, 100, 0.1);
         }
 
-        /* Wallet section enhancement */
-        html.dark .bg-purple-100.dark\:bg-purple-900 {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(147, 51, 234, 0.2)) !important;
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
-        }
-
-        /* Free cash banner enhancement */
-        html.dark .bg-gradient-to-r.from-purple-50 {
-            background: linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)) !important;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
-        }
-
         /* Modal transitions */
         .fixed.inset-0 {
             transition: opacity 0.3s ease,
@@ -434,8 +473,14 @@
         /* Enhanced text colors in dark mode */
         html.dark h2,
         html.dark h3 {
-            color: #ecfccb;
-            text-shadow: 0 1px 4px rgba(190, 242, 100, 0.15);
+            color: #e2e8c6;
+            text-shadow: none;
+        }
+
+        html.dark #profile-section h2,
+        html.dark #profile-section h3 {
+            color: #e2e8c6;
+            text-shadow: none;
         }
         
         /* Logout button enhancement in dark mode */
@@ -735,9 +780,9 @@
     </style>
 </head>
 <body>
-    <div class="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
+    <div class="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <!-- Header -->
-        <header class="sticky top-0 z-50 flex justify-between items-center mb-8 py-4 glass-effect -mx-4 sm:-mx-6 px-4 sm:px-6 rounded-lg">
+        <header class="sticky top-0 z-50 flex justify-between items-center mb-8 py-4 glass-effect -mx-6 sm:-mx-10 px-6 sm:px-10 rounded-lg">
             <div class="flex items-center gap-3">
                 <button onclick="window.location.href='./index.html?fromLogin=1'" class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all" title="Back to Home">
                     <i class="ph ph-arrow-left text-2xl text-[#1a2e05] dark:text-[#bef264]"></i>
@@ -771,13 +816,13 @@
         </div>
 
         <!-- Main Profile Layout -->
-        <div id="profile-content" class="grid md:grid-cols-[400px_1fr] gap-6">
+        <div id="profile-content" class="grid grid-cols-1 md:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)] gap-6 items-start">
             <!-- Left Sidebar -->
-            <div class="space-y-4">
+            <div class="space-y-4 md:sticky md:top-28">
                 <!-- Profile Card -->
                 <div class="themed-card-bg border themed-border rounded-xl shadow-lg p-6">
                     <div class="flex items-start gap-4 mb-6">
-                        <img id="profile-avatar" src="https://placehold.co/80x80/a3e635/1a2e05?text=G" alt="User Avatar" class="w-20 h-20 rounded-full border-2 border-[color:var(--accent-color-1)]">
+                        <img id="profile-avatar" src="./customer-avatar.svg" alt="Customer profile" class="w-20 h-20 rounded-full border-2 border-[color:var(--accent-color-1)]">
                         <div class="flex-1">
                             <h2 id="profile-name" class="text-xl font-bold themed-text">Niraj</h2>
                             <p id="profile-member-id" class="text-sm themed-subtle-text">7076003050</p>
@@ -799,73 +844,6 @@
                         </div>
                     </div>
 
-                    <!-- Wallet Section -->
-                    <div class="themed-bg border themed-border rounded-lg p-4 mb-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                                <i class="ph ph-wallet text-purple-600 dark:text-purple-400 text-xl"></i>
-                            </div>
-                            <span class="font-medium themed-text">Wallet</span>
-                        </div>
-                        <i class="ph ph-caret-right themed-subtle-text"></i>
-                    </div>
-
-                    <!-- Balance Section -->
-                    <div class="border-t themed-border pt-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-sm themed-subtle-text">Available Balance:</span>
-                            <span class="font-bold">₹0</span>
-                        </div>
-                        <button class="w-full btn-primary py-2 rounded-lg text-sm font-semibold">
-                            Add Balance
-                        </button>
-                    </div>
-
-                    <!-- Free Cash Banner -->
-                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-3 mt-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="ph ph-gift text-purple-600 dark:text-purple-400"></i>
-                            <span class="text-sm font-medium">Free Cash</span>
-                        </div>
-                        <span class="font-bold text-purple-600 dark:text-purple-400">₹100</span>
-                    </div>
-                </div>
-
-                <!-- Web3 Wallet & Blockchain Section -->
-                <div class="themed-card-bg border themed-border rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-lg themed-text">🔗 Web3 Wallet</h3>
-                        <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-semibold rounded-full">
-                            <i class="ph ph-lightning"></i> Blockchain
-                        </span>
-                    </div>
-                    
-                    <div id="wallet-connected" class="hidden">
-                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4 mb-3">
-                            <p class="text-xs themed-subtle-text mb-1">Wallet Address</p>
-                            <p id="wallet-address" class="font-mono font-bold text-sm themed-text break-all">0x742d...Cc6a</p>
-                        </div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-sm themed-subtle-text">Network:</span>
-                            <span id="wallet-network" class="font-bold text-sm themed-text">Polygon</span>
-                        </div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-sm themed-subtle-text">Balance:</span>
-                            <span id="wallet-balance" class="font-bold themed-text">0.0000 MATIC</span>
-                        </div>
-                        <button onclick="disconnectWallet()" class="w-full themed-bg border themed-border py-2 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                            <i class="ph ph-sign-out"></i> Disconnect Wallet
-                        </button>
-                    </div>
-                    
-                    <div id="wallet-not-connected">
-                        <p class="text-sm themed-subtle-text mb-4">Connect your Web3 wallet to access blockchain-verified product tracking and supply chain transparency</p>
-                        <button onclick="connectWallet()" class="w-full btn-primary py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
-                            <i class="ph ph-wallet text-xl"></i>
-                            Connect MetaMask
-                        </button>
-                        <p class="text-xs themed-subtle-text mt-3 text-center">Don't have MetaMask? <a href="https://metamask.io/download/" target="_blank" class="text-[color:var(--accent-color-1)] font-semibold hover:underline">Get it here</a></p>
-                    </div>
                 </div>
 
                 <!-- Navigation Menu -->
@@ -882,23 +860,11 @@
                         </div>
                         <span class="font-medium">Customer Support</span>
                     </button>
-                    <button data-section="referrals" class="nav-menu-item w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-b themed-border">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                            <i class="ph ph-users text-xl"></i>
-                        </div>
-                        <span class="font-medium">Manage Referrals</span>
-                    </button>
                     <button data-section="addresses" class="nav-menu-item w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-b themed-border">
                         <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                             <i class="ph ph-map-pin text-xl"></i>
                         </div>
                         <span class="font-medium">Addresses</span>
-                    </button>
-                    <button data-section="supply-chain" class="nav-menu-item w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-b themed-border">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                            <i class="ph ph-cube text-xl"></i>
-                        </div>
-                        <span class="font-medium">Supply Chain</span>
                     </button>
                     <button id="edit-profile-btn" data-section="profile" class="nav-menu-item w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                         <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
@@ -921,7 +887,7 @@
             </div>
 
             <!-- Right Content Area -->
-            <div class="themed-card-bg border themed-border rounded-xl shadow-lg">
+            <div class="themed-card-bg border themed-border rounded-xl shadow-lg min-h-[620px]">
                 <!-- Orders Section (Default) -->
                 <div id="orders-section" class="content-section">
                     <div class="p-6 border-b themed-border flex items-center justify-between">
@@ -1024,95 +990,6 @@
                     </div>
                 </div>
 
-                <div id="referrals-section" class="content-section hidden">
-                    <div class="p-6 border-b themed-border">
-                        <h2 class="text-2xl font-bold">Manage Referrals</h2>
-                    </div>
-                    <div class="p-6 space-y-6">
-                        <!-- Referral Card -->
-                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border themed-border rounded-xl p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 class="text-2xl font-bold mb-2">Refer & Earn ₹100</h3>
-                                    <p class="themed-subtle-text">Share your referral code with friends</p>
-                                </div>
-                                <div class="text-5xl">🎁</div>
-                            </div>
-                            
-                            <div class="bg-white dark:bg-slate-800 border themed-border rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm themed-subtle-text mb-1">Your Referral Code</p>
-                                        <p class="text-2xl font-bold font-mono">NIRAJ2025</p>
-                                    </div>
-                                    <button id="copy-referral-btn" class="btn-primary px-4 py-2 rounded-lg">
-                                        <i class="ph ph-copy"></i> Copy
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <button class="themed-bg border themed-border px-4 py-2 rounded-lg font-medium hover:shadow-md transition-all">
-                                    <i class="ph ph-whatsapp-logo"></i> Share on WhatsApp
-                                </button>
-                                <button class="themed-bg border themed-border px-4 py-2 rounded-lg font-medium hover:shadow-md transition-all">
-                                    <i class="ph ph-share-network"></i> More Options
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Referral Stats -->
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <div class="themed-bg border themed-border rounded-lg p-4">
-                                <p class="text-sm themed-subtle-text mb-1">Total Referrals</p>
-                                <p class="text-3xl font-bold">5</p>
-                            </div>
-                            <div class="themed-bg border themed-border rounded-lg p-4">
-                                <p class="text-sm themed-subtle-text mb-1">Successful</p>
-                                <p class="text-3xl font-bold text-green-600">3</p>
-                            </div>
-                            <div class="themed-bg border themed-border rounded-lg p-4">
-                                <p class="text-sm themed-subtle-text mb-1">Earnings</p>
-                                <p class="text-3xl font-bold text-purple-600">₹300</p>
-                            </div>
-                        </div>
-
-                        <!-- Referral History -->
-                        <div class="themed-bg border themed-border rounded-lg p-6">
-                            <h3 class="font-bold text-lg mb-4">Referral History</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between py-3 border-b themed-border">
-                                    <div>
-                                        <p class="font-medium">Rahul Kumar</p>
-                                        <p class="text-sm themed-subtle-text">Joined on Oct 15, 2025</p>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-semibold rounded-full">
-                                        +₹100
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between py-3 border-b themed-border">
-                                    <div>
-                                        <p class="font-medium">Priya Sharma</p>
-                                        <p class="text-sm themed-subtle-text">Joined on Oct 10, 2025</p>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-semibold rounded-full">
-                                        +₹100
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between py-3">
-                                    <div>
-                                        <p class="font-medium">Amit Patel</p>
-                                        <p class="text-sm themed-subtle-text">Joined on Oct 5, 2025</p>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-semibold rounded-full">
-                                        +₹100
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="addresses-section" class="content-section hidden">
                     <div class="p-6 border-b themed-border flex items-center justify-between">
                         <h2 class="text-2xl font-bold">Saved Addresses</h2>
@@ -1125,233 +1002,26 @@
                     </div>
                 </div>
 
-                <!-- Supply Chain Tracking Section -->
-                <div id="supply-chain-section" class="content-section hidden">
-                    <div class="p-6 border-b themed-border">
-                        <h2 class="text-2xl font-bold mb-2">Know your Product</h2>
-                        <p class="themed-subtle-text text-sm">Track your products from farm to table with our Proper verification System</p>
-                    </div>
-                    <div class="p-6">
-                        <!-- Wallet Connection -->
-                        <div id="wallet-connect-container" class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-fill ph-wallet text-3xl text-blue-600 dark:text-blue-400"></i>
-                                    <div>
-                                        <p class="font-semibold themed-text">Blockchain Wallet</p>
-                                        <p class="text-sm themed-subtle-text" id="wallet-status-text">Connect to track products</p>
-                                    </div>
-                                </div>
-                                <button id="connect-wallet-btn" onclick="connectWalletAndInitialize()" class="btn-primary px-6 py-2 rounded-lg font-semibold">
-                                    <i class="ph ph-plug"></i> Connect Wallet
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <button onclick="searchSupplyChain()" class="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-lg transition-all text-left">
-                                <i class="ph-bold ph-magnifying-glass text-2xl text-green-600 dark:text-green-400 mb-2"></i>
-                                <p class="font-semibold themed-text">Track Product</p>
-                                <p class="text-xs themed-subtle-text">Search by Product ID</p>
-                            </button>
-                            
-                            <button onclick="generateProductQRCode()" class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-lg transition-all text-left">
-                                <i class="ph-bold ph-qr-code text-2xl text-blue-600 dark:text-blue-400 mb-2"></i>
-                                <p class="font-semibold themed-text">Generate QR Code</p>
-                                <p class="text-xs themed-subtle-text">For product packaging</p>
-                            </button>
-                            
-                            <button onclick="window.open('CRYPTO_API_SETUP.md', '_blank')" class="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-lg transition-all text-left">
-                                <i class="ph-bold ph-book-open text-2xl text-purple-600 dark:text-purple-400 mb-2"></i>
-                                <p class="font-semibold themed-text">Documentation</p>
-                                <p class="text-xs themed-subtle-text">Setup & usage guide</p>
-                            </button>
-                        </div>
-                        
-                        <!-- Product Search -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium themed-text mb-2">Search Product by ID</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="supply-chain-search" placeholder="Enter product ID (e.g., APPLE_L5K2J_A7B9C2)" class="flex-1 themed-bg border themed-border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-color-1)] text-gray-900 dark:text-white">
-                                <button onclick="searchSupplyChain()" class="btn-primary px-6 py-2 rounded-lg font-semibold">
-                                    <i class="ph ph-magnifying-glass"></i> Search
-                                </button>
-                            </div>
-                            <p class="text-xs themed-subtle-text mt-1">💡 Tip: Use scripts/register-product.js to generate product IDs and QR codes</p>
-                        </div>
-
-                        <!-- Sample Products with Blockchain Tracking -->
-                        <div class="space-y-4" id="supply-chain-products">
-                            <h3 class="font-bold text-lg themed-text mb-4">🌾 Featured Tracked Products</h3>
-                            
-                            <!-- Product 1: Organic Apples -->
-                            <div class="themed-bg border themed-border rounded-lg p-5 hover:shadow-lg transition-all">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30 flex items-center justify-center">
-                                            <i class="ph ph-apple-logo text-3xl text-red-600 dark:text-red-400"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-lg themed-text">Organic Apples</h4>
-                                            <p class="text-sm themed-subtle-text">Shimla, Himachal Pradesh</p>
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded">✓ Organic</span>
-                                                <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded">🔗 Blockchain Verified</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="viewProductJourney('APPLE_001')" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                                        View Journey
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Harvest Date</p>
-                                        <p class="font-bold text-sm themed-text">Nov 1, 2025</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Farm</p>
-                                        <p class="font-bold text-sm themed-text">Green Valley</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Transit Time</p>
-                                        <p class="font-bold text-sm themed-text">2 Days</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Quality Score</p>
-                                        <p class="font-bold text-sm text-green-600 dark:text-green-400">98/100</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Product 2: Farm Fresh Milk -->
-                            <div class="themed-bg border themed-border rounded-lg p-5 hover:shadow-lg transition-all">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
-                                            <i class="ph ph-drop text-3xl text-blue-600 dark:text-blue-400"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-lg themed-text">Farm Fresh Milk</h4>
-                                            <p class="text-sm themed-subtle-text">Anand Dairy, Gujarat</p>
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded">✓ Fresh</span>
-                                                <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded">🔗 Blockchain Verified</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="viewProductJourney('MILK_001')" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                                        View Journey
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Collection Time</p>
-                                        <p class="font-bold text-sm themed-text">6:00 AM</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Source</p>
-                                        <p class="font-bold text-sm themed-text">Anand Dairy</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Temperature</p>
-                                        <p class="font-bold text-sm themed-text">4°C</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Quality Score</p>
-                                        <p class="font-bold text-sm text-green-600 dark:text-green-400">99/100</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Product 3: Organic Rice -->
-                            <div class="themed-bg border themed-border rounded-lg p-5 hover:shadow-lg transition-all">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30 flex items-center justify-center">
-                                            <i class="ph ph-plant text-3xl text-yellow-600 dark:text-yellow-400"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-lg themed-text">Organic Basmati Rice</h4>
-                                            <p class="text-sm themed-subtle-text">Punjab Farms</p>
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded">✓ Organic</span>
-                                                <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs font-semibold rounded">🏆 Premium</span>
-                                                <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded">🔗 Blockchain Verified</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="viewProductJourney('RICE_001')" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                                        View Journey
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Harvest Date</p>
-                                        <p class="font-bold text-sm themed-text">Oct 20, 2025</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Processing</p>
-                                        <p class="font-bold text-sm themed-text">Natural</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Age</p>
-                                        <p class="font-bold text-sm themed-text">2 Years</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                                        <p class="text-xs themed-subtle-text">Quality Score</p>
-                                        <p class="font-bold text-sm text-green-600 dark:text-green-400">97/100</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Blockchain Benefits -->
-                        <div class="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
-                            <h3 class="font-bold text-lg themed-text mb-4 flex items-center gap-2">
-                                <i class="ph ph-shield-check text-2xl text-purple-600 dark:text-purple-400"></i>
-                                Why Blockchain Tracking?
-                            </h3>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="flex items-start gap-3">
-                                    <i class="ph ph-check-circle text-2xl text-green-600 dark:text-green-400 mt-1"></i>
-                                    <div>
-                                        <p class="font-semibold themed-text">100% Transparency</p>
-                                        <p class="text-sm themed-subtle-text">Complete visibility from farm to your doorstep</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <i class="ph ph-seal-check text-2xl text-blue-600 dark:text-blue-400 mt-1"></i>
-                                    <div>
-                                        <p class="font-semibold themed-text">Verified Quality</p>
-                                        <p class="text-sm themed-subtle-text">Blockchain-verified certifications and quality checks</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <i class="ph ph-shield text-2xl text-purple-600 dark:text-purple-400 mt-1"></i>
-                                    <div>
-                                        <p class="font-semibold themed-text">Anti-Counterfeit</p>
-                                        <p class="text-sm themed-subtle-text">Prevent fake products with immutable records</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <i class="ph ph-heart text-2xl text-red-600 dark:text-red-400 mt-1"></i>
-                                    <div>
-                                        <p class="font-semibold themed-text">Support Farmers</p>
-                                        <p class="text-sm themed-subtle-text">Direct connection to verified organic farms</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="profile-section" class="content-section hidden">
                     <div class="p-6 border-b themed-border">
                         <h2 class="text-2xl font-bold">Profile Settings</h2>
                     </div>
                     <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="themed-bg border themed-border rounded-lg p-4">
+                                <p class="text-xs themed-subtle-text mb-1 uppercase tracking-wide">Total Orders</p>
+                                <p id="total-orders" class="text-2xl font-bold">0</p>
+                            </div>
+                            <div class="themed-bg border themed-border rounded-lg p-4">
+                                <p class="text-xs themed-subtle-text mb-1 uppercase tracking-wide">Total Spent</p>
+                                <p class="text-2xl font-bold">₹<span id="total-spent">0.00</span></p>
+                            </div>
+                            <div class="themed-bg border themed-border rounded-lg p-4">
+                                <p class="text-xs themed-subtle-text mb-1 uppercase tracking-wide">Average Order</p>
+                                <p class="text-2xl font-bold">₹<span id="avg-order">0.00</span></p>
+                            </div>
+                        </div>
+
                         <!-- Personal Information -->
                         <div class="themed-bg border themed-border rounded-lg p-6">
                             <h3 class="font-bold text-lg mb-4">Personal Information</h3>
@@ -1403,8 +1073,7 @@
 
                         <!-- Danger Zone -->
                         <div class="themed-bg border border-red-200 dark:border-red-900 rounded-lg p-6">
-                            <h3 class="font-bold text-lg mb-4 text-red-600 dark:text-red-400">Danger Zone</h3>
-                            <button class="w-full px-4 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors">
+                            <button id="delete-account-btn" class="w-full px-4 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors">
                                 <i class="ph ph-trash"></i> Delete Account
                             </button>
                         </div>
@@ -1705,6 +1374,62 @@
             email: 'guest.user@email.com'
         };
 
+        function getUserIdentityForApi() {
+            if (currentUser?.id) return currentUser.id;
+            if (localActiveUser?.id) return localActiveUser.id;
+            if (userProfile?.id) return userProfile.id;
+            return null;
+        }
+
+        function buildAddressHtml(addressObj = {}) {
+            const lines = [
+                addressObj.line1,
+                addressObj.line2,
+                [addressObj.city, addressObj.state].filter(Boolean).join(', '),
+                addressObj.country || 'India'
+            ].filter(Boolean);
+            return lines.join('<br>');
+        }
+
+        function getDefaultAddressObject() {
+            return addresses.find(addr => addr.isDefault) || null;
+        }
+
+        async function syncUserProfileToApi() {
+            const apiUserId = getUserIdentityForApi();
+            if (!apiUserId) return;
+
+            const defaultAddress = getDefaultAddressObject();
+            const payload = {
+                userId: apiUserId,
+                name: userProfile.name || '',
+                email: userProfile.email || '',
+                address: userProfile.address || ''
+            };
+
+            if (defaultAddress) {
+                payload.addressLine1 = defaultAddress.line1 || '';
+                payload.addressLine2 = defaultAddress.line2 || '';
+                payload.city = defaultAddress.city || '';
+                payload.state = defaultAddress.state || '';
+                payload.pincode = defaultAddress.pincode || '';
+                payload.country = defaultAddress.country || 'India';
+            }
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`Profile sync failed: ${response.status}`);
+                }
+            } catch (error) {
+                console.warn('Profile sync warning:', error.message);
+            }
+        }
+
         // Load user profile from localStorage or Clerk
         function loadUserProfile() {
             const profileKey = getUserStorageKey('grocerymartProfile');
@@ -1716,7 +1441,7 @@
                     name: localActiveUser.name || 'User',
                     phone: localActiveUser.phone || '',
                     email: localActiveUser.phone || 'user@email.com',
-                    address: localActiveUser.address || '123 Market Street<br>New Town, West Bengal<br>India'
+                    address: localActiveUser.address || ''
                 };
                 if (savedProfile) {
                     const parsed = JSON.parse(savedProfile);
@@ -1761,6 +1486,7 @@
         const cancelEdit = document.getElementById('cancel-edit');
         const logoutBtn = document.getElementById('logout-btn');
         const deleteProfileBtn = document.getElementById('delete-profile-btn');
+        const deleteAccountBtn = document.getElementById('delete-account-btn');
         const orderHistoryContainer = document.getElementById('order-history-container');
 
         // Theme toggle - simplified and smooth with consistent icon colors
@@ -1843,11 +1569,9 @@
                 if (el) el.textContent = userProfile.email || 'guest@email.com';
             });
 
-            // Update avatar with user initial
-            const initial = (userProfile.name || 'G').charAt(0).toUpperCase();
             if (profileAvatar) {
-                profileAvatar.src = `https://placehold.co/128x128/a3e635/1a2e05?text=${initial}`;
-                profileAvatar.alt = `${userProfile.name} Avatar`;
+                profileAvatar.src = './customer-avatar.svg';
+                profileAvatar.alt = `${userProfile.name || 'Customer'} profile`;
             }
 
             // Update member ID display
@@ -1880,7 +1604,7 @@
             editProfileModal.classList.remove('flex');
         });
 
-        editProfileForm.addEventListener('submit', (e) => {
+        editProfileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             userProfile.name = document.getElementById('edit-name').value;
             userProfile.email = document.getElementById('edit-email').value;
@@ -1889,6 +1613,7 @@
             const profileKey = getUserStorageKey('grocerymartProfile');
             localStorage.setItem(profileKey, JSON.stringify(userProfile));
             updateProfileUI();
+            await syncUserProfileToApi();
             
             editProfileModal.classList.add('hidden');
             editProfileModal.classList.remove('flex');
@@ -2078,6 +1803,19 @@
         logoutBtn.addEventListener('click', async () => {
             try {
                 if (localActiveUser) {
+                    await syncUserProfileToApi();
+
+                    const updatedUsers = getLocalUsers().map((user) => {
+                        if (user.id !== localActiveUser.id) return user;
+                        return {
+                            ...user,
+                            name: userProfile.name || user.name,
+                            phone: userProfile.phone || user.phone,
+                            address: userProfile.address || user.address
+                        };
+                    });
+                    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+
                     localStorage.removeItem(ACTIVE_USER_ID_KEY);
                     localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify([]));
                     localActiveUser = null;
@@ -2114,46 +1852,167 @@
             }
         });
 
-        if (deleteProfileBtn) {
-            deleteProfileBtn.addEventListener('click', () => {
-                if (!localActiveUser) {
-                    showNotification('No local profile selected to delete.', 'error');
-                    return;
+        const deleteCurrentProfile = async () => {
+            const shouldDelete = confirm('Delete this profile permanently? This cannot be undone.');
+            if (!shouldDelete) return;
+
+            // Get fresh data from localStorage to ensure we have current state
+            const currentActiveId = localStorage.getItem(ACTIVE_USER_ID_KEY);
+            const allUsers = getLocalUsers();
+            const loggedInIds = getLoggedInUserIds();
+            
+            console.log('Delete init - activeId:', currentActiveId, 'allUsers:', allUsers.length, 'loggedInIds:', loggedInIds);
+            console.log('currentUser:', currentUser?.id, 'localActiveUser:', localActiveUser?.id, 'userProfile:', userProfile?.id);
+
+            // Determine which user to delete
+            let userToDelete = null;
+            let deleteType = 'unknown';
+
+            // Check for local active user (logged in via local auth)
+            if (currentActiveId && allUsers.some(u => u.id === currentActiveId)) {
+                userToDelete = currentActiveId;
+                deleteType = 'local';
+                console.log('Deleting local user (by activeId):', userToDelete);
+            } 
+            // Fallback: Check if localActiveUser has an ID
+            else if (localActiveUser?.id && allUsers.some(u => u.id === localActiveUser.id)) {
+                userToDelete = localActiveUser.id;
+                deleteType = 'local';
+                console.log('Deleting local user (by localActiveUser):', userToDelete);
+            }
+            // Check for guest user scenario
+            else if (!currentUser && !currentActiveId) {
+                // This is a guest user scenario - clear guest data and return
+                console.log('Deleting guest profile');
+                
+                // Try to delete from API first
+                try {
+                    await fetch('/api/users', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: 'guest-user' })
+                    });
+                    console.log('Guest user deleted from API');
+                } catch (error) {
+                    console.warn('Failed to delete guest from API:', error.message);
                 }
 
-                const shouldDelete = confirm('Delete this profile permanently? This cannot be undone.');
-                if (!shouldDelete) return;
+                const guestKeys = [
+                    'grocerymartProfile',
+                    'grocerymartOrders',
+                    'grocerymartAddresses',
+                    'activeDelivery_guest-user'
+                ];
+                guestKeys.forEach((key) => localStorage.removeItem(key));
 
-                const activeId = localActiveUser.id;
-                const remainingUsers = getLocalUsers().filter((user) => user.id !== activeId);
+                // Also clean from users list if guest-user exists there
+                const cleanedUsers = allUsers.filter((user) => user.id !== 'guest-user');
+                localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(cleanedUsers));
+                localStorage.removeItem(ACTIVE_USER_ID_KEY);
+                localStorage.removeItem(LOGGED_IN_USERS_KEY);
+
+                showNotification('Guest profile deleted successfully', 'success');
+                setTimeout(() => {
+                    window.location.href = './login.html?redirect=./index.html';
+                }, 350);
+                return;
+            }
+            // Clerk user
+            else if (currentUser) {
+                deleteType = 'clerk';
+                console.log('Deleting Clerk user');
+                const profileKey = getUserStorageKey('grocerymartProfile');
+                const ordersKey = getUserStorageKey('grocerymartOrders');
+                const addressesKey = getUserStorageKey('grocerymartAddresses');
+                localStorage.removeItem(profileKey);
+                localStorage.removeItem(ordersKey);
+                localStorage.removeItem(addressesKey);
+
+                try {
+                    if (clerk) {
+                        await clerk.signOut();
+                    }
+                } catch (error) {
+                    console.warn('Sign out warning after delete:', error);
+                }
+
+                showNotification('Profile data deleted successfully', 'success');
+                setTimeout(() => {
+                    window.location.href = './login.html?redirect=./index.html';
+                }, 350);
+                return;
+            }
+            else {
+                console.error('Could not determine user type to delete. CurrentActiveId:', currentActiveId, 'CurrentUser:', currentUser, 'LocalActiveUser:', localActiveUser);
+                showNotification('Error: Could not identify profile to delete. Please refresh and try again.', 'error');
+                return;
+            }
+
+            // DELETE LOCAL USER
+            if (deleteType === 'local' && userToDelete) {
+                // First, delete from API/database
+                try {
+                    const deleteResponse = await fetch('/api/users', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userToDelete })
+                    });
+                    console.log('API delete response:', deleteResponse.status);
+                } catch (error) {
+                    console.warn('Failed to delete from API:', error.message);
+                    // Continue with local deletion anyway
+                }
+
+                // Remove user from users list
+                const remainingUsers = allUsers.filter((user) => user.id !== userToDelete);
                 localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(remainingUsers));
+                console.log('Updated users list, remaining:', remainingUsers.length);
 
-                const loggedInIds = getLoggedInUserIds().filter((id) => id !== activeId && remainingUsers.some((user) => user.id === id));
-                localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(loggedInIds));
+                // Update logged in user IDs - keep only those that still exist
+                const updatedLoggedInIds = loggedInIds.filter(
+                    (id) => id !== userToDelete && remainingUsers.some((user) => user.id === id)
+                );
+                localStorage.setItem(LOGGED_IN_USERS_KEY, JSON.stringify(updatedLoggedInIds));
+                console.log('Updated logged in IDs:', updatedLoggedInIds);
 
-                if (loggedInIds.length > 0) {
-                    localStorage.setItem(ACTIVE_USER_ID_KEY, loggedInIds[0]);
+                // Update active user
+                if (updatedLoggedInIds.length > 0) {
+                    localStorage.setItem(ACTIVE_USER_ID_KEY, updatedLoggedInIds[0]);
+                    console.log('Set new active user:', updatedLoggedInIds[0]);
                 } else {
                     localStorage.removeItem(ACTIVE_USER_ID_KEY);
+                    console.log('Removed active user');
                 }
 
+                // Remove user-specific data
                 const keysToRemove = [
-                    `grocerymartProfile_${activeId}`,
-                    `grocerymartOrders_${activeId}`,
-                    `grocerymartAddresses_${activeId}`,
-                    `activeDelivery_${activeId}`,
-                    `walletConnected_${activeId}`,
-                    `walletAddress_${activeId}`
+                    `grocerymartProfile_${userToDelete}`,
+                    `grocerymartOrders_${userToDelete}`,
+                    `grocerymartAddresses_${userToDelete}`,
+                    `activeDelivery_${userToDelete}`
                 ];
-                keysToRemove.forEach((key) => localStorage.removeItem(key));
+                keysToRemove.forEach((key) => {
+                    localStorage.removeItem(key);
+                    console.log('Removed key:', key);
+                });
 
                 showNotification('Profile deleted successfully', 'success');
                 setTimeout(() => {
-                    window.location.href = loggedInIds.length > 0
-                        ? './index.html?fromLogin=1'
-                        : './login.html?redirect=./index.html';
+                    if (updatedLoggedInIds.length > 0) {
+                        window.location.href = './index.html?fromLogin=1';
+                    } else {
+                        window.location.href = './login.html?redirect=./index.html';
+                    }
                 }, 350);
-            });
+            }
+        };
+
+        if (deleteProfileBtn) {
+            deleteProfileBtn.addEventListener('click', deleteCurrentProfile);
+        }
+
+        if (deleteAccountBtn) {
+            deleteAccountBtn.addEventListener('click', deleteCurrentProfile);
         }
 
         // Add item to cart (reorder functionality)
@@ -2425,9 +2284,18 @@
                 ...addr,
                 isDefault: addr.id === id
             }));
+
+            const defaultAddress = addresses.find(addr => addr.isDefault);
+            if (defaultAddress) {
+                userProfile.address = buildAddressHtml(defaultAddress);
+                const profileKey = getUserStorageKey('grocerymartProfile');
+                localStorage.setItem(profileKey, JSON.stringify(userProfile));
+            }
+
             const addressesKey = getUserStorageKey('grocerymartAddresses');
             localStorage.setItem(addressesKey, JSON.stringify(addresses));
             renderAddresses();
+            syncUserProfileToApi();
             showNotification('Default address updated', 'success');
         }
 
@@ -2462,12 +2330,22 @@
                 line1: document.getElementById('address-line1').value,
                 line2: document.getElementById('address-line2').value,
                 city: document.getElementById('address-city').value,
+                state: '',
                 pincode: document.getElementById('address-pincode').value,
+                country: 'India',
                 phone: document.getElementById('address-phone').value,
                 isDefault: addresses.length === 0
             };
             
             addresses.push(newAddress);
+
+            if (newAddress.isDefault) {
+                userProfile.address = buildAddressHtml(newAddress);
+                const profileKey = getUserStorageKey('grocerymartProfile');
+                localStorage.setItem(profileKey, JSON.stringify(userProfile));
+                syncUserProfileToApi();
+            }
+
             const addressesKey = getUserStorageKey('grocerymartAddresses');
             localStorage.setItem(addressesKey, JSON.stringify(addresses));
             renderAddresses();
@@ -2479,19 +2357,6 @@
             showNotification('Address added successfully!', 'success');
         });
 
-        // Copy Referral Code
-        const copyReferralBtn = document.getElementById('copy-referral-btn');
-        if (copyReferralBtn) {
-            copyReferralBtn.addEventListener('click', () => {
-                const referralCode = 'NIRAJ2025';
-                navigator.clipboard.writeText(referralCode).then(() => {
-                    showNotification('Referral code copied to clipboard!', 'success');
-                }).catch(() => {
-                    showNotification('Failed to copy referral code', 'error');
-                });
-            });
-        }
-
         // Development helper function to reset order data (call from console: resetOrderData())
         window.resetOrderData = function() {
             localStorage.removeItem('grocerymartOrders');
@@ -2499,553 +2364,15 @@
             showNotification('Order data has been reset with proper prices!', 'success');
         };
 
-        // ==================== BLOCKCHAIN FUNCTIONALITY ====================
-        
-        // Web3 Wallet Connection
-        let web3Provider = null;
-        let walletAddress = null;
-        let isWalletConnected = false;
-
-        async function connectWallet() {
-            try {
-                // Check if MetaMask is installed
-                if (typeof window.ethereum === 'undefined') {
-                    showNotification('MetaMask is not installed. Please install MetaMask to continue.', 'error');
-                    return;
-                }
-
-                showNotification('Connecting to MetaMask...', 'info');
-
-                // Request account access
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                });
-
-                walletAddress = accounts[0];
-                isWalletConnected = true;
-
-                // Get network info
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                const networkName = getNetworkName(chainId);
-
-                // Get balance
-                const balance = await window.ethereum.request({
-                    method: 'eth_getBalance',
-                    params: [walletAddress, 'latest']
-                });
-
-                const balanceInEth = parseInt(balance, 16) / 1e18;
-
-                // Update UI
-                updateWalletUI(walletAddress, networkName, balanceInEth.toFixed(4));
-                
-                // Store connection state
-                localStorage.setItem(getUserStorageKey('walletConnected'), 'true');
-                localStorage.setItem(getUserStorageKey('walletAddress'), walletAddress);
-
-                showNotification('Wallet connected successfully!', 'success');
-
-                // Listen for account changes
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', handleChainChanged);
-
-            } catch (error) {
-                console.error('Wallet connection error:', error);
-                if (error.code === 4001) {
-                    showNotification('Wallet connection rejected', 'error');
-                } else {
-                    showNotification('Failed to connect wallet: ' + error.message, 'error');
-                }
-            }
-        }
-
-        // Initialize blockchain connection for supply chain tracking
-        async function connectWalletAndInitialize() {
-            try {
-                // First check if SupplyChainWeb3 class is available
-                if (typeof SupplyChainWeb3 === 'undefined') {
-                    showNotification('Blockchain library not loaded. Please refresh the page.', 'error');
-                    console.error('SupplyChainWeb3 class not found. Make sure supplychain-web3.js is loaded.');
-                    return;
-                }
-
-                // Check if MetaMask is installed
-                if (typeof window.ethereum === 'undefined') {
-                    showNotification('MetaMask is not installed. Please install MetaMask to continue.', 'error');
-                    return;
-                }
-
-                showNotification('Connecting to wallet and initializing blockchain...', 'info');
-
-                // Create SupplyChainWeb3 instance if not exists
-                if (!window.supplyChainWeb3) {
-                    window.supplyChainWeb3 = new SupplyChainWeb3();
-                }
-
-                // Initialize Web3 connection (this will also connect wallet)
-                await window.supplyChainWeb3.init();
-
-                // Update wallet address
-                walletAddress = window.supplyChainWeb3.account;
-                isWalletConnected = true;
-
-                // Get network info
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                const networkName = getNetworkName(chainId);
-
-                // Get balance
-                const balance = await window.ethereum.request({
-                    method: 'eth_getBalance',
-                    params: [walletAddress, 'latest']
-                });
-
-                const balanceInEth = parseInt(balance, 16) / 1e18;
-
-                // Update UI
-                updateWalletUI(walletAddress, networkName, balanceInEth.toFixed(4));
-                
-                // Store connection state
-                localStorage.setItem(getUserStorageKey('walletConnected'), 'true');
-                localStorage.setItem(getUserStorageKey('walletAddress'), walletAddress);
-
-                showNotification('✅ Blockchain initialized successfully!', 'success');
-                
-                // Update connect button to show success
-                const connectBtn = document.getElementById('connect-wallet-btn');
-                if (connectBtn) {
-                    connectBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Blockchain Connected';
-                    connectBtn.classList.add('bg-green-600');
-                    connectBtn.disabled = false;
-                }
-
-                // Listen for account changes
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', handleChainChanged);
-
-            } catch (error) {
-                console.error('Blockchain initialization error:', error);
-                if (error.code === 4001) {
-                    showNotification('Wallet connection rejected', 'error');
-                } else if (error.message.includes('MetaMask')) {
-                    showNotification(error.message, 'error');
-                } else {
-                    showNotification('Failed to initialize blockchain: ' + error.message, 'error');
-                }
-            }
-        }
-
-        function disconnectWallet() {
-            walletAddress = null;
-            isWalletConnected = false;
-            
-            // Clear localStorage
-            localStorage.removeItem(getUserStorageKey('walletConnected'));
-            localStorage.removeItem(getUserStorageKey('walletAddress'));
-
-            // Update UI to show disconnected state
-            document.getElementById('wallet-connected').classList.add('hidden');
-            document.getElementById('wallet-not-connected').classList.remove('hidden');
-
-            showNotification('Wallet disconnected', 'info');
-        }
-
-        function updateWalletUI(address, network, balance) {
-            const connectedDiv = document.getElementById('wallet-connected');
-            const notConnectedDiv = document.getElementById('wallet-not-connected');
-
-            // Show connected state
-            connectedDiv.classList.remove('hidden');
-            notConnectedDiv.classList.add('hidden');
-
-            // Update wallet details
-            document.getElementById('wallet-address').textContent = 
-                address.substring(0, 6) + '...' + address.substring(address.length - 4);
-            document.getElementById('wallet-network').textContent = network;
-            document.getElementById('wallet-balance').textContent = balance;
-        }
-
-        function getNetworkName(chainId) {
-            const networks = {
-                '0x1': 'Ethereum Mainnet',
-                '0x89': 'Polygon',
-                '0x38': 'BSC',
-                '0xa': 'Optimism',
-                '0xa4b1': 'Arbitrum',
-                '0xaa36a7': 'Sepolia Testnet',
-                '0x13881': 'Mumbai Testnet',
-                '0x539': 'Hardhat Local', // 1337 in hex
-                '0x7a69': 'Hardhat Local (31337)' // Alternative Hardhat chain ID
-            };
-            return networks[chainId] || `Unknown Network (${chainId})`;
-        }
-
-        function handleAccountsChanged(accounts) {
-            if (accounts.length === 0) {
-                disconnectWallet();
-            } else if (accounts[0] !== walletAddress) {
-                walletAddress = accounts[0];
-                showNotification('Account changed', 'info');
-                connectWallet(); // Reconnect with new account
-            }
-        }
-
-        function handleChainChanged(chainId) {
-            window.location.reload(); // Reload page on network change
-        }
-
-        // Check if wallet was previously connected
-        function checkWalletConnection() {
-            const wasConnected = localStorage.getItem(getUserStorageKey('walletConnected'));
-            if (wasConnected === 'true' && typeof window.ethereum !== 'undefined') {
-                // Auto-connect if previously connected
-                setTimeout(() => {
-                    connectWallet();
-                }, 1000);
-            }
-        }
-
-        // Supply Chain Product Tracking - Now uses REAL blockchain data
-        async function viewProductJourney(productId) {
-            try {
-                // Check if Web3 is initialized
-                if (!window.supplyChainWeb3 || !window.supplyChainWeb3.contract) {
-                    showNotification('Please connect your wallet first', 'warning');
-                    return;
-                }
-                
-                showNotification('Fetching product data from blockchain...', 'info');
-                
-                // Get product details from blockchain
-                const product = await window.supplyChainWeb3.getProduct(productId);
-                const journey = await window.supplyChainWeb3.getProductJourney(productId);
-                const certifications = await window.supplyChainWeb3.getProductCertifications(productId);
-                
-                if (!product || journey.length === 0) {
-                    showNotification('Product not found on blockchain', 'error');
-                    return;
-                }
-                
-                // Format data for display
-                const formattedProduct = {
-                    productName: product.productName,
-                    productId: productId,
-                    currentStatus: STAGE_NAMES[product.currentStage] || 'Unknown',
-                    journey: journey,
-                    certifications: certifications.map(cert => cert.certName),
-                    qualityScore: product.qualityScore
-                };
-                
-                displayProductJourneyModal(formattedProduct);
-                
-            } catch (error) {
-                console.error('Error fetching product journey:', error);
-                showNotification('Failed to fetch product data: ' + error.message, 'error');
-            }
-        }
-
-        function displayProductJourneyModal(product) {
-
-            // Create modal for product journey
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4';
-            modal.onclick = (e) => {
-                if (e.target === modal) modal.remove();
-            };
-
-            const journeyHTML = product.journey.map((step, index) => {
-                // Format timestamp
-                const timestamp = step.timestamp instanceof Date ? 
-                    step.timestamp.toLocaleString() : 
-                    new Date(step.timestamp).toLocaleString();
-                
-                // Format stage name
-                const stageName = step.stageName || step.stage || 'Unknown Stage';
-                
-                // Format temperature
-                const temp = step.temperature ? `${step.temperature}°C` : 'N/A';
-                
-                // Get verifier info
-                const verifier = step.verifierName || 'Unknown';
-                
-                // Get notes/details
-                const details = step.notes || step.details || 'No additional details';
-                
-                return `
-                <div class="relative pl-8 pb-8 ${index === product.journey.length - 1 ? 'pb-0' : ''}">
-                    ${index !== product.journey.length - 1 ? '<div class="absolute left-[15px] top-8 bottom-0 w-0.5 bg-gradient-to-b from-lime-500 to-lime-300 dark:from-lime-400 dark:to-lime-600"></div>' : ''}
-                    <div class="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-lime-400 to-lime-600 dark:from-lime-500 dark:to-lime-700 flex items-center justify-center shadow-lg">
-                        <i class="ph-fill ph-check text-white text-sm"></i>
-                    </div>
-                    <div class="themed-bg border themed-border rounded-lg p-4 ml-4 hover:shadow-lg transition-all">
-                        <div class="flex items-start justify-between mb-2">
-                            <h4 class="font-bold text-lg themed-text">${stageName}</h4>
-                            <span class="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 text-xs font-semibold rounded">✓ Blockchain Verified</span>
-                        </div>
-                        <div class="space-y-1 text-sm">
-                            <p class="themed-subtle-text"><i class="ph ph-map-pin text-lime-600 dark:text-lime-400"></i> ${step.location}</p>
-                            <p class="themed-subtle-text"><i class="ph ph-clock text-lime-600 dark:text-lime-400"></i> ${timestamp}</p>
-                            <p class="themed-subtle-text"><i class="ph ph-user text-lime-600 dark:text-lime-400"></i> Verified by: ${verifier}</p>
-                            <p class="themed-subtle-text"><i class="ph ph-thermometer text-lime-600 dark:text-lime-400"></i> Temperature: ${temp}</p>
-                            <p class="themed-text mt-2">${details}</p>
-                            <p class="text-xs themed-subtle-text mt-2 font-mono break-all">
-                                <i class="ph ph-link text-blue-600 dark:text-blue-400"></i> Verified by: ${step.verifiedBy || 'Blockchain'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            }).join('');
-
-            const certificationsHTML = product.certifications.map(cert => `
-                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded-full">
-                    ✓ ${cert}
-                </span>
-            `).join('');
-
-            modal.innerHTML = `
-                <div class="themed-bg rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
-                    <div class="sticky top-0 themed-bg border-b themed-border p-6 flex items-center justify-between z-10">
-                        <div>
-                            <h2 class="text-2xl font-bold themed-text">${product.productName}</h2>
-                            <p class="text-sm themed-subtle-text">Product ID: ${product.productId}</p>
-                        </div>
-                        <button onclick="this.closest('.fixed').remove()" class="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all">
-                            <i class="ph ph-x text-2xl themed-text"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="p-6">
-                        <!-- Status Badge -->
-                        <div class="mb-6 p-4 bg-gradient-to-r from-lime-50 to-green-50 dark:from-lime-900/20 dark:to-green-900/20 rounded-xl border border-lime-200 dark:border-lime-800">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 rounded-full bg-lime-500 dark:bg-lime-600 flex items-center justify-center">
-                                        <i class="ph-fill ph-check text-white text-2xl"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-lg themed-text">Status: ${product.currentStatus}</p>
-                                        <p class="text-sm themed-subtle-text">Quality Score: ${product.qualityScore}/100</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Certifications -->
-                        <div class="mb-6">
-                            <h3 class="font-bold themed-text mb-3">Certifications</h3>
-                            <div class="flex flex-wrap gap-2">
-                                ${certificationsHTML}
-                            </div>
-                        </div>
-
-                        <!-- Journey Timeline -->
-                        <div>
-                            <h3 class="font-bold themed-text mb-4 flex items-center gap-2">
-                                <i class="ph ph-path text-xl text-lime-600 dark:text-lime-400"></i>
-                                Product Journey Timeline
-                            </h3>
-                            <div class="mt-4">
-                                ${journeyHTML}
-                            </div>
-                        </div>
-
-                        <!-- Blockchain Info -->
-                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <p class="text-sm themed-text">
-                                <i class="ph-fill ph-shield-check text-blue-600 dark:text-blue-400"></i>
-                                <strong>Blockchain Verified:</strong> All stages are recorded on the blockchain and cannot be tampered with.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-        }
-
-        async function searchSupplyChain() {
-            const searchInput = document.getElementById('supply-chain-search');
-            const searchTerm = searchInput.value.trim().toUpperCase();
-
-            if (!searchTerm) {
-                showNotification('Please enter a product ID (e.g., APPLE_001)', 'info');
-                return;
-            }
-
-            if (!window.supplyChainWeb3) {
-                showNotification('Blockchain connection not initialized', 'error');
-                return;
-            }
-
-            try {
-                // Try to fetch the product from blockchain
-                const product = await window.supplyChainWeb3.getProduct(searchTerm);
-                
-                // Check if product exists (productId will be empty string if not found)
-                if (product && product.productId && product.productId !== "") {
-                    await viewProductJourney(searchTerm);
-                } else {
-                    showNotification('No product found with ID: ' + searchTerm, 'error');
-                }
-            } catch (error) {
-                console.error('Error searching for product:', error);
-                showNotification('Error searching for product. Make sure the product ID exists on the blockchain.', 'error');
-            }
-        }
-
-        // ==================== QR CODE TRACKING ====================
-        
-        /**
-         * Check if user came from QR code scan
-         * URL format: profile.html?track=PRODUCT_ID
-         */
-        function checkQRCodeTracking() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const trackProductId = urlParams.get('track');
-            
-            if (trackProductId) {
-                console.log('QR Code scanned. Tracking product:', trackProductId);
-                
-                // Show supply chain section
-                const supplyChainSection = document.querySelector('[data-section="supply-chain"]');
-                if (supplyChainSection) {
-                    // Hide all sections
-                    document.querySelectorAll('.profile-section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    
-                    // Show supply chain section
-                    supplyChainSection.classList.add('active');
-                    
-                    // Update nav menu
-                    document.querySelectorAll('.nav-menu-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    const supplyChainNav = document.querySelector('.nav-menu-item[data-section="supply-chain"]');
-                    if (supplyChainNav) {
-                        supplyChainNav.classList.add('active');
-                    }
-                }
-                
-                // Auto-connect wallet if needed and show product
-                setTimeout(async () => {
-                    // Fill search input
-                    const searchInput = document.getElementById('supply-chain-search');
-                    if (searchInput) {
-                        searchInput.value = trackProductId;
-                    }
-                    
-                    // Show notification
-                    showNotification(`Tracking product: ${trackProductId}`, 'info');
-                    
-                    // Auto-search if Web3 is initialized
-                    if (window.supplyChainWeb3) {
-                        await searchSupplyChain();
-                    } else {
-                        showNotification('Please connect your wallet to view product details', 'info');
-                    }
-                }, 1000);
-            }
-        }
-
-        /**
-         * Generate QR code for current product (for farmers/producers)
-         */
-        async function generateProductQRCode() {
-            const productId = prompt('Enter Product ID to generate QR code:');
-            if (!productId) return;
-            
-            // Create QR code using QRCode.js library
-            const trackingUrl = `${window.location.origin}${window.location.pathname}?track=${productId}`;
-            
-            // Show QR code modal
-            const qrModal = document.createElement('div');
-            qrModal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
-            qrModal.innerHTML = `
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-bold themed-text">Product QR Code</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
-                            <i class="ph-bold ph-x text-2xl"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="text-center">
-                        <div class="bg-white p-6 rounded-lg inline-block mb-4">
-                            <div id="qr-code-container"></div>
-                        </div>
-                        
-                        <div class="space-y-3 text-left">
-                            <p class="themed-text"><strong>Product ID:</strong> ${productId}</p>
-                            <p class="themed-text text-sm break-all"><strong>Tracking URL:</strong><br>${trackingUrl}</p>
-                        </div>
-                        
-                        <div class="mt-6 space-y-2">
-                            <button onclick="downloadQRCode('${productId}')" class="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all">
-                                <i class="ph-bold ph-download-simple"></i> Download QR Code
-                            </button>
-                            <button onclick="printQRCode('${productId}')" class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all">
-                                <i class="ph-bold ph-printer"></i> Print Label
-                            </button>
-                        </div>
-                        
-                        <p class="mt-4 text-xs themed-text opacity-70">
-                            📱 Consumers can scan this QR code to track the product journey on blockchain
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(qrModal);
-            
-            // Generate QR code using a simple canvas approach
-            const qrContainer = document.getElementById('qr-code-container');
-            const qrSize = 250;
-            const canvas = document.createElement('canvas');
-            canvas.width = qrSize;
-            canvas.height = qrSize;
-            const ctx = canvas.getContext('2d');
-            
-            // Simple QR code representation (in production, use QRCode.js library)
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, qrSize, qrSize);
-            ctx.fillStyle = 'black';
-            ctx.font = '12px monospace';
-            ctx.fillText('QR Code', 90, 120);
-            ctx.fillText(productId, 50, 140);
-            
-            // Add border
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(0, 0, qrSize, qrSize);
-            
-            qrContainer.appendChild(canvas);
-        }
-
-        function downloadQRCode(productId) {
-            showNotification('QR code download feature - use scripts/register-product.js to generate actual QR codes', 'info');
-        }
-
-        function printQRCode(productId) {
-            showNotification('Print feature - use scripts/register-product.js to generate printable labels', 'info');
-        }
-
-        // ==================== END BLOCKCHAIN FUNCTIONALITY ====================
-
         // Initialize
         updateProfileUI();
         loadOrderHistory();
         initializeClerk();
-        checkWalletConnection(); // Check for previous wallet connection
-        checkQRCodeTracking(); // Check if user scanned QR code
-        
-        // Set default active menu item (Orders section unless from QR code)
-        const urlParams = new URLSearchParams(window.location.search);
-        if (!urlParams.get('track')) {
-            const defaultMenuItem = document.querySelector('.nav-menu-item[data-section="orders"]');
-            if (defaultMenuItem) {
-                defaultMenuItem.classList.add('active');
-            }
+
+        // Set default active menu item
+        const defaultMenuItem = document.querySelector('.nav-menu-item[data-section="orders"]');
+        if (defaultMenuItem) {
+            defaultMenuItem.classList.add('active');
         }
     </script>
 </body>

@@ -7,6 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
     <style>
+        :root {
+            --pay-text-light: #111827;
+            --pay-text-muted: #334155;
+        }
+
+        body {
+            color: var(--pay-text-light);
+        }
+
+        /* Light-mode readability guardrails */
+        .text-gray-500 { color: #475569 !important; }
+        .text-gray-600 { color: var(--pay-text-muted) !important; }
+        .text-gray-700 { color: #1f2937 !important; }
+
         @keyframes slideIn {
             from { transform: translateX(-100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -17,6 +31,13 @@
         }
         .slide-in { animation: slideIn 0.5s ease-out; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
+
+        @keyframes pulseSoft {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .pulse-soft { animation: pulseSoft 1.5s ease-in-out infinite; }
         
         .payment-method {
             transition: all 0.3s ease;
@@ -152,11 +173,6 @@
                 line-height: 1.15;
             }
 
-            #upiQrPreviewBox {
-                width: 10rem;
-                height: 10rem;
-            }
-
             .card-preview {
                 padding: 1rem;
                 border-radius: 0.9rem;
@@ -208,73 +224,18 @@
                 <!-- Payment Methods -->
                 <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">Choose Payment Method</h2>
+                    <div id="paymentFeedback" class="hidden mb-4 rounded-lg border px-4 py-3 text-sm font-medium"></div>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="payment-method active border-2 border-gray-200 rounded-xl p-4 text-center" 
-                             onclick="selectPaymentMethod('card')" id="method-card">
-                            <i class="ph-credit-card text-4xl text-blue-600 mb-2"></i>
-                            <div class="font-semibold text-sm">Card</div>
-                        </div>
-                        <div class="payment-method border-2 border-gray-200 rounded-xl p-4 text-center" 
                              onclick="selectPaymentMethod('upi')" id="method-upi">
                             <i class="ph-qr-code text-4xl text-purple-600 mb-2"></i>
                             <div class="font-semibold text-sm">UPI</div>
                         </div>
                         <div class="payment-method border-2 border-gray-200 rounded-xl p-4 text-center" 
-                             onclick="selectPaymentMethod('wallet')" id="method-wallet">
-                            <i class="ph-wallet text-4xl text-green-600 mb-2"></i>
-                            <div class="font-semibold text-sm">Wallet</div>
-                        </div>
-                        <div class="payment-method border-2 border-gray-200 rounded-xl p-4 text-center" 
-                             onclick="selectPaymentMethod('netbanking')" id="method-netbanking">
-                            <i class="ph-bank text-4xl text-orange-600 mb-2"></i>
-                            <div class="font-semibold text-sm">Net Banking</div>
-                        </div>
-                        <div class="payment-method border-2 border-gray-200 rounded-xl p-4 text-center" 
                              onclick="selectPaymentMethod('cod')" id="method-cod">
                             <i class="ph-hand-coins text-4xl text-amber-600 mb-2"></i>
                             <div class="font-semibold text-sm">Cash on Delivery</div>
-                        </div>
-                    </div>
-
-                    <!-- Card Payment Form -->
-                    <div id="card-form" class="payment-form">
-                        <h3 class="font-bold text-gray-700 mb-4">Enter Card Details</h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
-                                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19"
-                                       oninput="formatCardNumber(this)"
-                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
-                                <input type="text" id="cardName" placeholder="JOHN DOE"
-                                       oninput="this.value = this.value.toUpperCase()"
-                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
-                                    <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5"
-                                           oninput="formatExpiry(this)"
-                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                                    <input type="password" id="cardCVV" placeholder="123" maxlength="3"
-                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                                <i class="ph-lock text-blue-600"></i>
-                                <span>Your payment information is encrypted and secure</span>
-                            </div>
                         </div>
                     </div>
 
@@ -285,24 +246,15 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Enter UPI ID</label>
-                                <input type="text" id="upiId" placeholder="yourname@upi"
-                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                            </div>
-
-                            <div class="text-center py-6">
-                                <div class="inline-block bg-white p-6 rounded-2xl shadow-lg">
-                                    <div class="text-gray-600 mb-4">Or scan QR code</div>
-                                    <div id="upiQrPreviewBox" class="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                        <i id="upiQrPlaceholder" class="ph-qr-code text-8xl text-gray-400"></i>
-                                        <img id="upiQrPreviewImage" alt="Uploaded UPI QR" class="hidden w-full h-full object-contain">
-                                    </div>
-                                    <label for="upiQrUpload" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-purple-200 text-purple-700 font-medium cursor-pointer hover:bg-purple-50 transition">
-                                        <i class="ph-upload-simple"></i>
-                                        Upload QR Code
-                                    </label>
-                                    <input type="file" id="upiQrUpload" accept="image/*" class="hidden">
-                                    <div class="mt-4 text-sm text-gray-500">Scan with any UPI app</div>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <input type="text" id="upiId" placeholder="yourname@upi"
+                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
+                                    <button type="button" id="verifyUpiBtn" onclick="verifyUpiId()"
+                                            class="px-5 py-3 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition whitespace-nowrap">
+                                        Verify UPI ID
+                                    </button>
                                 </div>
+                                <p id="upiVerifyStatus" class="mt-2 text-sm text-gray-500">Verification required before payment</p>
                             </div>
 
                             <div class="grid grid-cols-4 gap-3">
@@ -310,135 +262,15 @@
                                     <img src="https://cdn.iconscout.com/icon/free/png-256/free-paytm-logo-icon-download-in-svg-png-gif-file-formats--payment-brand-bank-pack-logos-icons-226448.png?f=webp&w=256" alt="Paytm" class="w-full h-8 object-contain">
                                 </button>
                                 <button class="border-2 border-gray-200 rounded-lg p-3 hover:border-purple-500 transition">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-google-pay-logo-icon-download-in-svg-png-gif-file-formats--gpay-payment-logos-icons-1730345.png?f=webp&w=256" alt="Google Pay" class="w-full h-8 object-contain">
+                                    <img src="https://logo.clearbit.com/pay.google.com" alt="Google Pay" class="w-full h-8 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/160x64/ffffff/1f2937?text=Google+Pay';">
                                 </button>
                                 <button class="border-2 border-gray-200 rounded-lg p-3 hover:border-purple-500 transition">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-phonepe-logo-icon-download-in-svg-png-gif-file-formats--brand-payment-pack-logos-icons-2645426.png?f=webp&w=256" alt="PhonePe" class="w-full h-8 object-contain">
+                                    <img src="https://logo.clearbit.com/phonepe.com" alt="PhonePe" class="w-full h-8 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/160x64/ffffff/1f2937?text=PhonePe';">
                                 </button>
                                 <button class="border-2 border-gray-200 rounded-lg p-3 hover:border-purple-500 transition">
                                     <img src="https://cdn.iconscout.com/icon/free/png-256/free-bhim-logo-icon-download-in-svg-png-gif-file-formats--upi-payment-social-media-vol-2-pack-logos-icons-3029947.png?f=webp&w=256" alt="BHIM" class="w-full h-8 object-contain">
                                 </button>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Wallet Payment Form -->
-                    <div id="wallet-form" class="payment-form hidden">
-                        <h3 class="font-bold text-gray-700 mb-4">Select Wallet</h3>
-                        
-                        <div class="space-y-3">
-                            <label class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-paytm-logo-icon-download-in-svg-png-gif-file-formats--payment-brand-bank-pack-logos-icons-226448.png?f=webp&w=256" alt="Paytm" class="w-10 h-10 object-contain">
-                                    <div>
-                                        <div class="font-semibold">Paytm</div>
-                                        <div class="text-sm text-gray-500">Balance: ₹2,500</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="wallet" value="paytm" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-phonepe-logo-icon-download-in-svg-png-gif-file-formats--brand-payment-pack-logos-icons-2645426.png?f=webp&w=256" alt="PhonePe" class="w-10 h-10 object-contain">
-                                    <div>
-                                        <div class="font-semibold">PhonePe Wallet</div>
-                                        <div class="text-sm text-gray-500">Balance: ₹1,800</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="wallet" value="phonepe" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-amazon-pay-logo-icon-download-in-svg-png-gif-file-formats--payment-brand-shopping-vol-4-pack-logos-icons-2945049.png?f=webp&w=256" alt="Amazon Pay" class="w-10 h-10 object-contain">
-                                    <div>
-                                        <div class="font-semibold">Amazon Pay</div>
-                                        <div class="text-sm text-gray-500">Balance: ₹3,200</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="wallet" value="amazonpay" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-mobikwik-logo-icon-download-in-svg-png-gif-file-formats--payment-wallet-brand-logos-icons-1730337.png?f=webp&w=256" alt="Mobikwik" class="w-10 h-10 object-contain">
-                                    <div>
-                                        <div class="font-semibold">Mobikwik</div>
-                                        <div class="text-sm text-gray-500">Balance: ₹950</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="wallet" value="mobikwik" class="w-5 h-5">
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Net Banking Form -->
-                    <div id="netbanking-form" class="payment-form hidden">
-                        <h3 class="font-bold text-gray-700 mb-4">Select Your Bank</h3>
-                        
-                        <div class="mb-4">
-                            <input type="text" id="bankSearch" placeholder="Search your bank..."
-                                   oninput="filterBanks(this.value)"
-                                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg transition">
-                        </div>
-
-                        <div id="bankList" class="space-y-2 max-h-96 overflow-y-auto">
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">State Bank of India</span>
-                                </div>
-                                <input type="radio" name="bank" value="sbi" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">HDFC Bank</span>
-                                </div>
-                                <input type="radio" name="bank" value="hdfc" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">ICICI Bank</span>
-                                </div>
-                                <input type="radio" name="bank" value="icici" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">Axis Bank</span>
-                                </div>
-                                <input type="radio" name="bank" value="axis" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">Kotak Mahindra Bank</span>
-                                </div>
-                                <input type="radio" name="bank" value="kotak" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">Punjab National Bank</span>
-                                </div>
-                                <input type="radio" name="bank" value="pnb" class="w-5 h-5">
-                            </label>
-
-                            <label class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition bank-item">
-                                <div class="flex items-center gap-3">
-                                    <i class="ph-bank text-2xl text-orange-600"></i>
-                                    <span class="font-medium">Bank of Baroda</span>
-                                </div>
-                                <input type="radio" name="bank" value="bob" class="w-5 h-5">
-                            </label>
                         </div>
                     </div>
 
@@ -464,13 +296,13 @@
                     </div>
                 </div>
 
-                <!-- Save Card Option -->
+                <!-- Save Payment Preferences -->
                 <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" id="saveCard" class="w-5 h-5 text-blue-600 rounded">
+                        <input type="checkbox" id="savePreferences" class="w-5 h-5 text-blue-600 rounded">
                         <div>
-                            <div class="font-semibold text-gray-800">Save payment information</div>
-                            <div class="text-sm text-gray-500">Securely save for faster checkout next time</div>
+                            <div class="font-semibold text-gray-800">Save payment preferences</div>
+                            <div class="text-sm text-gray-500">Remember your preferred method for faster checkout next time</div>
                         </div>
                     </label>
                 </div>
@@ -492,27 +324,6 @@
             <!-- Right: Order Summary -->
             <div class="lg:col-span-1">
                 <div class="sticky top-8 space-y-6">
-                    <!-- Card Preview (for card payments) -->
-                    <div id="cardPreview" class="card-preview fade-in">
-                        <div class="flex justify-between items-start mb-6">
-                            <div class="text-xl font-bold">VISA</div>
-                            <i class="ph-cpu text-3xl"></i>
-                        </div>
-                        <div class="font-mono text-xl mb-6 tracking-wider" id="previewCardNumber">
-                            •••• •••• •••• ••••
-                        </div>
-                        <div class="flex justify-between">
-                            <div>
-                                <div class="text-xs opacity-70 mb-1">Card Holder</div>
-                                <div class="font-semibold" id="previewCardName">YOUR NAME</div>
-                            </div>
-                            <div>
-                                <div class="text-xs opacity-70 mb-1">Expires</div>
-                                <div class="font-semibold" id="previewExpiry">MM/YY</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Order Summary -->
                     <div class="payment-panel bg-white rounded-2xl shadow-xl p-6 fade-in">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
@@ -544,7 +355,7 @@
                         </div>
 
                         <!-- Payment Button -->
-                        <button onclick="processPayment()" 
+                        <button id="paymentBtn" onclick="processPayment()" 
                                 class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2">
                             <i id="payActionIcon" class="ph-lock text-xl"></i>
                             <span><span id="payActionText">Pay</span> ₹<span id="payAmount">462.50</span></span>
@@ -612,7 +423,7 @@
                 <div class="flex-1">
                     <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Estimated Arrival</p>
                     <p class="text-xl font-extrabold text-gray-800">Your groceries arrive in</p>
-                    <p id="deliveryCountdown" class="text-3xl font-black text-green-600 tabular-nums">12 min</p>
+                    <p id="deliveryCountdown" class="text-3xl font-black text-green-600 tabular-nums">-- min</p>
                 </div>
             </div>
 
@@ -623,7 +434,20 @@
                         <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Transaction ID</p>
                         <p class="font-mono font-bold text-gray-800 text-sm" id="transactionId">TXN-123456789</p>
                     </div>
-                    <i class="ph-check-circle text-3xl text-green-500"></i>
+                    <button onclick="copyTransactionId()" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-green-200 text-green-700 hover:bg-green-50 transition text-xs font-semibold">
+                        <i class="ph-copy"></i> Copy
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 rounded-xl p-3">
+                        <p class="text-xs text-blue-500 uppercase tracking-wide">Paid Via</p>
+                        <p id="successPaymentMethod" class="font-bold text-blue-900">Card</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-xl p-3 text-right">
+                        <p class="text-xs text-purple-500 uppercase tracking-wide">Amount</p>
+                        <p id="successAmount" class="font-bold text-purple-900">₹0.00</p>
+                    </div>
                 </div>
 
                 <p class="text-center text-sm text-gray-500">A confirmation has been recorded. Sit back and relax! 🛒</p>
@@ -643,8 +467,93 @@
     </div>
 
     <script>
-        let currentPaymentMethod = 'card';
+        let currentPaymentMethod = 'upi';
         let isProcessingPayment = false;
+        let verifiedUpiId = '';
+
+        function showFeedback(message, type = 'info') {
+            const feedbackEl = document.getElementById('paymentFeedback');
+            if (!feedbackEl) return;
+
+            const styles = {
+                success: 'bg-green-50 border-green-200 text-green-800',
+                error: 'bg-red-50 border-red-200 text-red-800',
+                warning: 'bg-amber-50 border-amber-200 text-amber-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800'
+            };
+
+            feedbackEl.className = `mb-4 rounded-lg border px-4 py-3 text-sm font-medium ${styles[type] || styles.info}`;
+            feedbackEl.textContent = message;
+            feedbackEl.classList.remove('hidden');
+        }
+
+        function clearFeedback() {
+            const feedbackEl = document.getElementById('paymentFeedback');
+            if (feedbackEl) feedbackEl.classList.add('hidden');
+        }
+
+        function setProcessingState(isLoading, message = 'Processing payment...') {
+            const payButton = document.getElementById('paymentBtn');
+            const processingModal = document.getElementById('processingModal');
+            const processingTitle = processingModal?.querySelector('h3');
+            const processingNote = processingModal?.querySelector('p');
+
+            if (processingTitle) processingTitle.textContent = message;
+            if (processingNote) processingNote.textContent = isLoading ? "Please don't close this window" : '';
+
+            if (payButton) {
+                payButton.disabled = isLoading;
+                payButton.classList.toggle('opacity-70', isLoading);
+                payButton.classList.toggle('cursor-not-allowed', isLoading);
+                payButton.classList.toggle('pulse-soft', isLoading);
+            }
+
+            if (isLoading) {
+                processingModal.classList.remove('hidden');
+                processingModal.classList.add('flex');
+            } else {
+                processingModal.classList.add('hidden');
+                processingModal.classList.remove('flex');
+            }
+        }
+
+        function isValidUpiId(upiId) {
+            return /^[a-zA-Z0-9._-]{2,}@[a-zA-Z]{2,}$/.test(upiId);
+        }
+
+        async function verifyUpiId() {
+            const upiInput = document.getElementById('upiId');
+            const verifyStatus = document.getElementById('upiVerifyStatus');
+            const verifyBtn = document.getElementById('verifyUpiBtn');
+            if (!upiInput || !verifyStatus || !verifyBtn) return;
+
+            const upiId = upiInput.value.trim();
+            verifiedUpiId = '';
+
+            if (!isValidUpiId(upiId)) {
+                verifyStatus.className = 'mt-2 text-sm text-red-600';
+                verifyStatus.textContent = 'Invalid UPI format. Example: yourname@upi';
+                showFeedback('Please enter a valid UPI ID before verification.', 'warning');
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+            verifyStatus.className = 'mt-2 text-sm text-blue-600';
+            verifyStatus.textContent = 'Verifying UPI ID...';
+
+            await new Promise((resolve) => setTimeout(resolve, 900));
+
+            verifiedUpiId = upiId.toLowerCase();
+            verifyStatus.className = 'mt-2 text-sm text-green-600 font-medium';
+            verifyStatus.textContent = 'UPI ID verified successfully';
+
+            verifyBtn.textContent = 'Verified';
+            verifyBtn.classList.remove('bg-purple-100', 'text-purple-700', 'hover:bg-purple-200');
+            verifyBtn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+            verifyBtn.disabled = false;
+            showFeedback('UPI ID verified. You can continue with payment.', 'success');
+        }
 
         function safeParseJSON(value, fallback = {}) {
             try {
@@ -676,12 +585,19 @@
         const pendingOrderSeed = safeParseJSON(localStorage.getItem('pendingOrder') || '{}', {});
         const payNowUserId = paymentPageParams.get('userId') || pendingOrderSeed.userId || defaultProfile.id || 'guest-user';
         const getOrdersStorageKey = (userId) => `grocerymartOrders_${userId || 'guest-user'}`;
+        const normalizeEstimatedDeliveryMinutes = (value, fallback = 12) => {
+            const parsed = Number.parseInt(value, 10);
+            if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+            return Math.max(5, Math.min(parsed, 180));
+        };
+
         let currentOrderContext = {
             orderId: '',
             amount: 0,
             items: [],
             userId: 'guest-user',
-            deliveryAddress: ''
+            deliveryAddress: '',
+            estimatedDeliveryMinutes: 12
         };
 
         const getActiveDeliveryStorageKey = (userId) => `activeDelivery_${userId || 'guest-user'}`;
@@ -702,7 +618,28 @@
 
         // Select Payment Method
         function selectPaymentMethod(method) {
+            const allowedMethods = ['upi', 'cod'];
+            if (!allowedMethods.includes(method)) {
+                method = 'upi';
+            }
             currentPaymentMethod = method;
+            clearFeedback();
+
+            if (method === 'upi') {
+                verifiedUpiId = '';
+                const verifyStatus = document.getElementById('upiVerifyStatus');
+                if (verifyStatus) {
+                    verifyStatus.className = 'mt-2 text-sm text-gray-500';
+                    verifyStatus.textContent = 'Verification required before payment';
+                }
+                const verifyBtn = document.getElementById('verifyUpiBtn');
+                if (verifyBtn) {
+                    verifyBtn.textContent = 'Verify UPI ID';
+                    verifyBtn.disabled = false;
+                    verifyBtn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                    verifyBtn.classList.add('bg-purple-100', 'text-purple-700', 'hover:bg-purple-200');
+                }
+            }
             
             // Update UI
             document.querySelectorAll('.payment-method').forEach(el => {
@@ -715,14 +652,6 @@
                 form.classList.add('hidden');
             });
             document.getElementById(`${method}-form`).classList.remove('hidden');
-
-            // Show/hide card preview
-            const cardPreview = document.getElementById('cardPreview');
-            if (method === 'card') {
-                cardPreview.classList.remove('hidden');
-            } else {
-                cardPreview.classList.add('hidden');
-            }
 
             updatePayAction();
         }
@@ -744,87 +673,20 @@
             }
         }
 
-        // Format Card Number
-        function formatCardNumber(input) {
-            let value = input.value.replace(/\s/g, '');
-            value = value.replace(/\D/g, '');
-            value = value.replace(/(.{4})/g, '$1 ').trim();
-            input.value = value;
-            
-            // Update preview
-            const preview = document.getElementById('previewCardNumber');
-            if (value) {
-                preview.textContent = value.padEnd(19, '•');
-            } else {
-                preview.textContent = '•••• •••• •••• ••••';
-            }
-
-            // Detect card type
-            if (value.startsWith('4')) {
-                // Visa
-            } else if (value.startsWith('5')) {
-                // Mastercard
-            }
+        function getMethodLabel(method) {
+            const labels = {
+                upi: 'UPI',
+                cod: 'Cash on Delivery'
+            };
+            return labels[method] || 'Payment';
         }
 
-        // Format Expiry
-        function formatExpiry(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length >= 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            }
-            input.value = value;
-            
-            // Update preview
-            document.getElementById('previewExpiry').textContent = value || 'MM/YY';
-        }
-
-        // Update Card Name Preview
-        document.getElementById('cardName')?.addEventListener('input', (e) => {
-            const name = e.target.value || 'YOUR NAME';
-            document.getElementById('previewCardName').textContent = name;
-        });
-
-        // Filter Banks
-        function filterBanks(searchTerm) {
-            const bankItems = document.querySelectorAll('.bank-item');
-            const search = searchTerm.toLowerCase();
-            
-            bankItems.forEach(item => {
-                const bankName = item.querySelector('span').textContent.toLowerCase();
-                if (bankName.includes(search)) {
-                    item.classList.remove('hidden');
-                } else {
-                    item.classList.add('hidden');
-                }
-            });
-        }
-
-        function setupQrUpload() {
-            const uploadInput = document.getElementById('upiQrUpload');
-            const previewImage = document.getElementById('upiQrPreviewImage');
-            const placeholderIcon = document.getElementById('upiQrPlaceholder');
-
-            if (!uploadInput || !previewImage || !placeholderIcon) return;
-
-            uploadInput.addEventListener('change', (event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-
-                if (!file.type.startsWith('image/')) {
-                    alert('Please upload an image file for QR code.');
-                    uploadInput.value = '';
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    previewImage.classList.remove('hidden');
-                    placeholderIcon.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            });
+        function copyTransactionId() {
+            const txnId = document.getElementById('transactionId')?.textContent || '';
+            if (!txnId) return;
+            navigator.clipboard.writeText(txnId)
+                .then(() => showFeedback('Transaction ID copied to clipboard', 'success'))
+                .catch(() => showFeedback('Could not copy transaction ID', 'warning'));
         }
 
         async function saveOrderRecord(paymentData, transactionId) {
@@ -854,6 +716,7 @@
                     paymentMethod: currentPaymentMethod,
                     paymentId: transactionId,
                     deliveryAddress: currentOrderContext.deliveryAddress || '',
+                    estimatedDeliveryMinutes: currentOrderContext.estimatedDeliveryMinutes || 12,
                     status: 'confirmed'
                 })
             });
@@ -900,70 +763,29 @@
                 return;
             }
 
+            clearFeedback();
+
             // Validate terms
             if (!document.getElementById('terms').checked) {
-                alert('Please accept the terms and conditions');
+                showFeedback('Please accept the terms and conditions to continue.', 'warning');
                 return;
             }
 
-            let cardNumber = '';
-            let cardName = '';
-            let cardExpiry = '';
-            let cardCVV = '';
-
             // Validate payment details based on method
-            if (currentPaymentMethod === 'card') {
-                cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-                cardName = document.getElementById('cardName').value;
-                cardExpiry = document.getElementById('cardExpiry').value;
-                cardCVV = document.getElementById('cardCVV').value;
-
-                if (!cardNumber || cardNumber.length < 16) {
-                    alert('Please enter a valid card number');
-                    return;
-                }
-                if (!cardName) {
-                    alert('Please enter cardholder name');
-                    return;
-                }
-                if (!cardExpiry || cardExpiry.length < 5) {
-                    alert('Please enter valid expiry date');
-                    return;
-                }
-                if (!cardCVV || cardCVV.length < 3) {
-                    alert('Please enter valid CVV');
-                    return;
-                }
-            } else if (currentPaymentMethod === 'upi') {
+            if (currentPaymentMethod === 'upi') {
                 const upiId = document.getElementById('upiId').value;
                 if (!upiId || !upiId.includes('@')) {
-                    alert('Please enter a valid UPI ID');
+                    showFeedback('Please enter a valid UPI ID (example: name@upi).', 'error');
                     return;
                 }
-            } else if (currentPaymentMethod === 'wallet') {
-                const selectedWallet = document.querySelector('input[name="wallet"]:checked');
-                if (!selectedWallet) {
-                    alert('Please select a wallet');
-                    return;
-                }
-            } else if (currentPaymentMethod === 'netbanking') {
-                const selectedBank = document.querySelector('input[name="bank"]:checked');
-                if (!selectedBank) {
-                    alert('Please select a bank');
+                if (verifiedUpiId !== upiId.trim().toLowerCase()) {
+                    showFeedback('Please verify your UPI ID before payment.', 'warning');
                     return;
                 }
             }
 
-            const payButton = document.querySelector('button[onclick="processPayment()"]');
             isProcessingPayment = true;
-            if (payButton) {
-                payButton.disabled = true;
-                payButton.classList.add('opacity-70', 'cursor-not-allowed');
-            }
-
-            // Show processing modal
-            document.getElementById('processingModal').classList.remove('hidden');
-            document.getElementById('processingModal').classList.add('flex');
+            setProcessingState(true, `Processing ${getMethodLabel(currentPaymentMethod)} payment...`);
 
             // Call payment API
             try {
@@ -979,19 +801,8 @@
                 };
 
                 // Add method-specific data
-                if (currentPaymentMethod === 'card') {
-                    paymentData.cardDetails = {
-                        number: cardNumber.replace(/\s/g, ''),
-                        name: cardName,
-                        expiry: cardExpiry,
-                        cvv: cardCVV
-                    };
-                } else if (currentPaymentMethod === 'upi') {
+                if (currentPaymentMethod === 'upi') {
                     paymentData.upiId = document.getElementById('upiId').value;
-                } else if (currentPaymentMethod === 'wallet') {
-                    paymentData.walletType = document.querySelector('input[name="wallet"]:checked').value;
-                } else if (currentPaymentMethod === 'netbanking') {
-                    paymentData.bankCode = document.querySelector('input[name="bank"]:checked').value;
                 }
 
                 // COD flow (place order now, payment stays pending)
@@ -1002,19 +813,21 @@
                         timestamp: new Date().toISOString()
                     };
 
-                    // Hide processing modal quickly for COD
-                    document.getElementById('processingModal').classList.add('hidden');
-                    document.getElementById('processingModal').classList.remove('flex');
+                    setProcessingState(false);
 
                     document.getElementById('transactionId').textContent = codResult.transactionId;
+                    document.getElementById('successPaymentMethod').textContent = getMethodLabel(currentPaymentMethod);
+                    document.getElementById('successAmount').textContent = `₹${Number(paymentData.amount).toFixed(2)}`;
 
                     const profile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
                     const firstName = (profile.name || 'Guest').split(' ')[0];
                     document.getElementById('successGreeting').textContent =
                         `Hey ${firstName}, order confirmed! Pay cash on delivery. 🚚`;
 
-                    let totalSeconds = 12 * 60;
+                    const etaMinutes = normalizeEstimatedDeliveryMinutes(currentOrderContext.estimatedDeliveryMinutes, 12);
+                    let totalSeconds = etaMinutes * 60;
                     const countdownEl = document.getElementById('deliveryCountdown');
+                    countdownEl.textContent = `${etaMinutes} min`;
                     const tick = () => {
                         const minutes = Math.ceil(totalSeconds / 60);
                         countdownEl.textContent = `${minutes} min`;
@@ -1027,13 +840,14 @@
                     };
                     tick();
 
-                    const deliveryEndsAt = Date.now() + 12 * 60 * 1000;
+                    const deliveryDurationMs = etaMinutes * 60 * 1000;
+                    const deliveryEndsAt = Date.now() + deliveryDurationMs;
                     const deliveryStartedAt = Date.now();
                     const deliveryUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
                     setActiveDeliveryForUser(deliveryUserId, {
                         startedAt: deliveryStartedAt,
                         endsAt: deliveryEndsAt,
-                        totalDurationMs: 12 * 60 * 1000,
+                        totalDurationMs: deliveryDurationMs,
                         orderId: paymentData.orderId,
                         amount: paymentData.amount,
                         paymentStatus: 'unpaid'
@@ -1057,7 +871,10 @@
                         timestamp: codResult.timestamp
                     };
                     localStorage.setItem('lastPayment', JSON.stringify(paymentInfo));
-                    window.location.href = 'index.html';
+
+                    showFeedback('COD order placed successfully! You can track delivery from home page.', 'success');
+                    document.getElementById('successModal').classList.remove('hidden');
+                    document.getElementById('successModal').classList.add('flex');
                     return;
                 }
 
@@ -1072,13 +889,13 @@
 
                 const result = await response.json();
 
-                // Hide processing modal
-                document.getElementById('processingModal').classList.add('hidden');
-                document.getElementById('processingModal').classList.remove('flex');
+                setProcessingState(false);
 
                 if (result.success) {
                     // Show success with transaction ID
                     document.getElementById('transactionId').textContent = result.transactionId;
+                    document.getElementById('successPaymentMethod').textContent = getMethodLabel(currentPaymentMethod);
+                    document.getElementById('successAmount').textContent = `₹${Number(paymentData.amount).toFixed(2)}`;
 
                     // Personalised greeting
                     const profile = safeParseJSON(localStorage.getItem('grocerymartProfile') || '{}', {});
@@ -1086,9 +903,10 @@
                     document.getElementById('successGreeting').textContent =
                         `Hey ${firstName}, your fresh groceries are on their way! 🛍️`;
 
-                    // Delivery countdown: 12 minutes (minute-only display)
-                    let totalSeconds = 12 * 60;
+                    const etaMinutes = normalizeEstimatedDeliveryMinutes(currentOrderContext.estimatedDeliveryMinutes, 12);
+                    let totalSeconds = etaMinutes * 60;
                     const countdownEl = document.getElementById('deliveryCountdown');
+                    countdownEl.textContent = `${etaMinutes} min`;
                     const tick = () => {
                         const minutes = Math.ceil(totalSeconds / 60);
                         countdownEl.textContent = `${minutes} min`;
@@ -1103,17 +921,18 @@
                     // ── Persist delivery so tracker widget works on other pages ──
                     const deliveryUserId = currentOrderContext.userId || payNowUserId || 'guest-user';
                     const existingDelivery = getActiveDeliveryForUser(deliveryUserId) || {};
+                    const nextDurationMs = etaMinutes * 60 * 1000;
                     const activeEndsAt = existingDelivery.endsAt && existingDelivery.endsAt > Date.now()
                         ? existingDelivery.endsAt
-                        : Date.now() + 12 * 60 * 1000;
+                        : Date.now() + nextDurationMs;
                     const activeStartedAt = existingDelivery.startedAt
                         ? existingDelivery.startedAt
-                        : activeEndsAt - (existingDelivery.totalDurationMs || (12 * 60 * 1000));
+                        : activeEndsAt - (existingDelivery.totalDurationMs || nextDurationMs);
 
                     setActiveDeliveryForUser(deliveryUserId, {
                         startedAt: activeStartedAt,
                         endsAt: activeEndsAt,
-                        totalDurationMs: existingDelivery.totalDurationMs || (12 * 60 * 1000),
+                        totalDurationMs: existingDelivery.totalDurationMs || nextDurationMs,
                         orderId: paymentData.orderId,
                         amount: paymentData.amount,
                         paymentStatus: 'paid'
@@ -1148,23 +967,19 @@
                     };
                     console.log('Payment successful:', paymentInfo);
                     localStorage.setItem('lastPayment', JSON.stringify(paymentInfo));
+                    showFeedback('Payment completed successfully. Order is confirmed!', 'success');
                 } else {
                     // Payment failed
-                    alert(`Payment failed: ${result.error}`);
+                    showFeedback(`Payment failed: ${result.error || 'Please try again.'}`, 'error');
                 }
             } catch (error) {
-                // Hide processing modal
-                document.getElementById('processingModal').classList.add('hidden');
-                document.getElementById('processingModal').classList.remove('flex');
+                setProcessingState(false);
                 
                 console.error('Payment error:', error);
-                alert('Payment processing failed. Please try again.');
+                showFeedback('Payment processing failed due to a network issue. Please retry.', 'error');
             } finally {
                 isProcessingPayment = false;
-                if (payButton) {
-                    payButton.disabled = false;
-                    payButton.classList.remove('opacity-70', 'cursor-not-allowed');
-                }
+                setProcessingState(false);
             }
         }
 
@@ -1203,16 +1018,38 @@ Thank you for your order!
 
         // Initialize
         window.addEventListener('load', () => {
-            setupQrUpload();
+            const upiInput = document.getElementById('upiId');
+            if (upiInput) {
+                upiInput.addEventListener('input', () => {
+                    verifiedUpiId = '';
+                    const verifyStatus = document.getElementById('upiVerifyStatus');
+                    if (verifyStatus) {
+                        verifyStatus.className = 'mt-2 text-sm text-gray-500';
+                        verifyStatus.textContent = 'Verification required before payment';
+                    }
+                    const verifyBtn = document.getElementById('verifyUpiBtn');
+                    if (verifyBtn) {
+                        verifyBtn.textContent = 'Verify UPI ID';
+                        verifyBtn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                        verifyBtn.classList.add('bg-purple-100', 'text-purple-700', 'hover:bg-purple-200');
+                    }
+                });
+            }
 
             if (isPayNowMode) {
-                selectPaymentMethod(preferredPaymentMethod || 'upi');
+                const supportedMethod = ['upi', 'cod'].includes(preferredPaymentMethod)
+                    ? preferredPaymentMethod
+                    : 'upi';
+                selectPaymentMethod(supportedMethod);
                 const upiInput = document.getElementById('upiId');
-                if ((preferredPaymentMethod || 'upi') === 'upi' && upiInput) {
+                if (supportedMethod === 'upi' && upiInput) {
                     upiInput.focus();
                 }
             } else if (preferredPaymentMethod) {
-                selectPaymentMethod(preferredPaymentMethod);
+                const supportedMethod = ['upi', 'cod'].includes(preferredPaymentMethod)
+                    ? preferredPaymentMethod
+                    : 'upi';
+                selectPaymentMethod(supportedMethod);
             }
             updatePayAction();
 
@@ -1224,13 +1061,16 @@ Thank you for your order!
             const amountSource = urlParams.get('amount') || localStorage.getItem('currentOrderAmount') || pendingOrder.totalAmount;
             const parsedAmount = parseFloat(amountSource);
             const normalizedAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : null;
+            const etaSource = urlParams.get('eta') || localStorage.getItem('currentOrderEtaMinutes') || pendingOrder.estimatedDeliveryMinutes;
+            const normalizedEtaMinutes = normalizeEstimatedDeliveryMinutes(etaSource, 12);
 
             currentOrderContext = {
                 orderId,
                 amount: normalizedAmount || 0,
                 items: Array.isArray(pendingOrder.items) ? pendingOrder.items : [],
                 userId: urlParams.get('userId') || pendingOrder.userId || defaultProfile.id || 'guest-user',
-                deliveryAddress: pendingOrder.deliveryAddress || ''
+                deliveryAddress: pendingOrder.deliveryAddress || '',
+                estimatedDeliveryMinutes: normalizedEtaMinutes
             };
             
             document.getElementById('orderId').textContent = formatOrderIdForDisplay(orderId);

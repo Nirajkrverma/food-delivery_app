@@ -1,8 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 const path = require('path');
+const dns = require('dns');
 const { Pool } = require('pg');
 require('dotenv').config({ path: '.env.local' });
+
+// Some networks block DNS resolution for Neon hosts via local resolver.
+// Prefer public resolvers for local development.
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (error) {
+  console.warn('⚠️ Could not set custom DNS servers:', error.message);
+}
 
 // Debug: Check if environment variables are loaded
 console.log('🔍 Environment check:');
@@ -11,13 +21,139 @@ console.log('- POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
 console.log('- CLERK_PUBLISHABLE_KEY exists:', !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 console.log('- CLERK_PUBLISHABLE_KEY value:', process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? `${process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.substring(0, 20)}...` : 'Not found');
 
-// Database connection
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-    ssl: {
-        rejectUnauthorized: false
+function sanitizeConnectionString(value = '') {
+  const trimmed = String(value).trim();
+  if (!trimmed) return '';
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+function getConnectionStringCandidates() {
+  const candidates = [
+    sanitizeConnectionString(process.env.DATABASE_URL),
+    sanitizeConnectionString(process.env.POSTGRES_URL),
+  ].filter(Boolean);
+
+  return candidates.filter((candidate) => {
+    try {
+      new URL(candidate);
+      return true;
+    } catch (_) {
+      return false;
     }
-});
+  });
+}
+
+const dbConnectionStringCandidates = getConnectionStringCandidates();
+
+async function createPoolForConnectionString(connectionString) {
+  const url = new URL(connectionString);
+  const originalHost = url.hostname;
+
+  try {
+    await dns.promises.lookup(originalHost);
+    return new Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+      max: 10,
+      maxUses: 7500,
+    });
+  } catch (error) {
+    let resolvedIps = [];
+    try {
+      resolvedIps = await dns.promises.resolve4(originalHost);
+    } catch (_) {
+      // Try IPv6 when IPv4 records are unavailable.
+    }
+
+    if (!resolvedIps.length) {
+      try {
+        const resolvedIpv6 = await dns.promises.resolve6(originalHost);
+        resolvedIps = resolvedIpv6;
+      } catch (_) {
+        // Fall through and rethrow the original DNS error.
+      }
+    }
+
+    if (!resolvedIps.length) {
+      throw error;
+    }
+
+    const fallbackUrl = new URL(connectionString);
+    fallbackUrl.hostname = resolvedIps[0];
+    fallbackUrl.searchParams.delete('sslmode');
+    fallbackUrl.searchParams.delete('channel_binding');
+
+    console.warn(`⚠️ DNS fallback in use for DB host ${originalHost} -> ${resolvedIps[0]}`);
+
+    return new Pool({
+      connectionString: fallbackUrl.toString(),
+      ssl: {
+        rejectUnauthorized: false,
+        servername: originalHost,
+      },
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+      max: 10,
+      maxUses: 7500,
+    });
+  }
+}
+
+async function createDatabasePool() {
+  if (!dbConnectionStringCandidates.length) {
+    throw new Error('DATABASE_URL/POSTGRES_URL is not configured');
+  }
+
+  let lastError = null;
+  for (const candidate of dbConnectionStringCandidates) {
+    try {
+      const pool = await createPoolForConnectionString(candidate);
+      await pool.query('SELECT 1');
+      return pool;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Failed to connect using configured database URLs');
+}
+
+let poolPromise = createDatabasePool();
+const db = {
+  async query(text, params) {
+    try {
+      const pool = await poolPromise;
+      return await pool.query(text, params);
+    } catch (error) {
+      const transientCodes = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNRESET', 'ETIMEDOUT']);
+      const code = error && error.code ? String(error.code) : '';
+      if (!transientCodes.has(code)) {
+        throw error;
+      }
+
+      const oldPool = await poolPromise.catch(() => null);
+      poolPromise = createDatabasePool();
+      const retryPool = await poolPromise;
+      const result = await retryPool.query(text, params);
+      if (oldPool && typeof oldPool.end === 'function') {
+        oldPool.end().catch(() => {});
+      }
+      return result;
+    }
+  },
+  async connect() {
+    const pool = await poolPromise;
+    return pool.connect();
+  },
+};
 
 const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/200x200/e0e0e0/333?text=No+Image';
 
@@ -78,14 +214,15 @@ const normalizeProducts = (items = []) => {
 };
 
 // Test database connection on startup
-pool.connect((err, client, release) => {
-    if (err) {
-        console.error('❌ Database connection failed:', err.message);
-    } else {
-        console.log('✅ Database connected successfully');
-        release();
-    }
-});
+(async () => {
+  try {
+    const client = await db.connect();
+    console.log('✅ Database connected successfully');
+    client.release();
+  } catch (err) {
+    console.error('❌ Database connection failed:', err.message);
+  }
+})();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -125,7 +262,7 @@ app.get('/api/config', (req, res) => {
 
 app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products ORDER BY id');
+    const result = await db.query('SELECT * FROM products ORDER BY id');
     if (result.rows.length > 0) {
       return res.json(normalizeProducts(result.rows));
     }
@@ -154,7 +291,7 @@ app.get('/api/orders/user/:userId', async (req, res) => {
   const { userId } = req.params;
   
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
       [userId]
     );
@@ -195,7 +332,7 @@ app.get('/api/orders', async (req, res) => {
       params = [];
     }
     
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     const orders = result.rows;
     
     const formattedOrders = orders.map(order => ({
@@ -249,7 +386,7 @@ app.post('/api/orders', async (req, res) => {
   
   try {
     // Save to Neon database
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO orders (user_id, items, total_amount, payment_method, payment_id, delivery_address) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [userId || 'guest-user', JSON.stringify(items), parseFloat(orderTotal), paymentMethod, paymentId, JSON.stringify(deliveryAddress)]
@@ -318,38 +455,123 @@ app.post('/api/payment-verify', (req, res) => {
 // Mock users storage
 let mockUsers = {};
 
-app.get('/api/users', (req, res) => {
-  const { userId } = req.query;
+function normalizeAddressPayload(payload = {}) {
+  const addressLine1 = payload.addressLine1 || payload.line1 || '';
+  const addressLine2 = payload.addressLine2 || payload.line2 || '';
+  const city = payload.city || '';
+  const state = payload.state || '';
+  const pincode = payload.pincode || payload.postalCode || '';
+  const country = payload.country || 'India';
+
+  const parts = [addressLine1, addressLine2, [city, state].filter(Boolean).join(', ')].filter(Boolean);
+  if (country) parts.push(country);
+
+  const fallbackFromString = typeof payload.address === 'string' ? payload.address : '';
+  const address = parts.length > 0 ? parts.join('<br>') : fallbackFromString;
+
+  return {
+    address,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    pincode,
+    country
+  };
+}
+
+app.get('/api/users', async (req, res) => {
+  const { userId, list, limit } = req.query;
+
+  const shouldListUsers = String(list || '').toLowerCase() === '1' || String(list || '').toLowerCase() === 'true';
+
+  if (shouldListUsers) {
+    const maxLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);
+
+    try {
+      const result = await db.query(
+        `SELECT user_id, name, email, address, address_line1, address_line2, city, state, pincode, country, created_at
+         FROM users
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [maxLimit]
+      );
+      return res.json(result.rows);
+    } catch (error) {
+      console.error('Database error for users list, using fallback storage:', error.message);
+      return res.json(Object.values(mockUsers).slice(0, maxLimit));
+    }
+  }
+
   if (!userId) {
     return res.status(400).json({ error: 'User ID is required' });
   }
-  
-  const user = mockUsers[userId];
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+
+  try {
+    const result = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Database error for user lookup, using fallback storage:', error.message);
+
+    const user = mockUsers[userId];
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json(user);
   }
-  
-  res.json(user);
 });
 
-app.post('/api/users', (req, res) => {
-  const { userId, name, email, address } = req.body;
-  
+app.post('/api/users', async (req, res) => {
+  const { userId, name, email } = req.body;
+
   if (!userId) {
     return res.status(400).json({ error: 'User ID is required' });
   }
-  
-  const user = {
-    id: Date.now(),
-    user_id: userId,
-    name,
-    email,
-    address,
-    created_at: new Date().toISOString()
-  };
-  
-  mockUsers[userId] = user;
-  res.json(user);
+
+  try {
+    const normalizedAddress = normalizeAddressPayload(req.body);
+
+    const result = await db.query(
+      `INSERT INTO users (user_id, name, email, address, address_line1, address_line2, city, state, pincode, country)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (user_id)
+       DO UPDATE SET name = $2, email = $3, address = $4, address_line1 = $5, address_line2 = $6, city = $7, state = $8, pincode = $9, country = $10
+       RETURNING *`,
+      [
+        userId,
+        name,
+        email,
+        normalizedAddress.address,
+        normalizedAddress.addressLine1,
+        normalizedAddress.addressLine2,
+        normalizedAddress.city,
+        normalizedAddress.state,
+        normalizedAddress.pincode,
+        normalizedAddress.country
+      ]
+    );
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Database error for user write, using fallback storage:', error.message);
+
+    const user = {
+      id: Date.now(),
+      user_id: userId,
+      name,
+      email,
+      ...normalizeAddressPayload(req.body),
+      created_at: new Date().toISOString()
+    };
+
+    mockUsers[userId] = user;
+    return res.json(user);
+  }
 });
 
 // Payment API endpoint
@@ -588,12 +810,71 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+function isAppRunningOnPort(port) {
+  return new Promise((resolve) => {
+    const req = http.get(`http://localhost:${port}/api/health`, (res) => {
+      resolve(res.statusCode === 200);
+      res.resume();
+    });
+
+    req.setTimeout(800, () => {
+      req.destroy();
+      resolve(false);
+    });
+
+    req.on('error', () => resolve(false));
+  });
+}
+
+function listenOnPort(port) {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(app);
+
+    server.once('error', (error) => {
+      server.close();
+      reject(error);
+    });
+
+    server.listen(port, () => resolve(server));
+  });
+}
+
+async function startServer(port) {
+  const maxAttempts = 10;
+
+  for (let offset = 0; offset < maxAttempts; offset++) {
+    const candidatePort = port + offset;
+
+    const alreadyRunning = await isAppRunningOnPort(candidatePort);
+    if (alreadyRunning) {
+      console.log(`ℹ️ Server already running at http://localhost:${candidatePort}`);
+      console.log(`📱 Reuse this URL: http://localhost:${candidatePort}`);
+      return;
+    }
+
+    try {
+      await listenOnPort(candidatePort);
+      console.log(`🚀 Development Server running on http://localhost:${candidatePort}`);
+      console.log(`📡 API endpoints available at http://localhost:${candidatePort}/api/`);
+      console.log(`🩺 Health check: http://localhost:${candidatePort}/api/health`);
+      console.log(`📱 Frontend available at http://localhost:${candidatePort}`);
+      return;
+    } catch (error) {
+      if (error.code === 'EADDRINUSE') {
+        console.warn(`⚠️ Port ${candidatePort} is in use. Retrying on ${candidatePort + 1}...`);
+        continue;
+      }
+
+      console.error('❌ Server failed to start:', error.message);
+      process.exit(1);
+    }
+  }
+
+  console.error(`❌ Could not find a free port in range ${port}-${port + maxAttempts - 1}`);
+  process.exit(1);
+}
+
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Development Server running on http://localhost:${PORT}`);
-  console.log(`📡 API endpoints available at http://localhost:${PORT}/api/`);
-  console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📱 Frontend available at http://localhost:${PORT}`);
-});
+startServer(PORT);
 
 module.exports = app;

@@ -1,11 +1,4 @@
-const { Pool } = require('pg');
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+const db = require('./_db');
 
 const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/200x200/e0e0e0/333?text=No+Image';
 
@@ -81,7 +74,7 @@ export default async function handler(req, res) {
 
     try {
         // Try to get products from database
-        const result = await pool.query('SELECT * FROM products ORDER BY id');
+        const result = await db.query('SELECT * FROM products ORDER BY id');
         res.status(200).json(normalizeProductList(result.rows));
     } catch (error) {
         console.error('Database error, falling back to sample data:', error.message);

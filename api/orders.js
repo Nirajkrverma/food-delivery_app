@@ -1,11 +1,4 @@
-const { Pool } = require('pg');
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+const db = require('./_db');
 
 // Fallback in-memory storage for when database is not available
 let mockOrders = [];
@@ -51,7 +44,7 @@ const handleGetOrders = async (req, res) => {
             params = [];
         }
         
-        const result = await pool.query(query, params);
+        const result = await db.query(query, params);
         const orders = result.rows.map(order => ({
             id: order.id,
             userId: order.user_id,
@@ -88,10 +81,14 @@ const handleGetOrders = async (req, res) => {
 };
 
 const handleCreateOrder = async (req, res) => {
-    const { userId, items, total, totalAmount, paymentMethod = 'COD', paymentId, deliveryAddress } = req.body;
+    const { userId, items, total, totalAmount, paymentMethod = 'COD', paymentId, deliveryAddress, estimatedDeliveryMinutes } = req.body;
     
     // Handle both 'total' and 'totalAmount' field names for compatibility
     const orderTotal = total || totalAmount;
+    const parsedEtaMinutes = Number.parseInt(estimatedDeliveryMinutes, 10);
+    const normalizedEtaMinutes = Number.isFinite(parsedEtaMinutes) && parsedEtaMinutes > 0
+        ? Math.max(5, Math.min(parsedEtaMinutes, 180))
+        : 12;
     
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -104,7 +101,7 @@ const handleCreateOrder = async (req, res) => {
     
     try {
         // Try database first
-        const result = await pool.query(
+        const result = await db.query(
             `INSERT INTO orders (user_id, items, total_amount, payment_method, payment_id, delivery_address) 
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
             [userId || 'guest-user', JSON.stringify(items), parseFloat(orderTotal), paymentMethod, paymentId, JSON.stringify(deliveryAddress)]
@@ -123,7 +120,7 @@ const handleCreateOrder = async (req, res) => {
                 status: newOrder.status,
                 paymentMethod: newOrder.payment_method,
                 orderDate: newOrder.created_at,
-                deliveryTime: '12 minutes'
+                deliveryTime: `${normalizedEtaMinutes} minutes`
             },
             message: 'Order placed successfully'
         });
@@ -156,7 +153,7 @@ const handleCreateOrder = async (req, res) => {
                 status: newOrder.status,
                 paymentMethod: newOrder.payment_method,
                 orderDate: newOrder.created_at,
-                deliveryTime: '12 minutes'
+                deliveryTime: `${normalizedEtaMinutes} minutes`
             },
             message: 'Order placed successfully'
         });
@@ -173,7 +170,7 @@ const handleUpdateOrder = async (req, res) => {
     
     try {
         // Try database first
-        const result = await pool.query(
+        const result = await db.query(
             'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
             [status, id]
         );
