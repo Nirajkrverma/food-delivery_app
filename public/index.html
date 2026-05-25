@@ -4550,12 +4550,17 @@ document.addEventListener('DOMContentLoaded', async() => {
                     console.log('⚠️ Gemini returned no items, trying Tesseract');
                 }
             } catch (geminiErr) {
-                // Do NOT fallback to Tesseract for server errors, because Tesseract cannot read handwriting at all.
-                if (geminiErr.message.includes('Server returned error') || 
-                    geminiErr.message.includes('Quota') || 
-                    geminiErr.message.includes('too large') ||
-                    geminiErr.message.includes('overloaded') ||
-                    geminiErr.message.includes('Gemini API')) {
+                const errMsg = (geminiErr.message || '').toLowerCase();
+                if (errMsg.includes('server returned error') || 
+                    errMsg.includes('quota') || 
+                    errMsg.includes('too large') ||
+                    errMsg.includes('overloaded') ||
+                    errMsg.includes('gemini') ||
+                    errMsg.includes('api_key')) {
+                    
+                    if (errMsg.includes('gemini_api_key not configured')) {
+                         throw new Error('Deployment Error: The GEMINI_API_KEY is missing on the live server (Vercel). Please add your Gemini API key to your Vercel Environment Variables and redeploy.');
+                    }
                     throw geminiErr; 
                 }
                 console.warn('Gemini API failed, falling back to Tesseract:', geminiErr.message);
