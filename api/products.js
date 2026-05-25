@@ -74,7 +74,21 @@ export default async function handler(req, res) {
 
     try {
         // Try to get products from database
-        const result = await db.query('SELECT * FROM products ORDER BY id');
+        const result = await db.query(`
+            SELECT 
+                p.id, p.name, p.image_url as image, p.category,
+                COALESCE(json_agg(
+                    json_build_object(
+                        'unit', pv.unit_value || ' ' || pv.unit_measure, 
+                        'price', pv.price,
+                        'id', pv.id
+                    )
+                ) FILTER (WHERE pv.id IS NOT NULL), '[]') as variants
+            FROM products p
+            LEFT JOIN product_variants pv ON p.id = pv.product_id
+            GROUP BY p.id
+            ORDER BY p.id
+        `);
         res.status(200).json(normalizeProductList(result.rows));
     } catch (error) {
         console.error('Database error, falling back to sample data:', error.message);

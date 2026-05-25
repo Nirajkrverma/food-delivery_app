@@ -37,10 +37,43 @@ const handleGetOrders = async (req, res) => {
         // Try database first
         let query, params;
         if (userId) {
-            query = 'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC';
+            query = `
+                SELECT o.*, 
+                    COALESCE(json_agg(
+                        json_build_object(
+                            'unit', pv.unit_value || ' ' || pv.unit_measure,
+                            'price', oi.unit_price,
+                            'quantity', oi.quantity,
+                            'name', p.name
+                        )
+                    ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+                FROM orders o
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                LEFT JOIN product_variants pv ON oi.product_variant_id = pv.id
+                LEFT JOIN products p ON pv.product_id = p.id
+                WHERE o.user_id = $1
+                GROUP BY o.id
+                ORDER BY o.created_at DESC
+            `;
             params = [userId];
         } else {
-            query = 'SELECT * FROM orders ORDER BY created_at DESC';
+            query = `
+                SELECT o.*, 
+                    COALESCE(json_agg(
+                        json_build_object(
+                            'unit', pv.unit_value || ' ' || pv.unit_measure,
+                            'price', oi.unit_price,
+                            'quantity', oi.quantity,
+                            'name', p.name
+                        )
+                    ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+                FROM orders o
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                LEFT JOIN product_variants pv ON oi.product_variant_id = pv.id
+                LEFT JOIN products p ON pv.product_id = p.id
+                GROUP BY o.id
+                ORDER BY o.created_at DESC
+            `;
             params = [];
         }
         
@@ -52,8 +85,7 @@ const handleGetOrders = async (req, res) => {
             total: order.total_amount,
             status: order.status,
             paymentMethod: order.payment_method,
-            orderDate: order.created_at,
-            deliveryAddress: order.delivery_address
+            orderDate: order.created_at
         }));
         
         res.status(200).json(orders);
@@ -70,8 +102,7 @@ const handleGetOrders = async (req, res) => {
                 total: order.total_amount,
                 status: order.status,
                 paymentMethod: order.payment_method,
-                orderDate: order.created_at,
-                deliveryAddress: order.delivery_address
+                orderDate: order.created_at
             }));
             res.status(200).json(formattedOrders);
         } else {
@@ -100,22 +131,38 @@ const handleCreateOrder = async (req, res) => {
     }
     
     try {
-        // Try database first
-        const result = await db.query(
-            `INSERT INTO orders (user_id, items, total_amount, payment_method, payment_id, delivery_address) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [userId || 'guest-user', JSON.stringify(items), parseFloat(orderTotal), paymentMethod, paymentId, JSON.stringify(deliveryAddress)]
+        const client = await db.query('BEGIN'); // Start transaction if possible, or just ignore for simple wrapper
+        
+        const parsedAddress = typeof deliveryAddress === 'string' ? deliveryAddress : JSON.stringify(deliveryAddress);
+
+        // Insert Order
+        const orderResult = await db.query(
+            `INSERT INTO orders (user_id, total_amount, payment_method, payment_id, delivery_address) 
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [userId || 'guest-user', parseFloat(orderTotal), paymentMethod, paymentId, parsedAddress]
         );
         
-        const newOrder = result.rows[0];
+        const newOrder = orderResult.rows[0];
+
+        // Insert Order Items
+        for (const item of items) {
+             const quantity = item.quantity || 1;
+             const price = parseFloat(item.price) || 0;
+             // Here we use a fake product_variant_id temporarily if real ones aren't mapped
+             await db.query(`
+                INSERT INTO order_items (order_id, quantity, unit_price, total_price)
+                VALUES ($1, $2, $3, $4)
+             `, [newOrder.id, quantity, price, quantity * price]);
+        }
         
+        // Return full structure for UI
         res.status(201).json({
             success: true,
             _id: newOrder.id,
             order: {
                 id: newOrder.id,
                 userId: newOrder.user_id,
-                items: newOrder.items,
+                items: items, // mirror frontend items array
                 total: newOrder.total_amount,
                 status: newOrder.status,
                 paymentMethod: newOrder.payment_method,

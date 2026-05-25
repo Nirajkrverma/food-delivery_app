@@ -106,72 +106,74 @@ const initDatabase = async () => {
         const client = await pool.connect();
         console.log('✅ Connected to Neon PostgreSQL database');
         
-        // Create products table
+        // 1. Products
         await client.query(`
             CREATE TABLE IF NOT EXISTS products (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                image VARCHAR(500),
                 category VARCHAR(100),
-                variants JSONB NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                image_url VARCHAR(500)
             )
         `);
         console.log('✅ Products table created/verified');
 
-        // Create orders table
+        // 2. Product Variants
         await client.query(`
-            CREATE TABLE IF NOT EXISTS orders (
+            CREATE TABLE IF NOT EXISTS product_variants (
                 id SERIAL PRIMARY KEY,
-                user_id VARCHAR(100) NOT NULL,
-                items JSONB NOT NULL,
-                total_amount DECIMAL(10,2) NOT NULL,
-                status VARCHAR(50) DEFAULT 'pending',
-                payment_method VARCHAR(50) DEFAULT 'COD',
-                payment_id VARCHAR(100),
-                delivery_address JSONB,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+                sku VARCHAR(100) UNIQUE,
+                unit_value DECIMAL(10,2) NOT NULL,
+                unit_measure VARCHAR(20) NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                stock_quantity INTEGER NOT NULL DEFAULT 100
             )
         `);
-        console.log('✅ Orders table created/verified');
+        console.log('✅ Product Variants table created/verified');
 
-        // Create users table
+        // 3. Users Profile
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(100) UNIQUE NOT NULL,
+                user_id VARCHAR(100) PRIMARY KEY,
                 name VARCHAR(255),
                 email VARCHAR(255),
-                address TEXT,
-                address_line1 TEXT,
-                address_line2 TEXT,
-                city VARCHAR(120),
-                state VARCHAR(120),
-                pincode VARCHAR(20),
-                country VARCHAR(120),
+                phone_number VARCHAR(20),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
         console.log('✅ Users table created/verified');
 
-        // Keep legacy databases in sync with the current address parameters.
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line1 TEXT');
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line2 TEXT');
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120)');
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS state VARCHAR(120)');
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode VARCHAR(20)');
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(120)');
-
-        // Keep one row per user_id before enforcing uniqueness on legacy tables.
+        // 4. Orders
         await client.query(`
-            DELETE FROM users u
-            USING users dup
-            WHERE u.user_id = dup.user_id
-              AND u.id < dup.id
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(100) REFERENCES users(user_id) ON DELETE SET NULL,
+                status VARCHAR(50) DEFAULT 'pending',
+                payment_method VARCHAR(50) DEFAULT 'COD',
+                payment_id VARCHAR(100),
+                total_amount DECIMAL(10,2) NOT NULL,
+                delivery_address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         `);
+        console.log('✅ Orders table created/verified');
+
+        // 5. Order Items
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+                product_variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL,
+                quantity INTEGER NOT NULL CHECK (quantity > 0),
+                unit_price DECIMAL(10,2) NOT NULL,
+                total_price DECIMAL(10,2) NOT NULL
+            )
+        `);
+        console.log('✅ Order Items table created/verified');
+
+        // Ensure user uniqueness index is in place
         await client.query('CREATE UNIQUE INDEX IF NOT EXISTS users_user_id_unique_idx ON users (user_id)');
 
-        // Ensure product catalog is fully present even when table is partially populated.
         await upsertSampleProducts(client);
 
         client.release();
@@ -333,44 +335,38 @@ const upsertSampleProducts = async (client) => {
         { id: 319, name: 'Limca', image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_544,w_504/iegvddhilgghljtwyoug', category: 'Beverages', variants: [{unit: '750 ml', price: 40}, {unit: '1.5 litre', price: 70}] },
     ];
 
-    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS products_name_category_unique_idx ON products (LOWER(name), category)');
-
-    let insertedCount = 0;
-    let updatedCount = 0;
+    let insertedProds = 0, insertedVariants = 0;
 
     for (const product of sampleProducts) {
-        const existing = await client.query(
-            'SELECT id, image, variants FROM products WHERE LOWER(name) = LOWER($1) AND category = $2 LIMIT 1',
-            [product.name, product.category]
+
+        // 1. Ensure product exists
+        const prodRes = await client.query(
+            'INSERT INTO products (category, name, image_url) VALUES ($1, $2, $3) RETURNING id',
+            [product.category, product.name, product.image]
         );
+        const productId = prodRes.rows[0].id;
+        insertedProds++;
 
-        if (existing.rows.length === 0) {
+        // 2. Insert variants
+        for (let i = 0; i < product.variants.length; i++) {
+            const variant = product.variants[i];
+            
+            // Extract unit measure ('g', 'kg', 'ml', 'litre', 'pc(s)')
+            const unitMatch = variant.unit.match(/([\d.]+)\s*(.*)/);
+            const unit_value = unitMatch ? parseFloat(unitMatch[1]) : 1;
+            const unit_measure = unitMatch ? unitMatch[2].trim() : variant.unit;
+            
+            const sku = `PROD-${productId}-VAR-${i+1}`;
+            
             await client.query(
-                'INSERT INTO products (name, image, category, variants) VALUES ($1, $2, $3, $4)',
-                [product.name, product.image, product.category, JSON.stringify(product.variants)]
+                'INSERT INTO product_variants (product_id, sku, unit_value, unit_measure, price, stock_quantity) VALUES ($1, $2, $3, $4, $5, $6)',
+                [productId, sku, unit_value, unit_measure, variant.price, 100]
             );
-            insertedCount += 1;
-            continue;
-        }
-
-        const row = existing.rows[0];
-        const currentVariants = JSON.stringify(row.variants);
-        const nextVariants = JSON.stringify(product.variants);
-        const currentImage = typeof row.image === 'string' ? row.image.trim() : '';
-        const nextImage = typeof product.image === 'string' ? product.image.trim() : '';
-
-        if (currentVariants !== nextVariants || (!currentImage && nextImage)) {
-            await client.query(
-                'UPDATE products SET image = $1, variants = $2 WHERE id = $3',
-                [nextImage || row.image, nextVariants, row.id]
-            );
-            updatedCount += 1;
+            insertedVariants++;
         }
     }
 
-    const dbCountResult = await client.query('SELECT COUNT(*) FROM products');
-    const dbCount = Number(dbCountResult.rows[0].count || 0);
-    console.log(`✅ Product sync completed (inserted: ${insertedCount}, updated: ${updatedCount}, total in table: ${dbCount}, expected seed size: ${sampleProducts.length})`);
+    console.log(`✅ Product sync completed (seeded ${insertedProds} products and ${insertedVariants} variants)`);
 };
 
 // Run initialization
