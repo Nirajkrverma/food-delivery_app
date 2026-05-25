@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grocery Mart - Delivery in Minutes</title>
+    <link rel="icon" type="image/png" href="./GroceryL.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="./GroceryD.png" media="(prefers-color-scheme: dark)">
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -18,6 +20,8 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Tesseract JS for OCR Image Scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <style>
         /* Define CSS variables for theming */
@@ -1047,6 +1051,371 @@
                 transform: none;
             }
         }
+
+        /* View transition API base styling for circular reveal */
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: none;
+            mix-blend-mode: normal;
+        }
+        ::view-transition-old(root) { z-index: 1; }
+        ::view-transition-new(root) { z-index: 2; }
+        html.dark::view-transition-old(root) { z-index: 2; }
+        html.dark::view-transition-new(root) { z-index: 1; }
+
+        /* Disable css transitions during view transitions so DOM snapshots instantly cleanly */
+        .disable-transitions,
+        .disable-transitions *,
+        .disable-transitions *::before,
+        .disable-transitions *::after {
+            transition: none !important;
+        }
+
+        /* ============================================ */
+        /* SMART SHOPPING LIST SCANNER STYLES           */
+        /* ============================================ */
+        #scanner-modal {
+            z-index: 60;
+        }
+
+        .scanner-backdrop {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .scanner-panel {
+            background: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 1.25rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                        0 0 0 1px rgba(255,255,255,0.1) inset;
+            max-height: 92vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: scannerSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        html.dark .scanner-panel {
+            background: var(--card-bg-dark);
+            border-color: var(--border-dark);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                        0 0 60px rgba(132, 204, 22, 0.05);
+        }
+
+        @keyframes scannerSlideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Scanner step indicator */
+        .scanner-steps {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 0 0.5rem;
+        }
+        .scanner-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--subtle-text-light);
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        .scanner-step.active {
+            opacity: 1;
+            color: var(--accent-color-1);
+        }
+        .scanner-step.completed {
+            opacity: 0.8;
+            color: #22c55e;
+        }
+        .scanner-step-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.7rem;
+            background: rgba(148, 163, 184, 0.15);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+        .scanner-step.active .scanner-step-dot {
+            background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
+            border-color: var(--accent-color-1);
+            color: #1a2e05;
+            box-shadow: 0 0 16px rgba(132, 204, 22, 0.35);
+        }
+        .scanner-step.completed .scanner-step-dot {
+            background: #22c55e;
+            border-color: #16a34a;
+            color: white;
+        }
+        .scanner-step-line {
+            flex: 1;
+            height: 2px;
+            background: rgba(148, 163, 184, 0.2);
+            margin: 0 0.4rem;
+            min-width: 1.5rem;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+        .scanner-step-line.filled {
+            background: linear-gradient(90deg, #22c55e, var(--accent-color-1));
+        }
+
+        /* Scanner image preview */
+        .scanner-image-zone {
+            position: relative;
+            border: 2px dashed rgba(132, 204, 22, 0.4);
+            border-radius: 1rem;
+            background: rgba(132, 204, 22, 0.04);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .scanner-image-zone:hover {
+            border-color: var(--accent-color-1);
+            background: rgba(132, 204, 22, 0.08);
+        }
+        .scanner-image-zone.has-image {
+            border-style: solid;
+            border-color: var(--accent-color-1);
+            cursor: default;
+        }
+        .scanner-image-zone img {
+            border-radius: 0.75rem;
+        }
+
+        /* Scanning animation overlay */
+        .scanner-scanning-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            border-radius: 0.75rem;
+            z-index: 5;
+        }
+        .scanner-scan-line {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color-1), var(--accent-color-2), var(--accent-color-1), transparent);
+            box-shadow: 0 0 20px rgba(132, 204, 22, 0.6);
+            border-radius: 4px;
+            animation: scanLine 2s ease-in-out infinite;
+        }
+        @keyframes scanLine {
+            0% { top: 10%; opacity: 0.7; }
+            50% { top: 85%; opacity: 1; }
+            100% { top: 10%; opacity: 0.7; }
+        }
+
+        /* Matched item cards */
+        .scanner-item-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-light);
+            background: var(--card-bg-light);
+            transition: all 0.25s ease;
+            animation: itemFadeIn 0.4s ease both;
+        }
+        html.dark .scanner-item-card {
+            border-color: var(--border-dark);
+            background: var(--card-bg-dark);
+        }
+        .scanner-item-card:hover {
+            border-color: var(--accent-color-1);
+            box-shadow: 0 4px 12px rgba(132, 204, 22, 0.1);
+            transform: translateY(-1px);
+        }
+        html.dark .scanner-item-card:hover {
+            box-shadow: 0 4px 12px rgba(132, 204, 22, 0.15);
+        }
+
+        @keyframes itemFadeIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .scanner-item-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+            object-fit: contain;
+            flex-shrink: 0;
+            background: rgba(148, 163, 184, 0.08);
+        }
+
+        .scanner-item-qty-control {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid var(--border-light);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        html.dark .scanner-item-qty-control {
+            border-color: var(--border-dark);
+        }
+        .scanner-item-qty-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            transition: background 0.15s ease;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .scanner-item-qty-btn:hover {
+            background: rgba(132, 204, 22, 0.15);
+        }
+        .scanner-item-qty-val {
+            width: 32px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: rgba(132, 204, 22, 0.06);
+        }
+
+        .scanner-item-remove {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            background: transparent;
+            border: none;
+        }
+        .scanner-item-remove:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Scanner summary bar */
+        .scanner-summary {
+            background: linear-gradient(135deg, rgba(132, 204, 22, 0.08), rgba(163, 230, 53, 0.06));
+            border: 1px solid rgba(132, 204, 22, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+        }
+        html.dark .scanner-summary {
+            background: linear-gradient(135deg, rgba(132, 204, 22, 0.06), rgba(163, 230, 53, 0.04));
+            border-color: rgba(132, 204, 22, 0.15);
+        }
+
+        /* Confidence badge */
+        .confidence-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+        }
+        .confidence-high {
+            background: rgba(34, 197, 94, 0.15);
+            color: #16a34a;
+        }
+        html.dark .confidence-high {
+            color: #4ade80;
+        }
+        .confidence-medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: #ca8a04;
+        }
+        html.dark .confidence-medium {
+            color: #fbbf24;
+        }
+
+        /* Scanner scrollable area */
+        .scanner-items-scroll {
+            max-height: 40vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color-1) transparent;
+        }
+        .scanner-items-scroll::-webkit-scrollbar { width: 5px; }
+        .scanner-items-scroll::-webkit-scrollbar-track { background: transparent; }
+        .scanner-items-scroll::-webkit-scrollbar-thumb { background: var(--accent-color-1); border-radius: 3px; }
+
+        /* Upload zone active states */
+        .scanner-upload-active {
+            border-color: var(--accent-color-1) !important;
+            background: rgba(132, 204, 22, 0.12) !important;
+        }
+
+        /* Extracted text raw preview */
+        .scanner-raw-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            line-height: 1.5;
+            color: var(--subtle-text-light);
+            background: rgba(0,0,0,0.03);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        html.dark .scanner-raw-text {
+            background: rgba(255,255,255,0.04);
+        }
+
+        /* No items found state */
+        .scanner-empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        .scanner-empty-state i {
+            font-size: 3rem;
+            color: var(--subtle-text-light);
+            margin-bottom: 0.75rem;
+        }
+
+        @media (max-width: 640px) {
+            .scanner-panel {
+                border-radius: 1rem;
+                max-height: 95vh;
+            }
+            .scanner-steps {
+                gap: 0;
+            }
+            .scanner-step span:not(.scanner-step-dot) {
+                display: none;
+            }
+            .scanner-item-card {
+                padding: 0.6rem;
+                gap: 0.5rem;
+            }
+            .scanner-item-img {
+                width: 40px;
+                height: 40px;
+            }
+        }
     </style>
 </head>
 <body class="themed-bg themed-text">
@@ -1056,7 +1425,7 @@
         <div class="w-full px-4 sm:px-6 flex justify-between items-center gap-4">
             <a href="/" class="header-brand flex-1 min-w-0 flex items-center gap-3 sm:gap-4 cursor-pointer no-underline group">
                 <!-- Logo Image -->
-                <img id="logo-img" src="/GroceryL.png" alt="Grocery Mart Logo" class="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.onerror=null;this.src='/GroceryL.png';">
+                <img id="logo-img" src="./GroceryL.png" alt="Grocery Mart Logo" class="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain flex-shrink-0 logo-img transition-all duration-300 group-hover:scale-110 group-active:scale-95" onerror="this.onerror=null;this.src='./GroceryL.png';">
                 <div class="flex flex-col justify-center">
                     <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight themed-text transition-all duration-300 group-hover:text-[color:var(--accent-color-1)]">
                         Grocery Mart
@@ -1126,7 +1495,7 @@
                     id="search-bar" 
                     placeholder="Search for products, e.g. apple, milk, bread..." 
                     autocomplete="off"
-                    class="w-full pl-14 pr-4 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
+                    class="w-full pl-14 pr-12 py-3.5 rounded-lg border-2 focus:ring-2 focus:outline-none transition-all
                            bg-white dark:bg-gray-700
                            text-gray-900 dark:text-gray-100
                            placeholder-gray-400 dark:placeholder-gray-400
@@ -1135,6 +1504,12 @@
                            focus:ring-[color:var(--accent-color-1)]
                            dark:focus:ring-lime-400
                            hover:border-lime-400 dark:hover:border-lime-500">
+                <button id="upload-list-btn" type="button"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full hover:bg-lime-100 dark:hover:bg-slate-600 transition-all text-lime-600 dark:text-lime-400"
+                    title="Upload Shopping List">
+                    <i class="ph ph-camera text-xl font-bold"></i>
+                </button>
+                <input type="file" id="upload-list-input" accept="image/*" class="hidden">
                 <div id="search-suggestions-dropdown" class="absolute left-0 right-0 top-full mt-2 rounded-lg bg-white dark:bg-slate-800 border themed-border shadow-lg max-h-96 overflow-y-auto z-50 hidden">
                     <!-- Suggestions will be inserted here dynamically -->
                 </div>
@@ -1316,6 +1691,150 @@
                     <button type="submit" class="btn-primary font-bold py-2 px-6 rounded-lg">Save Profile</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ── Smart Shopping List Scanner Modal ── -->
+    <div id="scanner-modal" class="fixed inset-0 hidden items-center justify-center p-3 sm:p-4">
+        <div class="scanner-backdrop absolute inset-0" id="scanner-backdrop"></div>
+        <div class="scanner-panel relative w-full max-w-lg mx-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 pt-5 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-lime-400 to-lime-600 flex items-center justify-center">
+                        <i class="ph ph-camera text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold leading-tight">Smart List Scanner</h2>
+                        <p class="text-xs themed-subtle-text">Snap your list, we fill your cart</p>
+                    </div>
+                </div>
+                <button id="scanner-close-btn" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Close scanner">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="px-5 pb-3">
+                <div class="scanner-steps">
+                    <div class="scanner-step active" id="scanner-step-1">
+                        <span class="scanner-step-dot">1</span>
+                        <span>Upload</span>
+                    </div>
+                    <div class="scanner-step-line" id="scanner-line-1"></div>
+                    <div class="scanner-step" id="scanner-step-2">
+                        <span class="scanner-step-dot">2</span>
+                        <span>Scan</span>
+                    </div>
+                    <div class="scanner-step-line" id="scanner-line-2"></div>
+                    <div class="scanner-step" id="scanner-step-3">
+                        <span class="scanner-step-dot">3</span>
+                        <span>Add to Cart</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area (scrollable) -->
+            <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4" id="scanner-content">
+                <!-- Phase 1: Upload Zone -->
+                <div id="scanner-upload-phase">
+                    <div class="scanner-image-zone flex flex-col items-center justify-center p-8 text-center" id="scanner-drop-zone">
+                        <i class="ph ph-cloud-arrow-up text-5xl text-lime-500 mb-3 opacity-70"></i>
+                        <p class="font-semibold text-sm mb-1">Drop your shopping list image here</p>
+                        <p class="text-xs themed-subtle-text mb-3">or click to browse · Supports JPG, PNG, HEIC</p>
+                        <button class="btn-primary text-sm font-bold px-5 py-2.5 rounded-lg flex items-center gap-2" id="scanner-browse-btn">
+                            <i class="ph ph-camera"></i>
+                            Choose Photo
+                        </button>
+                        <input type="file" id="scanner-file-input" accept="image/*" capture="environment" class="hidden">
+                    </div>
+                    <div class="flex items-center gap-2 mt-3 px-1">
+                        <i class="ph ph-lightbulb text-yellow-500 text-sm"></i>
+                        <p class="text-xs themed-subtle-text">Tip: Use a clear photo with good lighting for best results</p>
+                    </div>
+                </div>
+
+                <!-- Phase 2: Scanning (hidden initially) -->
+                <div id="scanner-scanning-phase" class="hidden">
+                    <div class="scanner-image-zone has-image relative">
+                        <img id="scanner-preview-img" src="" alt="Shopping list preview" class="w-full max-h-48 object-contain rounded-lg">
+                        <div class="scanner-scanning-overlay">
+                            <div class="scanner-scan-line"></div>
+                            <div class="text-center">
+                                <i class="ph ph-spinner-gap animate-spin text-3xl text-lime-400 mb-2"></i>
+                                <p class="text-white font-semibold text-sm">Scanning your list...</p>
+                                <p class="text-gray-300 text-xs mt-1" id="scanner-progress-text">Initializing OCR engine</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 3: Results (hidden initially) -->
+                <div id="scanner-results-phase" class="hidden space-y-3">
+                    <!-- Image Preview (collapsed) -->
+                    <div class="scanner-image-zone has-image">
+                        <img id="scanner-result-img" src="" alt="Scanned list" class="w-full max-h-32 object-contain rounded-lg opacity-80">
+                        <button id="scanner-retake-btn" class="absolute bottom-2 right-2 bg-white/90 dark:bg-slate-700/90 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md hover:bg-white dark:hover:bg-slate-600 transition-all">
+                            <i class="ph ph-arrow-counter-clockwise text-sm"></i>
+                            Retake
+                        </button>
+                    </div>
+
+                    <!-- Extracted Text Toggle -->
+                    <details class="group">
+                        <summary class="text-xs font-semibold themed-subtle-text cursor-pointer flex items-center gap-1.5 hover:text-[color:var(--accent-color-1)] transition-colors select-none">
+                            <i class="ph ph-caret-right text-xs transition-transform group-open:rotate-90"></i>
+                            View extracted text
+                        </summary>
+                        <div class="scanner-raw-text mt-2" id="scanner-raw-text"></div>
+                    </details>
+
+                    <!-- Matched Items List -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-sm" id="scanner-items-title">Matched Items</h3>
+                            <span class="text-xs themed-subtle-text" id="scanner-items-count"></span>
+                        </div>
+                        <div class="scanner-items-scroll space-y-2" id="scanner-items-list">
+                            <!-- Items will be inserted dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Not found items -->
+                    <div id="scanner-unmatched-section" class="hidden">
+                        <details class="group">
+                            <summary class="text-xs font-semibold text-amber-600 dark:text-amber-400 cursor-pointer flex items-center gap-1.5 select-none">
+                                <i class="ph ph-caret-right text-xs transition-transform group-open:rotate-90"></i>
+                                <span id="scanner-unmatched-title">Items not found in store</span>
+                            </summary>
+                            <div class="mt-2 flex flex-wrap gap-1.5" id="scanner-unmatched-list"></div>
+                        </details>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="scanner-summary flex items-center justify-between" id="scanner-summary">
+                        <div>
+                            <p class="text-xs themed-subtle-text">Total items</p>
+                            <p class="font-bold text-sm" id="scanner-total-items">0 items</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs themed-subtle-text">Estimated total</p>
+                            <p class="font-bold text-lg text-[color:var(--accent-color-1)]" id="scanner-total-price">₹0.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2.5">
+                        <button id="scanner-cancel-btn" class="flex-1 themed-card-bg border themed-border font-bold py-3 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                            Cancel
+                        </button>
+                        <button id="scanner-add-all-btn" class="flex-[2] btn-primary font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2">
+                            <i class="ph ph-shopping-cart-simple text-lg"></i>
+                            Add All to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3252,8 +3771,8 @@ document.addEventListener('DOMContentLoaded', async() => {
     const htmlEl = document.documentElement;
 
     const logoImg = document.getElementById('logo-img');
-    const LIGHT_LOGO_SRC = '/GroceryL.png';
-    const DARK_LOGO_SRC = '/GroceryD.png';
+    const LIGHT_LOGO_SRC = './GroceryL.png';
+    const DARK_LOGO_SRC = './GroceryD.png';
 
     const setLogoWithFallback = (preferredSrc) => {
         if (!logoImg) return;
@@ -3279,7 +3798,54 @@ document.addEventListener('DOMContentLoaded', async() => {
         setLogoWithFallback(isDark ? DARK_LOGO_SRC : LIGHT_LOGO_SRC);
     };
 
-    const toggleTheme = () => {
+    const toggleTheme = (event) => {
+        const isSupported = document.startViewTransition
+            && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!isSupported) {
+            performToggle();
+            return;
+        }
+
+        // Disable standard CSS transitions so the API can snapshot strictly the before & after states
+        htmlEl.classList.add('disable-transitions');
+
+        const x = event?.clientX ?? window.innerWidth / 2;
+        const y = event?.clientY ?? window.innerHeight / 2;
+        const endRadius = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y)
+        );
+
+        const transition = document.startViewTransition(() => {
+            performToggle();
+        });
+
+        transition.ready.then(() => {
+            const isDark = htmlEl.classList.contains('dark');
+            const clipPath = [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`
+            ];
+
+            document.documentElement.animate(
+                {
+                    clipPath: isDark ? clipPath : [...clipPath].reverse()
+                },
+                {
+                    duration: 500,
+                    easing: 'ease-in-out',
+                    pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
+                }
+            );
+        });
+
+        transition.finished.then(() => {
+            htmlEl.classList.remove('disable-transitions');
+        });
+    };
+    
+    const performToggle = () => {
         // Toggle dark mode immediately
         htmlEl.classList.toggle('dark');
         const isDarkMode = htmlEl.classList.contains('dark');
@@ -3314,6 +3880,749 @@ document.addEventListener('DOMContentLoaded', async() => {
         themeToggleBtn.addEventListener('click', toggleTheme);
     }
     
+    // --- SMART SHOPPING LIST SCANNER ---
+    const scannerModal = document.getElementById('scanner-modal');
+    const scannerCloseBtn = document.getElementById('scanner-close-btn');
+    const scannerBackdrop = document.getElementById('scanner-backdrop');
+    const scannerBrowseBtn = document.getElementById('scanner-browse-btn');
+    const scannerFileInput = document.getElementById('scanner-file-input');
+    const scannerDropZone = document.getElementById('scanner-drop-zone');
+    const scannerUploadPhase = document.getElementById('scanner-upload-phase');
+    const scannerScanningPhase = document.getElementById('scanner-scanning-phase');
+    const scannerResultsPhase = document.getElementById('scanner-results-phase');
+    const scannerPreviewImg = document.getElementById('scanner-preview-img');
+    const scannerResultImg = document.getElementById('scanner-result-img');
+    const scannerProgressText = document.getElementById('scanner-progress-text');
+    const scannerRawText = document.getElementById('scanner-raw-text');
+    const scannerItemsList = document.getElementById('scanner-items-list');
+    const scannerItemsTitle = document.getElementById('scanner-items-title');
+    const scannerItemsCount = document.getElementById('scanner-items-count');
+    const scannerTotalItems = document.getElementById('scanner-total-items');
+    const scannerTotalPrice = document.getElementById('scanner-total-price');
+    const scannerAddAllBtn = document.getElementById('scanner-add-all-btn');
+    const scannerCancelBtn = document.getElementById('scanner-cancel-btn');
+    const scannerRetakeBtn = document.getElementById('scanner-retake-btn');
+    const scannerUnmatchedSection = document.getElementById('scanner-unmatched-section');
+    const scannerUnmatchedList = document.getElementById('scanner-unmatched-list');
+    const scannerUnmatchedTitle = document.getElementById('scanner-unmatched-title');
+    const uploadListBtn = document.getElementById('upload-list-btn');
+    const uploadListInput = document.getElementById('upload-list-input');
+
+    // Scanner state
+    let scannerMatchedItems = []; // [{product, quantity, variant}]
+    let scannerImageObjectUrl = null;
+
+    // ── Scanner Modal Open / Close ──
+    const openScannerModal = () => {
+        scannerModal.classList.remove('hidden');
+        scannerModal.classList.add('flex');
+        document.body.classList.add('modal-open');
+        resetScannerToUpload();
+    };
+
+    const closeScannerModal = () => {
+        scannerModal.classList.add('hidden');
+        scannerModal.classList.remove('flex');
+        document.body.classList.remove('modal-open');
+        if (scannerImageObjectUrl) {
+            URL.revokeObjectURL(scannerImageObjectUrl);
+            scannerImageObjectUrl = null;
+        }
+        scannerMatchedItems = [];
+    };
+
+    // Wire up open triggers
+    if (uploadListBtn) {
+        uploadListBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openScannerModal();
+        });
+    }
+
+    // Also allow original hidden input to trigger scanner
+    if (uploadListInput) {
+        uploadListInput.addEventListener('click', (e) => {
+            e.preventDefault();
+            openScannerModal();
+        });
+    }
+
+    // Wire up close triggers
+    if (scannerCloseBtn) scannerCloseBtn.addEventListener('click', closeScannerModal);
+    if (scannerBackdrop) scannerBackdrop.addEventListener('click', closeScannerModal);
+    if (scannerCancelBtn) scannerCancelBtn.addEventListener('click', closeScannerModal);
+
+    // ── Step Indicator ──
+    const setScannerStep = (step) => {
+        const s1 = document.getElementById('scanner-step-1');
+        const s2 = document.getElementById('scanner-step-2');
+        const s3 = document.getElementById('scanner-step-3');
+        const l1 = document.getElementById('scanner-line-1');
+        const l2 = document.getElementById('scanner-line-2');
+
+        [s1, s2, s3].forEach(s => s?.classList.remove('active', 'completed'));
+        [l1, l2].forEach(l => l?.classList.remove('filled'));
+
+        if (step >= 1) { s1?.classList.add(step === 1 ? 'active' : 'completed'); }
+        if (step >= 2) { l1?.classList.add('filled'); s2?.classList.add(step === 2 ? 'active' : 'completed'); }
+        if (step >= 3) { l2?.classList.add('filled'); s3?.classList.add('active'); }
+    };
+
+    // ── Phase Management ──
+    const resetScannerToUpload = () => {
+        setScannerStep(1);
+        scannerUploadPhase?.classList.remove('hidden');
+        scannerScanningPhase?.classList.add('hidden');
+        scannerResultsPhase?.classList.add('hidden');
+        scannerMatchedItems = [];
+        if (scannerFileInput) scannerFileInput.value = '';
+    };
+
+    const showScanningPhase = (imgSrc) => {
+        setScannerStep(2);
+        scannerUploadPhase?.classList.add('hidden');
+        scannerScanningPhase?.classList.remove('hidden');
+        scannerResultsPhase?.classList.add('hidden');
+        if (scannerPreviewImg) scannerPreviewImg.src = imgSrc;
+        if (scannerProgressText) scannerProgressText.textContent = 'Initializing OCR engine';
+    };
+
+    const showResultsPhase = (imgSrc) => {
+        setScannerStep(3);
+        scannerUploadPhase?.classList.add('hidden');
+        scannerScanningPhase?.classList.add('hidden');
+        scannerResultsPhase?.classList.remove('hidden');
+        if (scannerResultImg) scannerResultImg.src = imgSrc;
+    };
+
+    // ── Drag & Drop ──
+    if (scannerDropZone) {
+        ['dragenter', 'dragover'].forEach(evt => {
+            scannerDropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                scannerDropZone.classList.add('scanner-upload-active');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            scannerDropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                scannerDropZone.classList.remove('scanner-upload-active');
+            });
+        });
+        scannerDropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer?.files?.[0];
+            if (file && file.type.startsWith('image/')) {
+                processScannedImage(file);
+            }
+        });
+        // Click on zone triggers file input
+        scannerDropZone.addEventListener('click', (e) => {
+            if (e.target.closest('#scanner-browse-btn') || e.target.closest('input')) return;
+            scannerFileInput?.click();
+        });
+    }
+
+    // Browse button
+    if (scannerBrowseBtn) {
+        scannerBrowseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            scannerFileInput?.click();
+        });
+    }
+
+    // File input change
+    if (scannerFileInput) {
+        scannerFileInput.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (file) processScannedImage(file);
+        });
+    }
+
+    // Retake button
+    if (scannerRetakeBtn) {
+        scannerRetakeBtn.addEventListener('click', () => {
+            resetScannerToUpload();
+        });
+    }
+
+    // ── Smart Quantity + Item Parsing ──
+    const parseShoppingListLines = (rawText) => {
+        // Parse text into lines, trying to extract item name + quantity
+        const lines = rawText
+            .split(/[\n\r]+/)
+            .map(l => l.trim())
+            .filter(l => l.length > 1);
+
+        const parsedItems = [];
+        const stopWords = new Set(['shopping', 'list', 'grocery', 'groceries', 'buy', 'need', 'get', 'total', 'items', 'item', 'things', 'stuff', 'order', 'notes', 'note', 'page', 'date', 'name']);
+        
+        // Quantity pattern: matches "2 apples", "3x milk", "apples x2", "apples - 2", "1kg rice", etc.
+        const qtyPatterns = [
+            /^(\d+)\s*[x×]\s+(.+)/i,          // "2x apples"
+            /^(\d+)\s+(.+)/,                   // "2 apples"
+            /^(.+?)\s*[x×]\s*(\d+)\s*$/i,      // "apples x2"
+            /^(.+?)\s*[-–—]\s*(\d+)\s*$/,       // "apples - 2"
+            /^(.+?)\s*\(\s*(\d+)\s*\)\s*$/,     // "apples (2)"
+        ];
+
+        lines.forEach(line => {
+            // Remove bullet points, dashes, numbers at start, checkboxes
+            let cleaned = line
+                .replace(/^[\s•·\-–—*#□☐✓✔☑\d.)\]]+\s*/g, '')
+                .replace(/[^\w\s]/g, ' ')
+                .trim();
+
+            if (!cleaned || cleaned.length < 2) return;
+            
+            // Check if entire line is just stop words
+            const words = cleaned.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+            if (words.every(w => stopWords.has(w))) return;
+
+            let quantity = 1;
+            let itemName = cleaned;
+
+            // Try to extract quantity
+            for (const pattern of qtyPatterns) {
+                const match = cleaned.match(pattern);
+                if (match) {
+                    // Figure out which capture group is qty and which is name
+                    const [, g1, g2] = match;
+                    const g1IsNum = /^\d+$/.test(g1);
+                    if (g1IsNum) {
+                        quantity = Math.min(parseInt(g1, 10), 20) || 1; // Cap at 20
+                        itemName = g2.trim();
+                    } else {
+                        quantity = Math.min(parseInt(g2, 10), 20) || 1;
+                        itemName = g1.trim();
+                    }
+                    break;
+                }
+            }
+
+            // Remove trailing unit words from item name
+            itemName = itemName.replace(/\s+(kg|gm|gram|grams|ml|liter|liters|pack|packs|dozen|pcs|pieces|piece)\s*$/i, '').trim();
+
+            if (itemName.length >= 2 && !words.every(w => stopWords.has(w))) {
+                parsedItems.push({ rawLine: line, itemName, quantity });
+            }
+        });
+
+        return parsedItems;
+    };
+
+    // ── Smart Product Matching ──
+    const matchParsedItemsToProducts = (parsedItems) => {
+        const matched = [];
+        const unmatched = [];
+        const usedProductIds = new Set();
+        
+        const stopWords = new Set(['fresh', 'organic', 'natural', 'pure', 'best', 'good', 'quality', 'premium', 'local', 'brand', 'daily', 'whole']);
+
+        parsedItems.forEach(parsed => {
+            const searchName = parsed.itemName.toLowerCase().trim();
+            const searchWords = searchName.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+            let bestMatch = null;
+            let bestScore = 0;
+
+            products.forEach(product => {
+                if (usedProductIds.has(product.id)) return;
+                const productName = product.name.toLowerCase();
+                const productWords = productName.split(/\s+/);
+
+                let score = 0;
+
+                // Exact name match
+                if (productName === searchName) {
+                    score = 100;
+                }
+                // Product name contains search term or vice versa
+                else if (productName.includes(searchName) || searchName.includes(productName)) {
+                    score = 80;
+                }
+                else {
+                    // Word-level matching
+                    searchWords.forEach(sw => {
+                        const singularSw = sw.endsWith('s') ? sw.slice(0, -1) : sw;
+                        const singularSwEs = sw.endsWith('es') ? sw.slice(0, -2) : sw;
+
+                        productWords.forEach(pw => {
+                            const singularPw = pw.endsWith('s') ? pw.slice(0, -1) : pw;
+                            if (pw === sw || singularPw === sw || pw === singularSw || singularPw === singularSw || pw === singularSwEs) {
+                                score += 40;
+                            } else if (pw.includes(sw) || sw.includes(pw)) {
+                                if (Math.min(pw.length, sw.length) > 3) score += 25;
+                            } else if (singularSw.length > 3 && (pw.includes(singularSw) || singularSw.includes(pw))) {
+                                score += 20;
+                            }
+                        });
+                    });
+                }
+
+                if (score > bestScore && score >= 20) {
+                    bestScore = score;
+                    bestMatch = product;
+                }
+            });
+
+            if (bestMatch) {
+                usedProductIds.add(bestMatch.id);
+                const variant = bestMatch.variants?.[0] || { unit: '1 pc', price: 0 };
+                matched.push({
+                    product: bestMatch,
+                    quantity: parsed.quantity,
+                    variant: variant,
+                    confidence: bestScore >= 60 ? 'high' : 'medium',
+                    rawLine: parsed.rawLine
+                });
+            } else {
+                unmatched.push(parsed.itemName);
+            }
+        });
+
+        return { matched, unmatched };
+    };
+
+    // ── Render Matched Items ──
+    const renderScannerItems = () => {
+        if (!scannerItemsList) return;
+        scannerItemsList.innerHTML = '';
+
+        if (scannerMatchedItems.length === 0) {
+            scannerItemsList.innerHTML = `
+                <div class="scanner-empty-state">
+                    <i class="ph ph-magnifying-glass-minus block"></i>
+                    <p class="font-semibold text-sm mb-1">No matching items found</p>
+                    <p class="text-xs themed-subtle-text">Try uploading a clearer image with readable text</p>
+                </div>
+            `;
+            if (scannerAddAllBtn) scannerAddAllBtn.disabled = true;
+            return;
+        }
+
+        if (scannerAddAllBtn) scannerAddAllBtn.disabled = false;
+
+        scannerMatchedItems.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'scanner-item-card';
+            card.style.animationDelay = `${idx * 0.08}s`;
+
+            const imgSrc = safeProductImage(item.product.image);
+            const confClass = item.confidence === 'high' ? 'confidence-high' : 'confidence-medium';
+            const confLabel = item.confidence === 'high' ? 'Exact' : 'Close';
+
+            card.innerHTML = `
+                <img src="${imgSrc}" alt="${item.product.name}" class="scanner-item-img" onerror="this.onerror=null;this.src='${DEFAULT_PRODUCT_IMAGE}';">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                        <p class="font-semibold text-sm truncate">${item.product.name}</p>
+                        <span class="confidence-badge ${confClass}">${confLabel}</span>
+                    </div>
+                    <p class="text-xs themed-subtle-text">${item.variant.unit} · ₹${item.variant.price.toFixed(2)}</p>
+                </div>
+                <div class="scanner-item-qty-control">
+                    <button class="scanner-item-qty-btn" data-action="dec" data-idx="${idx}" aria-label="Decrease">−</button>
+                    <span class="scanner-item-qty-val" id="scanner-qty-${idx}">${item.quantity}</span>
+                    <button class="scanner-item-qty-btn" data-action="inc" data-idx="${idx}" aria-label="Increase">+</button>
+                </div>
+                <button class="scanner-item-remove" data-idx="${idx}" aria-label="Remove item">
+                    <i class="ph ph-x text-sm"></i>
+                </button>
+            `;
+            scannerItemsList.appendChild(card);
+        });
+
+        // Bind quantity buttons
+        scannerItemsList.querySelectorAll('.scanner-item-qty-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                const action = btn.dataset.action;
+                if (action === 'inc') {
+                    scannerMatchedItems[idx].quantity = Math.min(scannerMatchedItems[idx].quantity + 1, 20);
+                } else {
+                    scannerMatchedItems[idx].quantity = Math.max(scannerMatchedItems[idx].quantity - 1, 1);
+                }
+                const qtyEl = document.getElementById(`scanner-qty-${idx}`);
+                if (qtyEl) qtyEl.textContent = scannerMatchedItems[idx].quantity;
+                updateScannerSummary();
+            });
+        });
+
+        // Bind remove buttons
+        scannerItemsList.querySelectorAll('.scanner-item-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.idx);
+                scannerMatchedItems.splice(idx, 1);
+                renderScannerItems();
+                updateScannerSummary();
+            });
+        });
+
+        updateScannerSummary();
+    };
+
+    // ── Update Summary ──
+    const updateScannerSummary = () => {
+        const totalQty = scannerMatchedItems.reduce((sum, i) => sum + i.quantity, 0);
+        const totalPrice = scannerMatchedItems.reduce((sum, i) => sum + (i.variant.price * i.quantity), 0);
+
+        if (scannerTotalItems) scannerTotalItems.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''}`;
+        if (scannerTotalPrice) scannerTotalPrice.textContent = `₹${totalPrice.toFixed(2)}`;
+        if (scannerItemsCount) scannerItemsCount.textContent = `${scannerMatchedItems.length} product${scannerMatchedItems.length !== 1 ? 's' : ''}`;
+
+        if (scannerAddAllBtn) {
+            scannerAddAllBtn.disabled = scannerMatchedItems.length === 0;
+            scannerAddAllBtn.innerHTML = scannerMatchedItems.length > 0
+                ? `<i class="ph ph-shopping-cart-simple text-lg"></i> Add ${totalQty} item${totalQty !== 1 ? 's' : ''} to Cart`
+                : `<i class="ph ph-shopping-cart-simple text-lg"></i> No Items to Add`;
+        }
+    };
+
+    // ── Render Unmatched Items ──
+    const renderUnmatchedItems = (unmatched) => {
+        if (!scannerUnmatchedSection || !scannerUnmatchedList) return;
+
+        if (unmatched.length === 0) {
+            scannerUnmatchedSection.classList.add('hidden');
+            return;
+        }
+
+        scannerUnmatchedSection.classList.remove('hidden');
+        if (scannerUnmatchedTitle) scannerUnmatchedTitle.textContent = `${unmatched.length} item${unmatched.length !== 1 ? 's' : ''} not found in store`;
+
+        scannerUnmatchedList.innerHTML = '';
+        unmatched.forEach(name => {
+            const chip = document.createElement('span');
+            chip.className = 'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/40';
+            chip.innerHTML = `<i class="ph ph-question text-xs"></i>${name}`;
+            scannerUnmatchedList.appendChild(chip);
+        });
+    };
+
+    // ── Add All to Cart ──
+    if (scannerAddAllBtn) {
+        scannerAddAllBtn.addEventListener('click', () => {
+            if (scannerMatchedItems.length === 0) return;
+
+            scannerMatchedItems.forEach(item => {
+                for (let i = 0; i < item.quantity; i++) {
+                    addToCart(item.product.id, item.variant.unit);
+                }
+            });
+
+            // Show success animation
+            scannerAddAllBtn.innerHTML = `<i class="ph ph-check-circle text-lg"></i> Added to Cart!`;
+            scannerAddAllBtn.disabled = true;
+
+            // Pulse the cart button
+            if (viewCartBtn) {
+                viewCartBtn.classList.add('scale-110');
+                setTimeout(() => viewCartBtn.classList.remove('scale-110'), 400);
+            }
+
+            // Close modal after brief success state
+            setTimeout(() => {
+                closeScannerModal();
+            }, 1200);
+        });
+    }
+
+    // ── Compress and Convert File to Base64 ──
+    const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Max dimensions
+                    const MAX_SIZE = 1200;
+                    if (width > height && width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    } else if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to JPEG with 0.7 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    const base64 = dataUrl.split(',')[1];
+                    resolve(base64);
+                };
+                img.onerror = () => reject(new Error('Failed to load image for compression'));
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    // ── Match Gemini AI items to store products ──
+    const matchGeminiItemsToProducts = (geminiItems) => {
+        const matched = [];
+        const unmatched = [];
+        const usedProductIds = new Set();
+
+        geminiItems.forEach(gItem => {
+            const searchName = gItem.name.toLowerCase().trim();
+            let bestMatch = null;
+            let bestScore = 0;
+
+            products.forEach(product => {
+                if (usedProductIds.has(product.id)) return;
+                const productName = product.name.toLowerCase();
+                const productWords = productName.split(/\s+/);
+                const searchWords = searchName.split(/\s+/);
+
+                let score = 0;
+
+                // Exact name match
+                if (productName === searchName) { score = 100; }
+                // Product name contains search term or vice versa
+                else if (productName.includes(searchName) || searchName.includes(productName)) { score = 80; }
+                else {
+                    // Word-level matching
+                    searchWords.forEach(sw => {
+                        if (sw.length < 3) return;
+                        const singularSw = sw.endsWith('s') ? sw.slice(0, -1) : sw;
+                        productWords.forEach(pw => {
+                            const singularPw = pw.endsWith('s') ? pw.slice(0, -1) : pw;
+                            if (pw === sw || singularPw === sw || pw === singularSw || singularPw === singularSw) {
+                                score += 50;
+                            } else if ((pw.length > 3 && sw.length > 3) && (pw.includes(sw) || sw.includes(pw))) {
+                                score += 30;
+                            }
+                        });
+                    });
+                }
+
+                if (score > bestScore && score >= 25) {
+                    bestScore = score;
+                    bestMatch = product;
+                }
+            });
+
+            if (bestMatch) {
+                usedProductIds.add(bestMatch.id);
+                
+                let selectedVariant = bestMatch.variants?.[0] || { unit: '1 pc', price: 0 };
+                let finalQuantity = gItem.quantity || 1;
+
+                // Normalization helper
+                const normalize = (n, u) => {
+                    const un = String(u).toLowerCase().replace(/s$/, '').trim();
+                    if (un === 'kg' || un === 'kilo' || un === 'kilogram') return { n: n * 1000, u: 'g' };
+                    if (un === 'gm' || un === 'g' || un === 'gram') return { n, u: 'g' };
+                    if (un === 'l' || un === 'litre' || un === 'liter') return { n: n * 1000, u: 'ml' };
+                    if (un === 'ml') return { n, u: 'ml' };
+                    if (un === 'pc' || un === 'piece') return { n, u: 'pc' };
+                    if (un === 'dozen') return { n: n * 12, u: 'pc' };
+                    return { n, u: un };
+                };
+
+                // Smart unit matching if Gemini provided a unit
+                if (gItem.unit && bestMatch.variants && bestMatch.variants.length > 0) {
+                    const reqNorm = normalize(gItem.quantity || 1, gItem.unit);
+                    
+                    // Try to find the exact variant match first
+                    let exactVariant = null;
+                    for (const v of bestMatch.variants) {
+                        const match = v.unit.toLowerCase().match(/([\d.]+)\s*([a-z]+)/);
+                        if (match) {
+                            const vNorm = normalize(parseFloat(match[1]), match[2]);
+                            if (vNorm.u === reqNorm.u && vNorm.n === reqNorm.n) {
+                                exactVariant = v;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (exactVariant) {
+                        selectedVariant = exactVariant;
+                        finalQuantity = 1; // Since it's an exact match, we only need 1 pack
+                    } else {
+                        // Fallback: Use division on the first variant
+                        const match = selectedVariant.unit.toLowerCase().match(/([\d.]+)\s*([a-z]+)/);
+                        if (match) {
+                            const vNorm = normalize(parseFloat(match[1]), match[2]);
+                            if (reqNorm.u === vNorm.u && vNorm.n > 0) {
+                                const calcQty = Math.round(reqNorm.n / vNorm.n);
+                                if (calcQty > 0) finalQuantity = calcQty;
+                            }
+                        }
+                    }
+                }
+
+                matched.push({
+                    product: bestMatch,
+                    quantity: finalQuantity,
+                    variant: selectedVariant,
+                    confidence: bestScore >= 60 ? 'high' : 'medium',
+                    rawLine: gItem.raw || gItem.name
+                });
+            } else {
+                unmatched.push(gItem.raw || gItem.name);
+            }
+        });
+
+        return { matched, unmatched };
+    };
+
+    // ── Core: Process Scanned Image ──
+    const processScannedImage = async (file) => {
+        if (!file || !file.type.startsWith('image/')) return;
+
+        // Create object URL for preview
+        if (scannerImageObjectUrl) URL.revokeObjectURL(scannerImageObjectUrl);
+        scannerImageObjectUrl = URL.createObjectURL(file);
+
+        // Show scanning phase with image preview
+        showScanningPhase(scannerImageObjectUrl);
+
+        try {
+            let matched = [];
+            let unmatched = [];
+            let rawText = '';
+            let usedGemini = false;
+
+            // ── Try Gemini Vision API first (best for handwriting) ──
+            try {
+                if (scannerProgressText) scannerProgressText.textContent = 'Compressing & analyzing image...';
+                
+                const base64Data = await compressImage(file);
+                const response = await fetch('/api/scan-list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: base64Data,
+                        mimeType: 'image/jpeg'
+                    })
+                });
+
+                if (!response.ok) {
+                    let serverErrorMsg = `Server returned error ${response.status}`;
+                    try {
+                        const errData = await response.json();
+                        if (errData.error) serverErrorMsg = errData.error;
+                    } catch(e) {}
+                    
+                    if (response.status === 413) {
+                        throw new Error('Image is too large. Please take a photo from further away or lower quality.');
+                    }
+                    if (response.status === 429) {
+                        throw new Error('Gemini API Quota Exceeded. Please try again later.');
+                    }
+                    if (response.status === 502 || response.status === 503) {
+                        throw new Error(serverErrorMsg);
+                    }
+                    throw new Error(serverErrorMsg);
+                }
+
+                const result = await response.json();
+
+                if (result.items && result.items.length > 0) {
+                    usedGemini = true;
+                    rawText = result.items.map(i => i.raw).join('\n');
+                    
+                    if (scannerProgressText) scannerProgressText.textContent = 'Matching items to store catalog...';
+                    await new Promise(r => setTimeout(r, 400));
+
+                    const matchResult = matchGeminiItemsToProducts(result.items);
+                    matched = matchResult.matched;
+                    unmatched = matchResult.unmatched;
+
+                    console.log('✅ Gemini Vision matched:', matched.length, 'items');
+                } else if (result.fallback) {
+                    console.log('⚠️ Gemini unavailable, falling back to Tesseract');
+                    if (result.error && result.error.includes('429')) {
+                         throw new Error('Gemini API Quota Exceeded. Please check your API key tier or try again later.');
+                    }
+                } else {
+                    console.log('⚠️ Gemini returned no items, trying Tesseract');
+                }
+            } catch (geminiErr) {
+                // Do NOT fallback to Tesseract for server errors, because Tesseract cannot read handwriting at all.
+                if (geminiErr.message.includes('Server returned error') || 
+                    geminiErr.message.includes('Quota') || 
+                    geminiErr.message.includes('too large') ||
+                    geminiErr.message.includes('overloaded') ||
+                    geminiErr.message.includes('Gemini API')) {
+                    throw geminiErr; 
+                }
+                console.warn('Gemini API failed, falling back to Tesseract:', geminiErr.message);
+            }
+
+            // ── Fallback: Tesseract OCR (for printed text) ──
+            if (!usedGemini) {
+                if (scannerProgressText) scannerProgressText.textContent = 'Loading OCR engine...';
+                const worker = await Tesseract.createWorker('eng');
+
+                if (scannerProgressText) scannerProgressText.textContent = 'Reading text from image...';
+                const { data: { text } } = await worker.recognize(scannerImageObjectUrl);
+                await worker.terminate();
+
+                rawText = text;
+                console.log('OCR Raw Text:', text);
+
+                if (scannerProgressText) scannerProgressText.textContent = 'Matching items to store catalog...';
+                await new Promise(r => setTimeout(r, 600));
+
+                const parsedItems = parseShoppingListLines(text);
+                const matchResult = matchParsedItemsToProducts(parsedItems);
+                matched = matchResult.matched;
+                unmatched = matchResult.unmatched;
+            }
+
+            // Store matched items in state
+            scannerMatchedItems = matched;
+
+            // Show results phase
+            showResultsPhase(scannerImageObjectUrl);
+
+            // Render extracted text
+            if (scannerRawText) scannerRawText.textContent = rawText || '(No text extracted)';
+
+            // Render matched items
+            if (scannerItemsTitle) {
+                scannerItemsTitle.textContent = matched.length > 0
+                    ? `Matched Items` + (usedGemini ? ' ✨' : '')
+                    : `No Items Found`;
+            }
+
+            renderScannerItems();
+            renderUnmatchedItems(unmatched);
+
+        } catch (err) {
+            console.error('Scanner Error:', err);
+            showResultsPhase(scannerImageObjectUrl);
+            if (scannerRawText) scannerRawText.textContent = `Error: ${err.message || 'Failed to scan image'}`;
+            if (scannerItemsList) {
+                scannerItemsList.innerHTML = `
+                    <div class="scanner-empty-state">
+                        <i class="ph ph-warning-circle block text-red-400"></i>
+                        <p class="font-semibold text-sm mb-1">Scanning Failed</p>
+                        <p class="text-xs themed-subtle-text">${err.message || 'Unknown error occurred'}. Please try again with a clearer photo.</p>
+                    </div>
+                `;
+            }
+            renderUnmatchedItems([]);
+            if (scannerAddAllBtn) scannerAddAllBtn.disabled = true;
+        }
+
+        // Reset file input for re-use
+        if (scannerFileInput) scannerFileInput.value = '';
+    };
+
+
     // --- AUTO-SUGGESTION FOR SEARCH BAR ---
     let suggestionIndex = 0;
     let suggestionInterval;
@@ -3402,50 +4711,60 @@ let userLocation = {
 };
 
 function getStructuredAddressDetails(addressObj = {}, fallback = '') {
-    const houseNumber = addressObj.house_number || '';
-    const road = addressObj.road || addressObj.street || addressObj.pedestrian || '';
-    const building = addressObj.building || addressObj.amenity || '';
-    const society = addressObj.residential || addressObj.apartment || addressObj.condominium || '';
-    const institution = addressObj.college || addressObj.university || addressObj.school || '';
-    const landmark = addressObj.landmark || addressObj.attraction || addressObj.tourism || '';
-    const locality = addressObj.suburb || addressObj.neighbourhood || addressObj.quarter || '';
+    // Collect all potential address parts in order of specificity
+    const rawParts = [
+        addressObj.house_number,
+        addressObj.building || addressObj.amenity,
+        addressObj.residential || addressObj.apartment || addressObj.condominium,
+        addressObj.college || addressObj.university || addressObj.school,
+        addressObj.landmark || addressObj.attraction || addressObj.tourism,
+        addressObj.road || addressObj.street || addressObj.pedestrian,
+        addressObj.suburb || addressObj.neighbourhood || addressObj.quarter,
+        addressObj.village || addressObj.town || addressObj.hamlet || addressObj.municipality,
+        addressObj.city || addressObj.county || addressObj.state_district,
+        addressObj.state || addressObj.region,
+        addressObj.postcode || addressObj.pincode,
+        addressObj.country || 'India'
+    ];
+
+    const uniqueParts = [];
+    const seenLower = new Set();
+    
+    // Intelligently deduplicate address parts (e.g. Durgapur, Durgapur)
+    rawParts.forEach(part => {
+        if (!part) return;
+        const pStr = String(part).trim();
+        if (!pStr) return;
+        
+        const pLower = pStr.toLowerCase();
+        
+        // Prevent adding exactly duplicated words, or subset words if the current list already covers it
+        let isDuplicate = false;
+        for (const seen of seenLower) {
+            if (seen === pLower || (seen.length > 5 && seen.includes(pLower) && pLower.length > 4)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        
+        if (!isDuplicate) {
+            seenLower.add(pLower);
+            uniqueParts.push(pStr);
+        }
+    });
+
+    const formattedAddress = uniqueParts.length > 0 ? uniqueParts.join(', ') : fallback;
+    
+    // Extracted base fields
     const place = addressObj.village || addressObj.town || addressObj.hamlet || addressObj.municipality || '';
     const city = addressObj.city || addressObj.county || addressObj.state_district || place || '';
     const state = addressObj.state || addressObj.region || '';
     const pincode = addressObj.postcode || addressObj.pincode || '';
     const country = addressObj.country || 'India';
-    const street = [houseNumber, road].filter(Boolean).join(' ').trim() || road || '';
-    const complexLike = /complex|society|apartment|apartments|residency|enclave|heights|tower/i.test(building || '') ? building : '';
-
-    const addressLine1 = street || society || complexLike || institution || building || fallback || '';
-    const addressLine2 = [
-        society && society !== addressLine1 ? society : '',
-        complexLike && complexLike !== addressLine1 ? complexLike : '',
-        institution && institution !== addressLine1 ? institution : '',
-        landmark,
-        locality,
-        place
-    ]
-        .filter(Boolean)
-        .join(', ');
-
-    const addressLines = [
-        addressLine1,
-        addressLine2,
-        [city, state, pincode].filter(Boolean).join(', '),
-        country
-    ].filter(Boolean);
 
     return {
-        address: normalizeSavedAddress(addressLines.join('<br>') || String(fallback || '').replace(/\n/g, '<br>')),
-        addressLine1,
-        addressLine2,
-        street,
-        society,
-        institution,
-        landmark,
+        address: normalizeSavedAddress(formattedAddress),
         place,
-        locality,
         city,
         state,
         pincode,
@@ -4218,45 +5537,16 @@ function updateLocationDisplay() {
     const viewMapBtn = document.getElementById('view-map-btn');
     
     if (userLocation.address) {
-        // Keep header address concise but still descriptive of the area.
-        const displayParts = [];
-        const seen = new Set();
-        const addDisplayPart = (value) => {
-            const text = String(value || '').trim();
-            const key = text.toLowerCase();
-            if (!text || seen.has(key)) return;
-            seen.add(key);
-            displayParts.push(text);
-        };
-
-        // Preferred order: society/complex/college/landmark context first.
-        addDisplayPart(userLocation.society);
-        addDisplayPart(userLocation.institution);
-        if (userLocation.landmark) {
-            addDisplayPart(`Near ${userLocation.landmark}`);
-        }
-        addDisplayPart(userLocation.place);
-        addDisplayPart(userLocation.locality);
-        addDisplayPart(userLocation.city);
-        addDisplayPart(userLocation.addressLine2);
-        addDisplayPart(userLocation.addressLine1);
-
-        if (userLocation.pincode) {
-            addDisplayPart(`PIN ${userLocation.pincode}`);
-        }
-
-        // Fallback when structured fields are unavailable.
-        if (displayParts.length === 0) {
-            const addressSegments = String(userLocation.address)
-                .replace(/<br\s*\/?>/gi, ',')
-                .split(',')
-                .map(part => part.trim())
-                .filter(Boolean);
-            addDisplayPart(addressSegments[0] || 'Location selected');
-            addDisplayPart(addressSegments[1] || '');
-        }
-
-        const displayText = displayParts.slice(0, 4).join(', ');
+        // Since we now deduplicate inside getStructuredAddressDetails, we can directly use the address string
+        const addressSegments = String(userLocation.address)
+            .replace(/<br\s*\/?>/gi, ',')
+            .split(',')
+            .map(part => part.trim())
+            .filter(Boolean);
+            
+        // Limit display to the first 3-4 segments for a clean, concise header, 
+        // prioritizing the most specific location parts (building, street, suburb)
+        const displayText = addressSegments.slice(0, 4).join(', ') || 'Location selected';
         
         // Update main location display
         locationElement.textContent = displayText;
