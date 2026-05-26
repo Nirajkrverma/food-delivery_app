@@ -305,6 +305,18 @@
             }
         }
 
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        .slide-in-right {
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -318,6 +330,19 @@
         /* Prevent body scroll when a modal is open */
         body.modal-open {
             overflow: hidden;
+        }
+
+        /* Perfect separable window for cart */
+        body {
+            transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        body.cart-active {
+            padding-right: 450px;
+        }
+        @media (max-width: 640px) {
+            body.cart-active {
+                padding-right: 0;
+            }
         }
 
         /* Apply dark theme when the .dark class is present */
@@ -1535,7 +1560,7 @@
     </div>
 
     <!-- Sticky Cart Footer -->
-    <footer id="cart-footer" class="fixed bottom-0 left-0 right-0 glass-effect border-t p-4 transform translate-y-full transition-transform duration-300 z-40">
+    <footer id="cart-footer" class="hidden fixed bottom-0 left-0 right-0 glass-effect border-t p-4 transform translate-y-full transition-transform duration-300 z-40">
         <div class="w-full max-w-5xl mx-auto flex justify-between items-center">
             <div>
                 <p id="cart-summary" class="font-semibold text-lg">Your cart is empty</p>
@@ -1548,8 +1573,8 @@
     </footer>
 
     <!-- Cart Modal -->
-    <div id="cart-modal" class="fixed inset-0 glass-effect z-50 p-4 flex-col hidden">
-        <div class="w-full max-w-2xl mx-auto flex-grow flex flex-col max-h-[90vh]">
+    <div id="cart-modal" class="fixed top-0 right-0 h-full w-full sm:w-[450px] glass-effect border-l themed-border shadow-2xl z-50 p-4 flex-col hidden slide-in-right">
+        <div class="w-full h-full flex-grow flex flex-col">
             <!-- Modal Header -->
             <div class="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 class="text-3xl font-bold">Your Cart</h2>
@@ -1573,9 +1598,6 @@
                     <span id="modal-total-price">₹0.00</span>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="continue-shopping-btn" class="w-full themed-card-bg border themed-border text-center font-bold py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        Continue Shopping
-                    </button>
                     <button id="checkout-btn" class="btn-primary w-full py-3 rounded-lg text-lg">
                         Proceed to Checkout
                     </button>
@@ -2821,7 +2843,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     const cartModal = document.getElementById('cart-modal');
     const closeModalBtn = document.getElementById('close-cart-modal-btn');
     const clearCartBtn = document.getElementById('clear-cart-btn');
-    const continueShoppingBtn = document.getElementById('continue-shopping-btn');
     const cartItemsContainer = document.getElementById('cart-items-container');
     const modalTotalPrice = document.getElementById('modal-total-price');
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -3229,6 +3250,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         if (cart.length === 0) {
             cartFooter.classList.add('translate-y-full');
             clearCartBtn.classList.add('hidden');
+            hideCartModal();
         } else {
             cartFooter.classList.remove('translate-y-full');
             clearCartBtn.classList.remove('hidden');
@@ -3260,7 +3282,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         cart.forEach((cartItem, index) => {
             const product = products.find(p => p.id === cartItem.productId);
             const itemElement = document.createElement('div');
-            itemElement.className = 'cart-item flex items-center gap-4 p-4 themed-card-bg border themed-border rounded-lg shadow-sm';
+            itemElement.className = 'cart-item flex items-center gap-3 p-3 themed-card-bg border themed-border rounded-lg shadow-sm';
             itemElement.style.animationDelay = `${index * 0.1}s`;
             
             // Handle items that don't have a corresponding product (e.g., reordered items)
@@ -3269,55 +3291,55 @@ document.addEventListener('DOMContentLoaded', async() => {
                 let imageDisplay;
                 if (cartItem.image && (cartItem.image.startsWith('http') || cartItem.image.startsWith('/'))) {
                     // Handle actual image URLs
-                    imageDisplay = `<img src="${cartItem.image}" alt="${cartItem.name}" class="w-16 h-16 rounded-md object-contain flex-shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                   <div class="w-16 h-16 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center" style="display: none;">
-                                       <span class="text-2xl">🛒</span>
+                    imageDisplay = `<img src="${cartItem.image}" alt="${cartItem.name}" class="w-12 h-12 rounded-md object-contain flex-shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                   <div class="w-12 h-12 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center" style="display: none;">
+                                       <span class="text-xl">🛒</span>
                                    </div>`;
                 } else if (cartItem.image && cartItem.image.length <= 4) {
                     // Handle emoji images
-                    imageDisplay = `<span class="text-3xl">${cartItem.image}</span>`;
+                    imageDisplay = `<span class="text-2xl">${cartItem.image}</span>`;
                 } else {
                     // Fallback to shopping cart icon
-                    imageDisplay = `<span class="text-3xl">🛒</span>`;
+                    imageDisplay = `<span class="text-2xl">🛒</span>`;
                 }
                 
                 itemElement.innerHTML = `
-                    <div class="w-16 h-16 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <div class="w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                         ${imageDisplay}
                     </div>
-                    <div class="flex-grow min-w-0">
-                        <p class="font-semibold truncate">${cartItem.name}</p>
-                        <p class="text-sm themed-subtle-text">${cartItem.unit} - ₹${cartItem.price.toFixed(2)}</p>
+                    <div class="flex-grow min-w-0 pr-1">
+                        <p class="font-semibold leading-tight line-clamp-2 text-sm" title="${cartItem.name}">${cartItem.name}</p>
+                        <p class="text-xs themed-subtle-text mt-0.5">${cartItem.unit} - ₹${cartItem.price.toFixed(2)}</p>
                     </div>
-                    <div class="flex items-center justify-center border-2 themed-border rounded-lg overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 min-h-[44px]">
-                        <button class="p-2 dec-btn min-w-[44px] min-h-[44px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 font-black text-xl leading-none flex items-center justify-center" data-id="${cartItem.productId}" data-unit="${cartItem.unit}" aria-label="Decrease quantity">
+                    <div class="flex items-center justify-center border-2 themed-border rounded-lg overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 min-h-[32px]">
+                        <button class="p-1 dec-btn min-w-[32px] min-h-[32px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 font-black text-lg leading-none flex items-center justify-center" data-id="${cartItem.productId}" data-unit="${cartItem.unit}" aria-label="Decrease quantity">
                             <span aria-hidden="true">-</span>
                         </button>
-                        <span class="px-4 font-bold min-w-[3rem] text-center text-gray-900 dark:text-white">${cartItem.quantity}</span>
-                        <button class="p-2 inc-btn min-w-[44px] min-h-[44px] bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 font-black text-xl leading-none flex items-center justify-center" data-id="${cartItem.productId}" data-unit="${cartItem.unit}" aria-label="Increase quantity">
+                        <span class="px-2 font-bold min-w-[2rem] text-center text-sm text-gray-900 dark:text-white">${cartItem.quantity}</span>
+                        <button class="p-1 inc-btn min-w-[32px] min-h-[32px] bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 font-black text-lg leading-none flex items-center justify-center" data-id="${cartItem.productId}" data-unit="${cartItem.unit}" aria-label="Increase quantity">
                             <span aria-hidden="true">+</span>
                         </button>
                     </div>
-                    <p class="font-bold w-20 text-right flex-shrink-0">₹${(cartItem.price * cartItem.quantity).toFixed(2)}</p>
+                    <p class="font-bold w-16 text-right flex-shrink-0 text-sm">₹${(cartItem.price * cartItem.quantity).toFixed(2)}</p>
                 `;
             } else {
                 // For normal products, use the existing logic
                 itemElement.innerHTML = `
-                    <img src="${safeProductImage(product.image)}" alt="${product.name}" class="w-16 h-16 rounded-md object-contain flex-shrink-0" onerror="this.onerror=null;this.src='${DEFAULT_PRODUCT_IMAGE}';">
-                    <div class="flex-grow min-w-0">
-                        <p class="font-semibold truncate">${product.name}</p>
-                        <p class="text-sm themed-subtle-text">${cartItem.unit} - ₹${cartItem.price.toFixed(2)}</p>
+                    <img src="${safeProductImage(product.image)}" alt="${product.name}" class="w-12 h-12 rounded-md object-contain flex-shrink-0" onerror="this.onerror=null;this.src='${DEFAULT_PRODUCT_IMAGE}';">
+                    <div class="flex-grow min-w-0 pr-1">
+                        <p class="font-semibold leading-tight line-clamp-2 text-sm" title="${product.name}">${product.name}</p>
+                        <p class="text-xs themed-subtle-text mt-0.5">${cartItem.unit} - ₹${cartItem.price.toFixed(2)}</p>
                     </div>
-                    <div class="flex items-center justify-center border-2 themed-border rounded-lg overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 min-h-[44px]">
-                        <button class="p-2 dec-btn min-w-[44px] min-h-[44px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 font-black text-xl leading-none flex items-center justify-center" data-id="${product.id}" data-unit="${cartItem.unit}" aria-label="Decrease quantity">
+                    <div class="flex items-center justify-center border-2 themed-border rounded-lg overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 min-h-[32px]">
+                        <button class="p-1 dec-btn min-w-[32px] min-h-[32px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 font-black text-lg leading-none flex items-center justify-center" data-id="${product.id}" data-unit="${cartItem.unit}" aria-label="Decrease quantity">
                             <span aria-hidden="true">-</span>
                         </button>
-                        <span class="px-4 font-bold min-w-[3rem] text-center text-gray-900 dark:text-white">${cartItem.quantity}</span>
-                        <button class="p-2 inc-btn min-w-[44px] min-h-[44px] bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 font-black text-xl leading-none flex items-center justify-center" data-id="${product.id}" data-unit="${cartItem.unit}" aria-label="Increase quantity">
+                        <span class="px-2 font-bold min-w-[2rem] text-center text-sm text-gray-900 dark:text-white">${cartItem.quantity}</span>
+                        <button class="p-1 inc-btn min-w-[32px] min-h-[32px] bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 font-black text-lg leading-none flex items-center justify-center" data-id="${product.id}" data-unit="${cartItem.unit}" aria-label="Increase quantity">
                             <span aria-hidden="true">+</span>
                         </button>
                     </div>
-                    <p class="font-bold w-20 text-right flex-shrink-0">₹${(cartItem.price * cartItem.quantity).toFixed(2)}</p>
+                    <p class="font-bold w-16 text-right flex-shrink-0 text-sm">₹${(cartItem.price * cartItem.quantity).toFixed(2)}</p>
                 `;
             }
             cartItemsContainer.appendChild(itemElement);
@@ -3433,6 +3455,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                 cartItem.quantity++;
             }
             updateCartView();
+            showCartModal();
             return;
         }
         
@@ -3446,6 +3469,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
         updateCartView();
         updateProductCardUI(productId);
+        showCartModal();
     };
     
     const removeFromCart = (productId, unit) => {
@@ -3629,12 +3653,12 @@ document.addEventListener('DOMContentLoaded', async() => {
     const hideCartModal = () => {
         cartModal.classList.add('hidden');
         cartModal.classList.remove('flex');
-        document.body.classList.remove('modal-open');
+        document.body.classList.remove('cart-active');
     };
     const showCartModal = () => {
         cartModal.classList.remove('hidden');
         cartModal.classList.add('flex');
-        document.body.classList.add('modal-open');
+        document.body.classList.add('cart-active');
     };
     const hideProfileModal = () => {
         profileModal.classList.add('hidden');
@@ -3669,7 +3693,6 @@ document.addEventListener('DOMContentLoaded', async() => {
 
     viewCartBtn.addEventListener('click', showCartModal);
     closeModalBtn.addEventListener('click', hideCartModal);
-    continueShoppingBtn.addEventListener('click', hideCartModal);
     profileBtn.addEventListener('click', () => {
         window.location.href = './profile.html';
     });
